@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -17,15 +18,13 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
   const [startTime, setStartTime] = useState<Date | null>(null);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
     if (status === "STARTED" || status === "ANALYZING") {
       if (!startTime) {
         setStartTime(new Date());
       }
-    } else {
+    } else if (status === "STOPPED") {
       setStartTime(null);
     }
-    return () => clearTimeout(timer);
   }, [status, startTime]);
 
   const formatStartTime = (date: Date | null) => {
@@ -42,9 +41,9 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
 
   const getStatusText = () => {
     switch (status) {
-        case 'STARTED': return 'STARTED';
-        case 'ANALYZING': return 'ANALYZING...';
-        case 'STOPPED': return 'STOPPED';
+        case 'STARTED': return 'ANALYSIS COMPLETE';
+        case 'ANALYZING': return 'MENGANALISIS...';
+        case 'STOPPED': return 'DIHENTIKAN';
     }
   }
 
@@ -61,7 +60,7 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Kontrol & Status</CardTitle>
+        <CardTitle>Kontrol & Status Sistem</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-sm">
@@ -72,10 +71,10 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
           <Button 
             className="w-full bg-green-600 hover:bg-green-700" 
             onClick={() => onStatusChange("STARTED")}
-            disabled={!isStartEnabled || isProcessing}
+            disabled={!isStartEnabled || isProcessing || status === 'STARTED'}
           >
             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {isProcessing ? 'Menganalisis...' : 'START Pencatatan Data'}
+            {isProcessing ? 'Menganalisis...' : 'Mulai Analisis Video'}
           </Button>
           <Button 
             variant="destructive" 
@@ -83,7 +82,7 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
             onClick={() => onStatusChange("STOPPED")}
             disabled={isProcessing}
           >
-            STOP Pencatatan Data
+            Hentikan & Reset
           </Button>
         </div>
       </CardContent>

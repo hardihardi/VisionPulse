@@ -9,3 +9,10 @@ export interface VehicleCount {
   count: number;
   pcuFactor: number;
 }
+
+export interface PcuCoefficients {
+  sepedaMotor: number;
+  mobil: number;
+  bus: number;
+  truk: number;
+}

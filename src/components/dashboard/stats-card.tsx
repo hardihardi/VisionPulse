@@ -20,7 +20,7 @@ export function StatsCard({ title, value, icon, change, variant = 'default' }: S
         <div className="text-2xl font-bold">{value}</div>
         {change && (
           <p className={cn("text-xs text-muted-foreground", variant === 'destructive' && "text-destructive")}>
-            {change} from last hour
+            {change} dari jam terakhir
           </p>
         )}
       </CardContent>

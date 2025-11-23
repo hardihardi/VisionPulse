@@ -25,7 +25,6 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: Da
     const interval = setInterval(() => {
       setTrafficData(prevData => {
         const newData = [...prevData, generateNewDataPoint(prevData)];
-        // Keep the data to a reasonable size, e.g., last 3 hours (36 points)
         if (newData.length > 40) {
           return newData.slice(newData.length - 40);
         }
@@ -56,19 +55,19 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: Da
                   change="+5.2%"
                 />
                 <StatsCard 
-                  title="Live SKR (PCU)" 
+                  title="Live SKR (Satuan Kendaraan Roda Empat)" 
                   value={Math.round(livePcu).toString()}
                   icon={<Users />}
                   change="+3.1%"
                 />
                 <StatsCard 
-                  title="Avg. Speed" 
+                  title="Kecepatan Rata-Rata" 
                   value="45 km/h"
                   icon={<Truck />}
                   change="-1.2%"
                 />
                 <StatsCard 
-                  title="Anomaly Events" 
+                  title="Peristiwa Anomali" 
                   value="2"
                   icon={<Zap />}
                   change="+1"

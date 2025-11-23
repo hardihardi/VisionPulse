@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo } from 'react';
@@ -89,7 +90,6 @@ export function TrafficTrendsChart({ data }: TrafficTrendsChartProps) {
         </div>
       </CardHeader>
       <CardContent className="flex-grow">
-        {/* For Mobile */}
         <div className="sm:hidden">
           <Select value={activeChart} onValueChange={(value) => setActiveChart(value as ChartType)}>
               <SelectTrigger className="w-full mb-4">
@@ -102,14 +102,12 @@ export function TrafficTrendsChart({ data }: TrafficTrendsChartProps) {
           </Select>
         </div>
 
-        {/* For Desktop */}
         <Tabs value={activeChart} onValueChange={(value) => setActiveChart(value as ChartType)} className="w-full">
             <TabsList className="hidden sm:grid w-full grid-cols-2">
                 <TabsTrigger value="licensePlates">Jumlah Plat</TabsTrigger>
                 <TabsTrigger value="pcu">SKR (Satuan Kendaraan Roda Empat)</TabsTrigger>
             </TabsList>
             
-            {/* Unified Content */}
             <div className="mt-4">
               {activeChart === 'licensePlates' && renderChart('licensePlates', 'licensePlateMA', 'hsl(var(--chart-1))')}
               {activeChart === 'pcu' && renderChart('pcu', 'pcuMA', 'hsl(var(--chart-2))')}

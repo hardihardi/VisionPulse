@@ -1,10 +1,11 @@
+
 "use client"
 
 import React, { useState } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
-import type { TrafficDataPoint, VehicleCount } from '@/lib/types';
+import type { PcuCoefficients } from '@/lib/types';
 import { ControlStatus, SystemStatus } from './control-status';
 import { VehicleVolume } from './vehicle-volume';
 import { ExportReport } from './export-report';
@@ -18,17 +19,20 @@ import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license
 import { VideoInput } from './video-input';
 import { DetectionResultCard } from '../dashboard/detection-result-card';
 
+const initialCoefficients: PcuCoefficients = {
+    sepedaMotor: 0.4,
+    mobil: 1.0,
+    bus: 1.5,
+    truk: 2.0,
+};
 
-interface TrafficDashboardProps {
-  initialTrafficData: TrafficDataPoint[];
-  initialVehicleCounts: VehicleCount[];
-}
-
-export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: TrafficDashboardProps) {
+export function TrafficDashboard() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [status, setStatus] = useState<SystemStatus>("STOPPED");
   const [detectionResult, setDetectionResult] = useState<EnhanceLicensePlateRecognitionOutput | null>(null);
+  const [pcuCoefficients, setPcuCoefficients] = useState<PcuCoefficients>(initialCoefficients);
+
   const { toast } = useToast();
 
   const handleVideoSelect = (file: File) => {
@@ -51,23 +55,38 @@ export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: T
         setStatus('ANALYZING');
         setDetectionResult(null);
 
-        const videoDataUri = await toBase64(videoFile);
-        const result = await getEnhancedRecognition({ videoDataUri });
+        try {
+          const videoDataUri = await toBase64(videoFile);
+          const result = await getEnhancedRecognition({ videoDataUri });
 
-        if (result.error) {
-            toast({
-                title: "Deteksi Gagal",
-                description: result.error,
+          if (result.error) {
+              toast({
+                  title: "Deteksi Gagal",
+                  description: result.error,
+                  variant: "destructive",
+              });
+              setStatus('STOPPED');
+          } else if (result.result) {
+              toast({
+                  title: "Deteksi Berhasil",
+                  description: `Plat nomor terdeteksi: ${result.result.licensePlate}`,
+              });
+              setDetectionResult(result.result);
+              setStatus('STARTED'); // Analysis complete
+          }
+        } catch (error) {
+           toast({
+                title: "Gagal Memproses Video",
+                description: "Terjadi kesalahan saat membaca file video.",
                 variant: "destructive",
             });
             setStatus('STOPPED');
-        } else if (result.result) {
-            toast({
-                title: "Deteksi Berhasil",
-                description: `Plat nomor terdeteksi: ${result.result.licensePlate}`,
-            });
-            setDetectionResult(result.result);
-            setStatus('STARTED');
+        }
+    } else if (newStatus === 'STOPPED') {
+        setStatus('STOPPED');
+        setDetectionResult(null);
+        if (!videoFile) {
+          setVideoSrc(null);
         }
     } else {
         setStatus(newStatus);
@@ -82,26 +101,23 @@ export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: T
           <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
             <DashboardHeader title="Dasbor Lalu Lintas" description="Pemantauan dan kontrol sistem lalu lintas real-time." />
             <main className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-              {/* Left Column */}
               <div className="lg:col-span-2 flex flex-col gap-6">
                 <VideoInput onVideoSelect={handleVideoSelect} videoSrc={videoSrc} />
                 <TrafficCountingChart />
-                <PcuCoefficient />
+                <PcuCoefficient coefficients={pcuCoefficients} onUpdate={setPcuCoefficients} />
               </div>
 
-              {/* Right Column */}
               <div className="lg:col-span-1 flex flex-col gap-6">
                 <ControlStatus 
                     isStartEnabled={!!videoFile}
                     status={status}
                     onStatusChange={handleStatusChange}
                 />
-                { (status === "ANALYZING" || detectionResult) && <DetectionResultCard detectionResult={detectionResult} /> }
+                <DetectionResultCard detectionResult={detectionResult} />
                 <VehicleVolume />
                 <ExportReport />
               </div>
               
-              {/* Bottom full-width charts */}
               <div className="lg:col-span-3">
                 <MovingAverageChart />
               </div>
