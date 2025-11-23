@@ -48,7 +48,6 @@ export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: T
   });
 
   const handleStatusChange = async (newStatus: SystemStatus) => {
-    setStatus(newStatus);
     if (newStatus === 'STARTED' && videoFile) {
         setStatus('ANALYZING');
         setDetectionResult(null);
@@ -71,9 +70,13 @@ export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: T
             setDetectionResult(result.result);
             setStatus('STARTED');
         }
+    } else {
+        setStatus(newStatus);
     }
-    if (newStatus === 'STOPPED') {
-        // Keep detectionResult so it's still visible
+
+    if (newStatus === 'STOPPED' && !detectionResult) {
+        // Clear video if stopped before analysis
+        // But keep it if there is a result to show
     }
   }
 
