@@ -73,7 +73,7 @@ export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: T
         }
     }
     if (newStatus === 'STOPPED') {
-        setDetectionResult(null);
+        // Keep detectionResult so it's still visible
     }
   }
 
@@ -99,7 +99,7 @@ export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: T
                     status={status}
                     onStatusChange={handleStatusChange}
                 />
-                { (status === "ANALYZING" || status === "STARTED") && <DetectionResultCard detectionResult={detectionResult} /> }
+                { (status === "ANALYZING" || detectionResult) && <DetectionResultCard detectionResult={detectionResult} /> }
                 <VehicleVolume />
                 <ExportReport />
                 <MovingAverageChart />
