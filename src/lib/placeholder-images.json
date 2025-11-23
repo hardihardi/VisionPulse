@@ -5,6 +5,12 @@
       "description": "A placeholder image for a live traffic camera feed.",
       "imageUrl": "https://images.unsplash.com/photo-1530035398653-4e46e1813e53?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx0cmFmZmljJTIwY2FtZXJhfGVufDB8fHx8MTc2MzkxMTgzN3ww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "traffic camera"
+    },
+    {
+      "id": "traffic-feed-detected",
+      "description": "A placeholder image for a live traffic camera feed with object detection overlays.",
+      "imageUrl": "https://storage.googleapis.com/aifire.dev-dependencies.appspot.com/templates/vision-pulse-traffic-image.png",
+      "imageHint": "traffic camera detection"
     }
   ]
 }

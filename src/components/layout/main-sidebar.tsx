@@ -25,10 +25,10 @@ export function MainSidebar() {
       <SidebarContent className="p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive tooltip="Dashboard">
+            <SidebarMenuButton asChild isActive tooltip="Dasbor">
               <Link href="/">
                 <LayoutDashboard />
-                <span>Dashboard</span>
+                <span>Dasbor</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -39,10 +39,10 @@ export function MainSidebar() {
         <SidebarGroup>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Settings">
+              <SidebarMenuButton asChild tooltip="Pengaturan">
                 <Link href="#">
                   <Settings />
-                  <span>Settings</span>
+                  <span>Pengaturan</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -50,12 +50,12 @@ export function MainSidebar() {
               <SidebarMenuButton asChild>
                 <Link href="#">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="https://picsum.photos/seed/user-avatar/100/100" alt="User" />
+                    <AvatarImage src="https://picsum.photos/seed/user-avatar/100/100" alt="Pengguna" />
                     <AvatarFallback>U</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
-                    <span className="font-semibold">User</span>
-                    <span className="text-xs text-muted-foreground">user@visionpulse.com</span>
+                    <span className="font-semibold">Pengguna</span>
+                    <span className="text-xs text-muted-foreground">pengguna@visionpulse.com</span>
                   </div>
                 </Link>
               </SidebarMenuButton>
