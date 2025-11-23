@@ -12,6 +12,8 @@ interface TrafficTrendsChartProps {
   data: TrafficDataPoint[];
 }
 
+type ChartType = 'licensePlates' | 'pcu';
+
 const calculateMovingAverage = (data: number[], windowSize: number): (number | null)[] => {
   if (windowSize <= 0) return [];
   const result: (number | null)[] = new Array(data.length).fill(null);
@@ -29,6 +31,7 @@ const calculateMovingAverage = (data: number[], windowSize: number): (number | n
 
 export function TrafficTrendsChart({ data }: TrafficTrendsChartProps) {
   const [timeframe, setTimeframe] = useState<string>("15");
+  const [activeChart, setActiveChart] = useState<ChartType>('licensePlates');
 
   const chartData = useMemo(() => {
     const windowSize = timeframe === '15' ? 3 : 12; // 3 * 5min = 15min, 12 * 5min = 60min
@@ -69,13 +72,13 @@ export function TrafficTrendsChart({ data }: TrafficTrendsChartProps) {
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
             <CardTitle>Tren Lalu Lintas</CardTitle>
             <CardDescription>Jumlah plat nomor dan nilai SKR dari waktu ke waktu.</CardDescription>
           </div>
           <Select value={timeframe} onValueChange={setTimeframe}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Rerata Bergerak" />
             </SelectTrigger>
             <SelectContent>
@@ -86,17 +89,31 @@ export function TrafficTrendsChart({ data }: TrafficTrendsChartProps) {
         </div>
       </CardHeader>
       <CardContent className="flex-grow">
-        <Tabs defaultValue="plates" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="plates">Jumlah Plat</TabsTrigger>
-            <TabsTrigger value="pcu">SKR (Satuan Kendaraan Roda Empat)</TabsTrigger>
-          </TabsList>
-          <TabsContent value="plates" className="mt-4">
-            {renderChart('licensePlates', 'licensePlateMA', 'hsl(var(--chart-1))')}
-          </TabsContent>
-          <TabsContent value="pcu" className="mt-4">
-            {renderChart('pcu', 'pcuMA', 'hsl(var(--chart-2))')}
-          </TabsContent>
+        {/* For Mobile */}
+        <div className="sm:hidden">
+          <Select value={activeChart} onValueChange={(value) => setActiveChart(value as ChartType)}>
+              <SelectTrigger className="w-full mb-4">
+                  <SelectValue placeholder="Pilih Tampilan Grafik" />
+              </SelectTrigger>
+              <SelectContent>
+                  <SelectItem value="licensePlates">Jumlah Plat</SelectItem>
+                  <SelectItem value="pcu">SKR (Satuan Kendaraan Roda Empat)</SelectItem>
+              </SelectContent>
+          </Select>
+        </div>
+
+        {/* For Desktop */}
+        <Tabs value={activeChart} onValueChange={(value) => setActiveChart(value as ChartType)} className="w-full">
+            <TabsList className="hidden sm:grid w-full grid-cols-2">
+                <TabsTrigger value="licensePlates">Jumlah Plat</TabsTrigger>
+                <TabsTrigger value="pcu">SKR (Satuan Kendaraan Roda Empat)</TabsTrigger>
+            </TabsList>
+            
+            {/* Unified Content */}
+            <div className="mt-4">
+              {activeChart === 'licensePlates' && renderChart('licensePlates', 'licensePlateMA', 'hsl(var(--chart-1))')}
+              {activeChart === 'pcu' && renderChart('pcu', 'pcuMA', 'hsl(var(--chart-2))')}
+            </div>
         </Tabs>
       </CardContent>
     </Card>
