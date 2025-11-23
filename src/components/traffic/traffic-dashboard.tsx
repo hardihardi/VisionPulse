@@ -17,6 +17,7 @@ import { getEnhancedRecognition } from '@/app/(actions)/enhance-recognition';
 import { useToast } from '@/hooks/use-toast';
 import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
 import { VideoInput } from './video-input';
+import { DetectionResultCard } from '../dashboard/detection-result-card';
 
 
 interface TrafficDashboardProps {
@@ -98,7 +99,8 @@ export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: T
                     status={status}
                     onStatusChange={handleStatusChange}
                 />
-                <VehicleVolume detectionResult={detectionResult} />
+                { (status === "ANALYZING" || status === "STARTED") && <DetectionResultCard detectionResult={detectionResult} /> }
+                <VehicleVolume />
                 <ExportReport />
                 <MovingAverageChart />
               </div>

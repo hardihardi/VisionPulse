@@ -15,6 +15,8 @@ import { VideoInput } from './video-input';
 import { useToast } from '@/hooks/use-toast';
 import { getEnhancedRecognition } from '@/app/(actions)/enhance-recognition';
 import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
+import { DetectionResultCard } from './detection-result-card';
+
 
 interface DashboardClientProps {
   initialTrafficData: TrafficDataPoint[];
@@ -133,8 +135,8 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: Da
                     videoSrc={videoSrc}
                     onStartAnalysis={handleStartAnalysis}
                     isAnalyzing={isAnalyzing}
-                    detectionResult={detectionResult}
                 />
+                { (isAnalyzing || detectionResult) && <DetectionResultCard detectionResult={detectionResult} /> }
                 <AiSummary trafficData={trafficData} />
               </div>
             </main>

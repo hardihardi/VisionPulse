@@ -7,17 +7,15 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from '@/components/ui/button';
 import { Upload, Loader2, Play } from 'lucide-react';
 import { useRef } from 'react';
-import type { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
 
 interface VideoInputProps {
   onVideoSelect: (file: File) => void;
   videoSrc: string | null;
   onStartAnalysis: () => void;
   isAnalyzing: boolean;
-  detectionResult: EnhanceLicensePlateRecognitionOutput | null;
 }
 
-export function VideoInput({ onVideoSelect, videoSrc, onStartAnalysis, isAnalyzing, detectionResult }: VideoInputProps) {
+export function VideoInput({ onVideoSelect, videoSrc, onStartAnalysis, isAnalyzing }: VideoInputProps) {
   const placeholder = PlaceHolderImages.find(img => img.id === 'traffic-feed-detected');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -52,14 +50,6 @@ export function VideoInput({ onVideoSelect, videoSrc, onStartAnalysis, isAnalyzi
             />
           )}
         </div>
-
-        {detectionResult && (
-            <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 text-center">
-                <CardDescription className="text-xs">Plat Nomor Terdeteksi:</CardDescription>
-                <p className="text-xl font-bold text-primary">{detectionResult.licensePlate}</p>
-                <CardDescription className="text-xs mt-1">Akurasi: {detectionResult.accuracyAchieved}</CardDescription>
-            </div>
-        )}
 
         <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={handleUploadClick} className="w-full">

@@ -2,8 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import type { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const VehicleCounter = ({ title, counts }: { title: string, counts: { [key: string]: number } }) => (
   <div className="p-4 bg-muted/50 rounded-lg">
@@ -22,11 +21,8 @@ const VehicleCounter = ({ title, counts }: { title: string, counts: { [key: stri
   </div>
 );
 
-interface VehicleVolumeProps {
-    detectionResult: EnhanceLicensePlateRecognitionOutput | null;
-}
 
-export function VehicleVolume({ detectionResult }: VehicleVolumeProps) {
+export function VehicleVolume() {
     const [mendekat, setMendekat] = useState({ Motor: 0, Mobil: 0, Bus: 0, Truk: 0 });
     const [menjauh, setMenjauh] = useState({ Motor: 0, Mobil: 0, Bus: 0, Truk: 0 });
 
@@ -54,14 +50,6 @@ export function VehicleVolume({ detectionResult }: VehicleVolumeProps) {
         <CardTitle>Volume Kendaraan (Kumulatif)</CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-4">
-        {detectionResult && (
-            <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                <CardTitle className="text-base mb-2">Deteksi Plat Nomor</CardTitle>
-                <CardDescription>Plat Nomor terdeteksi:</CardDescription>
-                <p className="text-2xl font-bold text-primary">{detectionResult.licensePlate}</p>
-                <CardDescription className="text-xs mt-1">Akurasi: {detectionResult.accuracyAchieved}</CardDescription>
-            </div>
-        )}
         <div className="grid grid-cols-2 gap-4">
             <VehicleCounter title="Mendekat:" counts={mendekat} />
             <VehicleCounter title="Menjauh:" counts={menjauh} />
