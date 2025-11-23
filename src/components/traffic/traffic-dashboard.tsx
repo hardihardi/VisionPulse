@@ -6,13 +6,17 @@ import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
 import { VideoInput } from '@/components/dashboard/video-input';
 import type { TrafficDataPoint, VehicleCount } from '@/lib/types';
-import { ControlStatus } from './control-status';
+import { ControlStatus, SystemStatus } from './control-status';
 import { VehicleVolume } from './vehicle-volume';
 import { ExportReport } from './export-report';
 import { TrafficCountingChart } from './traffic-counting-chart';
 import { MovingAverageChart } from './moving-average-chart';
 import { PcuCoefficient } from './pcu-coefficient';
 import { CumulativeVolumeChart } from './cumulative-volume-chart';
+import { getEnhancedRecognition } from '@/app/(actions)/enhance-recognition';
+import { useToast } from '@/hooks/use-toast';
+import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
+
 
 interface TrafficDashboardProps {
   initialTrafficData: TrafficDataPoint[];
@@ -22,12 +26,54 @@ interface TrafficDashboardProps {
 export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: TrafficDashboardProps) {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  const [status, setStatus] = useState<SystemStatus>("STOPPED");
+  const [detectionResult, setDetectionResult] = useState<EnhanceLicensePlateRecognitionOutput | null>(null);
+  const { toast } = useToast();
 
   const handleVideoSelect = (file: File) => {
     setVideoFile(file);
     const url = URL.createObjectURL(file);
     setVideoSrc(url);
+    setStatus("STOPPED");
+    setDetectionResult(null);
   };
+  
+  const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+
+  const handleStatusChange = async (newStatus: SystemStatus) => {
+    setStatus(newStatus);
+    if (newStatus === 'STARTED' && videoFile) {
+        setStatus('ANALYZING');
+        setDetectionResult(null);
+
+        const videoDataUri = await toBase64(videoFile);
+        const result = await getEnhancedRecognition({ videoDataUri });
+
+        if (result.error) {
+            toast({
+                title: "Deteksi Gagal",
+                description: result.error,
+                variant: "destructive",
+            });
+            setStatus('STOPPED');
+        } else if (result.result) {
+            toast({
+                title: "Deteksi Berhasil",
+                description: `Plat nomor terdeteksi: ${result.result.licensePlate}`,
+            });
+            setDetectionResult(result.result);
+            setStatus('STARTED');
+        }
+    }
+    if (newStatus === 'STOPPED') {
+        setDetectionResult(null);
+    }
+  }
 
   return (
     <SidebarProvider>
@@ -46,8 +92,12 @@ export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: T
 
               {/* Right Column */}
               <div className="lg:col-span-1 flex flex-col gap-6">
-                <ControlStatus isStartEnabled={!!videoFile} />
-                <VehicleVolume />
+                <ControlStatus 
+                    isStartEnabled={!!videoFile}
+                    status={status}
+                    onStatusChange={handleStatusChange}
+                />
+                <VehicleVolume detectionResult={detectionResult} />
                 <ExportReport />
                 <MovingAverageChart />
               </div>

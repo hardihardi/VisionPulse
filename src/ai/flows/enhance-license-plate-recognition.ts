@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview Enhances license plate recognition accuracy by fine-tuning the system with custom training data.
+ * @fileOverview Enhances license plate recognition accuracy from a video feed.
  *
- * - enhanceLicensePlateRecognition - A function that enhances license plate recognition using custom training data.
+ * - enhanceLicensePlateRecognition - A function that enhances and detects a license plate from a video.
  * - EnhanceLicensePlateRecognitionInput - The input type for the enhanceLicensePlateRecognition function.
  * - EnhanceLicensePlateRecognitionOutput - The return type for the enhanceLicensePlateRecognition function.
  */
@@ -16,27 +16,22 @@ const EnhanceLicensePlateRecognitionInputSchema = z.object({
     .string()
     .describe(
       "A video stream for analysis, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-  trainingDataDescription: z
-    .string()
-    .describe('Description of the custom training data provided.'),
-  desiredAccuracy: z
-    .string()
-    .describe('The target accuracy level for license plate recognition.'),
+    )
 });
 export type EnhanceLicensePlateRecognitionInput = z.infer<
   typeof EnhanceLicensePlateRecognitionInputSchema
 >;
 
 const EnhanceLicensePlateRecognitionOutputSchema = z.object({
+  licensePlate: z.string().describe('The detected license plate number.'),
   enhancementResult: z
     .string()
     .describe(
-      'A description of the enhancement result after fine-tuning with custom training data.'
+      'A description of the enhancement result after processing the video.'
     ),
   accuracyAchieved: z
     .string()
-    .describe('The accuracy level achieved after fine-tuning.'),
+    .describe('The confidence level of the detection.'),
 });
 export type EnhanceLicensePlateRecognitionOutput = z.infer<
   typeof EnhanceLicensePlateRecognitionOutputSchema
@@ -52,16 +47,13 @@ const enhanceLicensePlateRecognitionPrompt = ai.definePrompt({
   name: 'enhanceLicensePlateRecognitionPrompt',
   input: {schema: EnhanceLicensePlateRecognitionInputSchema},
   output: {schema: EnhanceLicensePlateRecognitionOutputSchema},
-  prompt: `You are an expert in enhancing license plate recognition systems using custom training data.
+  prompt: `You are an expert in license plate recognition from video streams.
 
-You will receive a video stream, a description of the training data, and the desired accuracy level.
-Use this information to fine-tune the license plate recognition system and provide the enhancement result and the accuracy achieved.
+You will receive a video stream. Your task is to analyze the video, identify the clearest view of a vehicle's license plate, and extract the license plate number.
+
+Provide the detected license plate number, a brief summary of the detection process, and the confidence score of the detection.
 
 Video Stream: {{media url=videoDataUri}}
-Training Data Description: {{{trainingDataDescription}}}
-Desired Accuracy: {{{desiredAccuracy}}}
-
-Provide a detailed description of the enhancement process and the final accuracy achieved.
 `,
 });
 
