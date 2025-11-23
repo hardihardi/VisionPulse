@@ -73,11 +73,6 @@ export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: T
     } else {
         setStatus(newStatus);
     }
-
-    if (newStatus === 'STOPPED' && !detectionResult) {
-        // Clear video if stopped before analysis
-        // But keep it if there is a result to show
-    }
   }
 
   return (
