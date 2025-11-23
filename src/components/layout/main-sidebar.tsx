@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -13,10 +14,13 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Logo } from "@/components/logo"
-import { LayoutDashboard, Settings } from "lucide-react"
+import { LayoutDashboard, Settings, TrafficCone } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 export function MainSidebar() {
+  const pathname = usePathname();
+
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r border-sidebar-border/60">
       <SidebarHeader>
@@ -25,10 +29,18 @@ export function MainSidebar() {
       <SidebarContent className="p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive tooltip="Dasbor">
+            <SidebarMenuButton asChild isActive={pathname === '/'} tooltip="Dasbor Utama">
               <Link href="/">
                 <LayoutDashboard />
-                <span>Dasbor</span>
+                <span>Dasbor Utama</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname === '/traffic'} tooltip="Dasbor Lalu Lintas">
+              <Link href="/traffic">
+                <TrafficCone />
+                <span>Lalu Lintas</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

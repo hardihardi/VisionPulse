@@ -1,10 +1,10 @@
+
 "use client"
 
 import React, { useState } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
-import { VideoInput } from '@/components/dashboard/video-input';
 import type { TrafficDataPoint, VehicleCount } from '@/lib/types';
 import { ControlStatus, SystemStatus } from './control-status';
 import { VehicleVolume } from './vehicle-volume';
@@ -16,6 +16,7 @@ import { CumulativeVolumeChart } from './cumulative-volume-chart';
 import { getEnhancedRecognition } from '@/app/(actions)/enhance-recognition';
 import { useToast } from '@/hooks/use-toast';
 import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
+import { VideoInput } from './video-input';
 
 
 interface TrafficDashboardProps {
@@ -81,7 +82,7 @@ export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: T
         <MainSidebar />
         <SidebarInset>
           <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
-            <DashboardHeader />
+            <DashboardHeader title="Dasbor Lalu Lintas" description="Pemantauan dan kontrol sistem lalu lintas real-time." />
             <main className="grid gap-6 grid-cols-1 lg:grid-cols-3">
               {/* Left Column */}
               <div className="lg:col-span-2 flex flex-col gap-6">

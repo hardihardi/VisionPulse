@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -6,11 +7,14 @@ import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { TrafficTrendsChart } from '@/components/dashboard/traffic-trends-chart';
-import { VideoInput } from '@/components/dashboard/video-input';
 import { AiSummary } from '@/components/dashboard/ai-summary';
 import { generateNewDataPoint, generateLatestVehicleCounts } from '@/lib/data';
 import type { TrafficDataPoint, VehicleCount } from '@/lib/types';
 import { Car, Users, Truck, Zap } from 'lucide-react';
+import { VideoInput } from './video-input';
+import { useToast } from '@/hooks/use-toast';
+import { getEnhancedRecognition } from '@/app/(actions)/enhance-recognition';
+import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
 
 interface DashboardClientProps {
   initialTrafficData: TrafficDataPoint[];
@@ -20,6 +24,12 @@ interface DashboardClientProps {
 export function DashboardClient({ initialTrafficData, initialVehicleCounts }: DashboardClientProps) {
   const [trafficData, setTrafficData] = useState<TrafficDataPoint[]>(initialTrafficData);
   const [vehicleCounts, setVehicleCounts] = useState<VehicleCount[]>(initialVehicleCounts);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [detectionResult, setDetectionResult] = useState<EnhanceLicensePlateRecognitionOutput | null>(null);
+
+  const { toast } = useToast();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -40,13 +50,52 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: Da
   const latestData = useMemo(() => trafficData[trafficData.length - 1], [trafficData]);
   const livePcu = useMemo(() => vehicleCounts.reduce((acc, v) => acc + v.count * v.pcuFactor, 0), [vehicleCounts]);
 
+  const handleVideoSelect = (file: File) => {
+    setVideoFile(file);
+    const url = URL.createObjectURL(file);
+    setVideoSrc(url);
+    setDetectionResult(null);
+  };
+
+  const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+
+  const handleStartAnalysis = async () => {
+    if (!videoFile) return;
+
+    setIsAnalyzing(true);
+    setDetectionResult(null);
+
+    const videoDataUri = await toBase64(videoFile);
+    const result = await getEnhancedRecognition({ videoDataUri });
+
+    if (result.error) {
+        toast({
+            title: "Deteksi Gagal",
+            description: result.error,
+            variant: "destructive",
+        });
+    } else if (result.result) {
+        toast({
+            title: "Deteksi Berhasil",
+            description: `Plat nomor terdeteksi: ${result.result.licensePlate}`,
+        });
+        setDetectionResult(result.result);
+    }
+    setIsAnalyzing(false);
+  }
+
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full bg-muted/40">
         <MainSidebar />
         <SidebarInset>
           <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-8">
-            <DashboardHeader />
+            <DashboardHeader title="Dasbor Utama" description="Analisis lalu lintas dan ringkasan data." />
             <main className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <div className="lg:col-span-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <StatsCard 
@@ -79,7 +128,13 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: Da
                 <TrafficTrendsChart data={trafficData} />
               </div>
               <div className="lg:col-span-1 flex flex-col gap-6">
-                <VideoInput />
+                <VideoInput 
+                    onVideoSelect={handleVideoSelect}
+                    videoSrc={videoSrc}
+                    onStartAnalysis={handleStartAnalysis}
+                    isAnalyzing={isAnalyzing}
+                    detectionResult={detectionResult}
+                />
                 <AiSummary trafficData={trafficData} />
               </div>
             </main>

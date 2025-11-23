@@ -1,18 +1,23 @@
+
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from '@/components/ui/button';
-import { Upload } from 'lucide-react';
+import { Upload, Loader2, Play } from 'lucide-react';
 import { useRef } from 'react';
+import type { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
 
 interface VideoInputProps {
   onVideoSelect: (file: File) => void;
   videoSrc: string | null;
+  onStartAnalysis: () => void;
+  isAnalyzing: boolean;
+  detectionResult: EnhanceLicensePlateRecognitionOutput | null;
 }
 
-export function VideoInput({ onVideoSelect, videoSrc }: VideoInputProps) {
+export function VideoInput({ onVideoSelect, videoSrc, onStartAnalysis, isAnalyzing, detectionResult }: VideoInputProps) {
   const placeholder = PlaceHolderImages.find(img => img.id === 'traffic-feed-detected');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -29,21 +34,11 @@ export function VideoInput({ onVideoSelect, videoSrc }: VideoInputProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Video Lalu Lintas</CardTitle>
-        <Button size="sm" variant="outline" onClick={handleUploadClick}>
-          <Upload className="mr-2 h-4 w-4" />
-          Unggah Video
-        </Button>
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept="video/*"
-          onChange={handleFileChange}
-        />
+      <CardHeader>
+        <CardTitle>Input Video</CardTitle>
+        <CardDescription>Unggah video untuk dianalisis.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <div className="aspect-video overflow-hidden rounded-md relative bg-muted">
           {videoSrc ? (
             <video src={videoSrc} className="w-full h-full object-cover" controls autoPlay loop muted />
@@ -56,6 +51,32 @@ export function VideoInput({ onVideoSelect, videoSrc }: VideoInputProps) {
               data-ai-hint={placeholder.imageHint}
             />
           )}
+        </div>
+
+        {detectionResult && (
+            <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 text-center">
+                <CardDescription className="text-xs">Plat Nomor Terdeteksi:</CardDescription>
+                <p className="text-xl font-bold text-primary">{detectionResult.licensePlate}</p>
+                <CardDescription className="text-xs mt-1">Akurasi: {detectionResult.accuracyAchieved}</CardDescription>
+            </div>
+        )}
+
+        <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={handleUploadClick} className="w-full">
+              <Upload className="mr-2 h-4 w-4" />
+              Unggah
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="video/*"
+              onChange={handleFileChange}
+            />
+            <Button size="sm" onClick={onStartAnalysis} className="w-full" disabled={!videoSrc || isAnalyzing}>
+                {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                {isAnalyzing ? 'Menganalisis...' : 'Mulai Analisis'}
+            </Button>
         </div>
       </CardContent>
     </Card>
