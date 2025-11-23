@@ -4,7 +4,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-export function ControlStatus() {
+interface ControlStatusProps {
+    isStartEnabled: boolean;
+}
+
+export function ControlStatus({ isStartEnabled }: ControlStatusProps) {
   const [status, setStatus] = useState("STOPPED");
   const [startTime, setStartTime] = useState<Date | null>(null);
 
@@ -40,11 +44,19 @@ export function ControlStatus() {
           <p>Waktu Mulai: {formatStartTime(startTime)}</p>
           <p>STATUS: <span className={status === 'STARTED' ? 'text-green-500' : 'text-red-500'}>{status}</span></p>
         </div>
-        <div className="flex gap-2">
-          <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => setStatus("STARTED")}>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button 
+            className="w-full bg-green-600 hover:bg-green-700" 
+            onClick={() => setStatus("STARTED")}
+            disabled={!isStartEnabled}
+          >
             START Pencatatan Data
           </Button>
-          <Button variant="destructive" className="w-full" onClick={() => setStatus("STOPPED")}>
+          <Button 
+            variant="destructive" 
+            className="w-full" 
+            onClick={() => setStatus("STOPPED")}
+          >
             STOP Pencatatan Data
           </Button>
         </div>

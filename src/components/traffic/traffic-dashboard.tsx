@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react';
+import React, { useState } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
@@ -20,6 +20,15 @@ interface TrafficDashboardProps {
 }
 
 export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: TrafficDashboardProps) {
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoSrc, setVideoSrc] = useState<string | null>(null);
+
+  const handleVideoSelect = (file: File) => {
+    setVideoFile(file);
+    const url = URL.createObjectURL(file);
+    setVideoSrc(url);
+  };
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-muted/40">
@@ -30,14 +39,14 @@ export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: T
             <main className="grid gap-6 grid-cols-1 lg:grid-cols-3">
               {/* Left Column */}
               <div className="lg:col-span-2 flex flex-col gap-6">
-                <VideoInput />
+                <VideoInput onVideoSelect={handleVideoSelect} videoSrc={videoSrc} />
                 <TrafficCountingChart />
                 <PcuCoefficient />
               </div>
 
               {/* Right Column */}
               <div className="lg:col-span-1 flex flex-col gap-6">
-                <ControlStatus />
+                <ControlStatus isStartEnabled={!!videoFile} />
                 <VehicleVolume />
                 <ExportReport />
                 <MovingAverageChart />
