@@ -85,6 +85,7 @@ export function TrafficDashboard() {
     } else if (newStatus === 'STOPPED') {
         setStatus('STOPPED');
         setDetectionResult(null);
+        // Do not clear video source on stop, only on new upload or explicit clear
         if (!videoFile) {
           setVideoSrc(null);
         }

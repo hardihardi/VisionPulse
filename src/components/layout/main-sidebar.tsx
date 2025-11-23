@@ -14,7 +14,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Logo } from "@/components/logo"
-import { LayoutDashboard, Settings, TrafficCone } from "lucide-react"
+import { LayoutDashboard, Settings, TrafficCone, History } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -41,6 +41,14 @@ export function MainSidebar() {
               <Link href="/traffic">
                 <TrafficCone />
                 <span>Lalu Lintas</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname === '/history'} tooltip="Riwayat Video">
+              <Link href="/history">
+                <History />
+                <span>Riwayat Video</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
