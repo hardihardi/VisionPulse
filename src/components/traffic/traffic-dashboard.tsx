@@ -100,10 +100,12 @@ export function TrafficDashboard({ initialTrafficData, initialVehicleCounts }: T
                 { (status === "ANALYZING" || detectionResult) && <DetectionResultCard detectionResult={detectionResult} /> }
                 <VehicleVolume />
                 <ExportReport />
-                <MovingAverageChart />
               </div>
               
-              {/* Bottom full-width chart */}
+              {/* Bottom full-width charts */}
+              <div className="lg:col-span-3">
+                <MovingAverageChart />
+              </div>
               <div className="lg:col-span-3">
                 <CumulativeVolumeChart />
               </div>
