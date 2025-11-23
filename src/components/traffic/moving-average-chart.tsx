@@ -26,8 +26,8 @@ export function MovingAverageChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Moving Average Analysis (PCU / Jam Bergulir)</CardTitle>
-        <CardDescription>Analisis PCU per jam</CardDescription>
+        <CardTitle>Analisis Rerata Bergerak (SKR / Jam Bergulir)</CardTitle>
+        <CardDescription>Analisis SKR (Satuan Kendaraan Roda Empat) per jam.</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
@@ -35,7 +35,7 @@ export function MovingAverageChart() {
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
             <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
             <YAxis 
-                label={{ value: 'Volume (PCU/Jam)', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }}
+                label={{ value: 'Volume (SKR/Jam)', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }}
                 stroke="hsl(var(--muted-foreground))" 
                 fontSize={12} 
                 tickLine={false} 
@@ -50,9 +50,9 @@ export function MovingAverageChart() {
               }}
             />
             <Legend />
-            <Bar dataKey="pcuMendekat" name="PCU Mendekat (Bar)" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="pcuMenjauh" name="PCU Menjauh (Bar)" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
-            <Line type="monotone" dataKey="pcuTotal" name="PCU Total (Line)" stroke="hsl(var(--foreground))" strokeWidth={2} dot={false} />
+            <Bar dataKey="pcuMendekat" name="SKR Mendekat" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="pcuMenjauh" name="SKR Menjauh" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
+            <Line type="monotone" dataKey="pcuTotal" name="Total SKR" stroke="hsl(var(--foreground))" strokeWidth={2} dot={false} />
           </ComposedChart>
         </ResponsiveContainer>
       </CardContent>

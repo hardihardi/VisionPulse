@@ -7,12 +7,12 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
 const vehicleTypes = [
-    { id: 'sepedaMotor', label: 'Sepeda Motor (Detected)', defaultValue: 0.4 },
-    { id: 'mobil', label: 'Mobil (Detected)', defaultValue: 1 },
-    { id: 'mediumBus', label: 'Medium Bus', defaultValue: 1 },
-    { id: 'mediumTruck', label: 'Medium Truck', defaultValue: 1 },
-    { id: 'bus', label: 'Bus (Detected)', defaultValue: 1.5 },
-    { id: 'truk', label: 'Truk (Detected)', defaultValue: 2 },
+    { id: 'sepedaMotor', label: 'Sepeda Motor (Terdeteksi)', defaultValue: 0.4 },
+    { id: 'mobil', label: 'Mobil (Terdeteksi)', defaultValue: 1 },
+    { id: 'mediumBus', label: 'Bus Medium', defaultValue: 1 },
+    { id: 'mediumTruck', label: 'Truk Medium', defaultValue: 1 },
+    { id: 'bus', label: 'Bus (Terdeteksi)', defaultValue: 1.5 },
+    { id: 'truk', label: 'Truk (Terdeteksi)', defaultValue: 2 },
     { id: 'trailer', label: 'Trailer', defaultValue: 2.5 },
     { id: 'trukGandeng', label: 'Truk Gandeng', defaultValue: 3 },
 ];
@@ -23,15 +23,15 @@ export function PcuCoefficient() {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         toast({
-            title: "Koefisien PCU Diperbarui",
-            description: "Nilai koefisien PCU telah berhasil diperbarui.",
+            title: "Koefisien SKR Diperbarui",
+            description: "Nilai koefisien SKR (Satuan Kendaraan Roda Empat) telah berhasil diperbarui.",
         });
     };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Koefisien PCU Aktif (PCU/Vehicle)</CardTitle>
+        <CardTitle>Koefisien SKR Aktif (SKR/Kendaraan)</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -43,7 +43,7 @@ export function PcuCoefficient() {
                     </div>
                 ))}
             </div>
-            <Button type="submit" className="w-full">Update PCU</Button>
+            <Button type="submit" className="w-full">Perbarui Koefisien</Button>
         </form>
       </CardContent>
     </Card>

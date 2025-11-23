@@ -47,8 +47,8 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: Da
         <SidebarInset>
           <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-8">
             <DashboardHeader title="Dasbor Utama" description="Analisis lalu lintas dan ringkasan data." />
-            <main className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <div className="lg:col-span-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <main className="grid flex-1 items-start gap-4 sm:gap-6 lg:gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid w-full auto-rows-max gap-4 sm:gap-6 md:col-span-2 lg:col-span-3 xl:col-span-4 lg:grid-cols-4">
                 <StatsCard 
                   title="Live Vehicle Count" 
                   value={latestData?.licensePlates.toString() || '0'}
@@ -56,7 +56,7 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: Da
                   change="+5.2%"
                 />
                 <StatsCard 
-                  title="Live PCU" 
+                  title="Live SKR (PCU)" 
                   value={Math.round(livePcu).toString()}
                   icon={<Users />}
                   change="+3.1%"
@@ -75,7 +75,7 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: Da
                   variant='destructive'
                 />
               </div>
-              <div className="lg:col-span-3">
+              <div className="md:col-span-2 lg:col-span-3 xl:col-span-3">
                 <TrafficTrendsChart data={trafficData} />
               </div>
               <div className="lg:col-span-1 flex flex-col gap-6">

@@ -60,8 +60,8 @@ export function TrafficTrendsChart({ data }: TrafficTrendsChartProps) {
           }}
         />
         <Legend />
-        <Bar dataKey={dataKey} fill={color} name={dataKey === 'licensePlates' ? 'License Plates' : 'PCU'} radius={[4, 4, 0, 0]} barSize={20} />
-        <Line type="monotone" dataKey={maDataKey} name={`Moving Avg. (${timeframe} min)`} stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+        <Bar dataKey={dataKey} fill={color} name={dataKey === 'licensePlates' ? 'Jumlah Plat' : 'SKR'} radius={[4, 4, 0, 0]} barSize={20} />
+        <Line type="monotone" dataKey={maDataKey} name={`Rerata Bergerak (${timeframe} min)`} stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
       </ComposedChart>
     </ResponsiveContainer>
   );
@@ -71,16 +71,16 @@ export function TrafficTrendsChart({ data }: TrafficTrendsChartProps) {
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle>Traffic Trends</CardTitle>
-            <CardDescription>License plate counts and PCU values over time.</CardDescription>
+            <CardTitle>Tren Lalu Lintas</CardTitle>
+            <CardDescription>Jumlah plat nomor dan nilai SKR dari waktu ke waktu.</CardDescription>
           </div>
           <Select value={timeframe} onValueChange={setTimeframe}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Moving Average" />
+              <SelectValue placeholder="Rerata Bergerak" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="15">15-min Moving Avg.</SelectItem>
-              <SelectItem value="60">1-hour Moving Avg.</SelectItem>
+              <SelectItem value="15">15-min Rerata Bergerak</SelectItem>
+              <SelectItem value="60">1-jam Rerata Bergerak</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -88,8 +88,8 @@ export function TrafficTrendsChart({ data }: TrafficTrendsChartProps) {
       <CardContent className="flex-grow">
         <Tabs defaultValue="plates" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="plates">License Plates</TabsTrigger>
-            <TabsTrigger value="pcu">PCU</TabsTrigger>
+            <TabsTrigger value="plates">Jumlah Plat</TabsTrigger>
+            <TabsTrigger value="pcu">SKR (Satuan Kendaraan Roda Empat)</TabsTrigger>
           </TabsList>
           <TabsContent value="plates" className="mt-4">
             {renderChart('licensePlates', 'licensePlateMA', 'hsl(var(--chart-1))')}
