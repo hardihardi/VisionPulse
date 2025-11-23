@@ -19,12 +19,12 @@ export function ExportReport() {
       <CardHeader>
         <CardTitle>Ekspor Laporan</CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-2">
+      <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <Button variant="outline" onClick={() => handleExport('XLSX')}>Ekspor XLSX</Button>
-        <Button variant="outline" onClick={() => handleExport('CSV (Raw)')}>Ekspor CSV (Raw)</Button>
-        <Button variant="outline" onClick={() => handleExport('Grafik Traffic Counting')}>Unduh Grafik Traffic Counting</Button>
-        <Button variant="outline" onClick={() => handleExport('Grafik Moving Average')}>Unduh Grafik Moving Average</Button>
-        <Button variant="outline" onClick={() => handleExport('Grafik Volume Kendaraan')}>Unduh Grafik Volume Kendaraan</Button>
+        <Button variant="outline" onClick={() => handleExport('CSV (Raw)')}>Ekspor CSV</Button>
+        <Button variant="outline" onClick={() => handleExport('Grafik Traffic Counting')}>Grafik Counting</Button>
+        <Button variant="outline" onClick={() => handleExport('Grafik Moving Average')}>Grafik Moving Avg</Button>
+        <Button variant="outline" onClick={() => handleExport('Grafik Volume Kendaraan')}>Grafik Volume</Button>
       </CardContent>
     </Card>
   );
