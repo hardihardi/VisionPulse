@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
 import { VideoInput } from './video-input';
 import { DetectionResultCard } from '../dashboard/detection-result-card';
+import { VideoHistoryCard } from './video-history-card';
 
 const initialCoefficients: PcuCoefficients = {
     sepedaMotor: 0.4,
@@ -26,21 +27,32 @@ const initialCoefficients: PcuCoefficients = {
     truk: 2.0,
 };
 
+type VideoHistoryItem = {
+  file: File;
+  src: string;
+};
+
 export function TrafficDashboard() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [status, setStatus] = useState<SystemStatus>("STOPPED");
   const [detectionResult, setDetectionResult] = useState<EnhanceLicensePlateRecognitionOutput | null>(null);
   const [pcuCoefficients, setPcuCoefficients] = useState<PcuCoefficients>(initialCoefficients);
+  const [videoHistory, setVideoHistory] = useState<VideoHistoryItem[]>([]);
 
   const { toast } = useToast();
 
   const handleVideoSelect = (file: File) => {
-    setVideoFile(file);
     const url = URL.createObjectURL(file);
+    setVideoFile(file);
     setVideoSrc(url);
     setStatus("STOPPED");
     setDetectionResult(null);
+
+    // Add to history if not already present
+    if (!videoHistory.some(item => item.file.name === file.name)) {
+      setVideoHistory(prev => [...prev, { file, src: url }]);
+    }
   };
   
   const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
@@ -114,6 +126,7 @@ export function TrafficDashboard() {
                     onStatusChange={handleStatusChange}
                 />
                 <DetectionResultCard detectionResult={detectionResult} />
+                <VideoHistoryCard videoHistory={videoHistory} onSelectVideo={handleVideoSelect} />
                 <VehicleVolume />
                 <ExportReport />
               </div>
