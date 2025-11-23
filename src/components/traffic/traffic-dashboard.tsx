@@ -16,7 +16,7 @@ import { CumulativeVolumeChart } from './cumulative-volume-chart';
 import { getEnhancedRecognition } from '@/app/(actions)/enhance-recognition';
 import { useToast } from '@/hooks/use-toast';
 import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
-import { VideoInput } from './video-input';
+import { VideoInput } from '@/components/dashboard/video-input';
 import { DetectionResultCard } from '../dashboard/detection-result-card';
 
 const initialCoefficients: PcuCoefficients = {
