@@ -80,7 +80,7 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
             variant="destructive" 
             className="w-full" 
             onClick={() => onStatusChange("STOPPED")}
-            disabled={isProcessing}
+            disabled={status === 'STOPPED'}
           >
             Hentikan & Reset
           </Button>
