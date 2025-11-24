@@ -44,9 +44,7 @@ export default function HistoryPage() {
 
   const handleVideoUpload = (name: string, file: File) => {
     const newVideoItem: VideoHistoryItem = { id: Date.now().toString(), name, file };
-    if (!videoHistory.some(v => v.file.name === file.name && v.file.size === file.size)) {
-      setVideoHistory(prev => [...prev, newVideoItem]);
-    }
+    setVideoHistory(prev => [newVideoItem, ...prev]);
     setCurrentVideo(newVideoItem);
   };
 
