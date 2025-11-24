@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from 'react';
@@ -34,7 +35,7 @@ export function AiSummary({ trafficData }: AiSummaryProps) {
 
     if (result.error) {
       toast({
-        title: "Summary Failed",
+        title: "Gagal Membuat Ringkasan",
         description: result.error,
         variant: "destructive",
       });
@@ -47,8 +48,8 @@ export function AiSummary({ trafficData }: AiSummaryProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>AI Traffic Summary</CardTitle>
-        <CardDescription>Generate an AI-powered analysis of the current traffic patterns.</CardDescription>
+        <CardTitle>Ringkasan Lalu Lintas AI</CardTitle>
+        <CardDescription>Buat analisis berbasis AI dari pola lalu lintas saat ini.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {summary && (
@@ -59,12 +60,12 @@ export function AiSummary({ trafficData }: AiSummaryProps) {
         {isLoading && (
           <div className="flex items-center justify-center text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            <span>Analyzing patterns...</span>
+            <span>Menganalisis pola...</span>
           </div>
         )}
         <Button onClick={handleGenerateSummary} disabled={isLoading} className="w-full">
           <Wand2 className="mr-2 h-4 w-4" />
-          {isLoading ? 'Generating...' : 'Generate Summary'}
+          {isLoading ? 'Membuat...' : 'Buat Ringkasan'}
         </Button>
       </CardContent>
     </Card>

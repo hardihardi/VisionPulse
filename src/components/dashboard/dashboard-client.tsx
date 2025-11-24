@@ -104,13 +104,13 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
                   title="Total Kendaraan" 
                   value={totalVehicles.toString()}
                   icon={<Car />}
-                  change={timeFrame !== 'live' ? `Dalam ${timeFrame === '15min' ? '15 Menit' : timeFrame === '1hour' ? '1 Jam' : '24 Jam'}`: 'Live count'}
+                  change={timeFrame !== 'live' ? `Dalam ${timeFrame === '15min' ? '15 Menit' : timeFrame === '1hour' ? '1 Jam' : '24 Jam'}`: 'Jumlah live'}
                 />
                 <StatsCard 
                   title="Rata-rata SKR" 
                   value={averagePcu.toString()}
                   icon={<Users />}
-                  change={timeFrame !== 'live' ? `Dalam ${timeFrame === '15min' ? '15 Menit' : timeFrame === '1hour' ? '1 Jam' : '24 Jam'}`: 'Live SKR'}
+                  change={timeFrame !== 'live' ? `Dalam ${timeFrame === '15min' ? '15 Menit' : timeFrame === '1hour' ? '1 Jam' : '24 Jam'}`: 'SKR live'}
                 />
                 <StatsCard 
                   title="Kecepatan Rata-Rata" 
