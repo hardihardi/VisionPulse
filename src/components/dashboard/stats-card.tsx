@@ -1,5 +1,7 @@
+
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '../ui/skeleton';
 
 interface StatsCardProps {
   title: string;
@@ -10,6 +12,7 @@ interface StatsCardProps {
 }
 
 export function StatsCard({ title, value, icon, change, variant = 'default' }: StatsCardProps) {
+  const isLoading = !value || value === '0';
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -17,10 +20,14 @@ export function StatsCard({ title, value, icon, change, variant = 'default' }: S
         <div className="text-muted-foreground">{icon}</div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        {isLoading ? (
+            <Skeleton className="h-8 w-1/2" />
+        ) : (
+            <div className="text-2xl font-bold">{value}</div>
+        )}
         {change && (
           <p className={cn("text-xs text-muted-foreground", variant === 'destructive' && "text-destructive")}>
-            {change} dari jam terakhir
+            {change}
           </p>
         )}
       </CardContent>
