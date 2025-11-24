@@ -126,6 +126,7 @@ export function TrafficDashboard() {
                     status={status}
                     onStatusChange={handleStatusChange}
                 />
+                <RealtimeDetectionStats isAnalyzing={isAnalyzing} />
                 <VehicleVolume isAnalyzing={isAnalyzing} coefficients={pcuCoefficients} />
                 <ExportReport />
               </div>
