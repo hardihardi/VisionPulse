@@ -17,7 +17,7 @@ import { getEnhancedRecognition } from '@/app/(actions)/enhance-recognition';
 import { useToast } from '@/hooks/use-toast';
 import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
 import { VideoInput } from '@/components/dashboard/video-input';
-import { DetectionResultCard } from '../dashboard/detection-result-card';
+import { RealtimeDetectionStats } from './realtimedetection-stats';
 
 const initialCoefficients: PcuCoefficients = {
     sepedaMotor: 0.4,
@@ -114,7 +114,7 @@ export function TrafficDashboard() {
                     status={status}
                     onStatusChange={handleStatusChange}
                 />
-                <DetectionResultCard detectionResult={detectionResult} />
+                <RealtimeDetectionStats isAnalyzing={status === 'ANALYZING' || status === 'STARTED'} />
                 <VehicleVolume />
                 <ExportReport />
               </div>
