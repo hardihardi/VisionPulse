@@ -23,3 +23,9 @@ export interface CameraData {
   location: string;
   vehicles: number;
 }
+
+export interface VideoHistoryItem {
+  id: string;
+  name: string;
+  file: File;
+}

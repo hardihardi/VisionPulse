@@ -4,12 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileVideo, Trash, FolderPlus } from 'lucide-react';
-
-export interface VideoHistoryItem {
-  id: string;
-  name: string;
-  file: File;
-}
+import type { VideoHistoryItem } from '@/hooks/use-video-history';
 
 interface VideoHistoryCardProps {
   currentVideo: VideoHistoryItem | null;

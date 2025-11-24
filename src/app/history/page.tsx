@@ -6,7 +6,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
 import { VideoUploadForm, VideoUploadFormHandles } from '@/components/dashboard/video-upload-form';
-import { VideoHistoryCard, VideoHistoryItem } from '@/components/traffic/video-history-card';
+import { VideoHistoryCard } from '@/components/traffic/video-history-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,11 @@ import { DetectionResultCard } from '@/components/dashboard/detection-result-car
 import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useVideoHistory, VideoHistoryItem } from '@/hooks/use-video-history';
 
-const LOCAL_STORAGE_KEY = 'visionpulse-video-history';
 
 export default function HistoryPage() {
-  const [currentVideo, setCurrentVideo] = useState<VideoHistoryItem | null>(null);
-  const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  const { currentVideo, videoSrc, setCurrentVideo, loadVideo, toBase64 } = useVideoHistory();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [detectionResult, setDetectionResult] = useState<EnhanceLicensePlateRecognitionOutput | null>(null);
   const { toast } = useToast();
@@ -29,51 +28,21 @@ export default function HistoryPage() {
   const uploadFormRef = useRef<VideoUploadFormHandles>(null);
 
   useEffect(() => {
-    // Load data from localStorage on initial render
-    const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (storedData) {
-      try {
-        const parsedData = JSON.parse(storedData);
-        // We can't store the file, so we just restore the metadata
-        if (parsedData && parsedData.id && parsedData.name) {
-          toast({
-            title: "Sesi Sebelumnya Dipulihkan",
-            description: `Video "${parsedData.name}" dimuat. Unggah kembali file untuk menganalisis.`,
-          });
-          // We create a dummy file object
-          const dummyFile = new File([], parsedData.fileName || "file_not_found", { type: "video/mp4" });
-          setCurrentVideo({ ...parsedData, file: dummyFile });
-        }
-      } catch (error) {
-        console.error("Failed to parse video history from localStorage", error);
-      }
-    }
-  }, [toast]);
+    loadVideo();
+  }, [loadVideo]);
 
   useEffect(() => {
-    if (currentVideo && currentVideo.file.size > 0) {
-      const url = URL.createObjectURL(currentVideo.file);
-      setVideoSrc(url);
+    if (currentVideo) {
       setDetectionResult(null);
-
-      // Save to localStorage (without the file object)
-      const dataToStore = { id: currentVideo.id, name: currentVideo.name, fileName: currentVideo.file.name };
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToStore));
-
-      return () => {
-        URL.revokeObjectURL(url);
-      };
-    } else if (!currentVideo) {
-      setVideoSrc(null);
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
     }
-  }, [currentVideo]);
+  }, [currentVideo])
+
 
   const handleVideoUpload = (name: string, file: File) => {
     const newVideoItem: VideoHistoryItem = { id: Date.now().toString(), name, file };
     setCurrentVideo(newVideoItem);
     toast({
-        title: "Video Ditambahkan",
+        title: "Video Aktif Diperbarui",
         description: `"${name}" telah dijadikan video aktif.`,
     });
   };
@@ -90,19 +59,15 @@ export default function HistoryPage() {
     uploadFormRef.current?.focusNameInput();
   };
 
-  const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
-    if (file.size === 0) {
-      reject(new Error("File tidak ditemukan. Harap unggah ulang file video."));
-      return;
-    }
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = error => reject(error);
-  });
-
   const handleAnalyzeVideo = async () => {
-    if (!currentVideo) return;
+    if (!currentVideo || !currentVideo.file) {
+      toast({
+        title: "Analisis Gagal",
+        description: "Tidak ada video aktif atau file tidak ditemukan. Mohon unggah kembali.",
+        variant: "destructive",
+      });
+      return;
+    };
 
     setIsAnalyzing(true);
     setDetectionResult(null);
