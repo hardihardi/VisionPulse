@@ -29,3 +29,10 @@ export interface VideoHistoryItem {
   name: string;
   file: File;
 }
+
+export interface VehicleStats {
+  name: string;
+  count: number;
+  pcu: number;
+  progress: number;
+}

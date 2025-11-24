@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
-import type { PcuCoefficients, VideoHistoryItem } from '@/lib/types';
+import type { PcuCoefficients } from '@/lib/types';
 import { ControlStatus, SystemStatus } from './control-status';
 import { VehicleVolume } from './vehicle-volume';
 import { ExportReport } from './export-report';
@@ -16,19 +16,17 @@ import { CumulativeVolumeChart } from './cumulative-volume-chart';
 import { getEnhancedRecognition } from '@/app/(actions)/enhance-recognition';
 import { useToast } from '@/hooks/use-toast';
 import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
-import { RealtimeDetectionStats } from './realtimedetection-stats';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Upload } from 'lucide-react';
 import { useVideoHistory } from '@/hooks/use-video-history';
+import { RealtimeDetectionStats } from './realtimedetection-stats';
 
 const initialCoefficients: PcuCoefficients = {
-    sepedaMotor: 0.4,
+    sepedaMotor: 0.25,
     mobil: 1.0,
-    bus: 1.5,
-    truk: 2.0,
+    bus: 2.5,
+    truk: 3.0,
 };
 
 export function TrafficDashboard() {
@@ -39,6 +37,7 @@ export function TrafficDashboard() {
   const placeholder = PlaceHolderImages.find(img => img.id === 'traffic-feed-detected');
   
   const { toast } = useToast();
+  const isAnalyzing = status === 'ANALYZING' || status === 'STARTED';
 
   useEffect(() => {
     loadVideo();
@@ -127,8 +126,7 @@ export function TrafficDashboard() {
                     status={status}
                     onStatusChange={handleStatusChange}
                 />
-                <RealtimeDetectionStats isAnalyzing={status === 'ANALYZING' || status === 'STARTED'} />
-                <VehicleVolume />
+                <VehicleVolume isAnalyzing={isAnalyzing} coefficients={pcuCoefficients} />
                 <ExportReport />
               </div>
               
