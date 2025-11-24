@@ -17,53 +17,72 @@ import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
+const LOCAL_STORAGE_KEY = 'visionpulse-video-history';
+
 export default function HistoryPage() {
   const [currentVideo, setCurrentVideo] = useState<VideoHistoryItem | null>(null);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
-  const [videoHistory, setVideoHistory] = useState<VideoHistoryItem[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [detectionResult, setDetectionResult] = useState<EnhanceLicensePlateRecognitionOutput | null>(null);
   const { toast } = useToast();
   const placeholder = PlaceHolderImages.find(img => img.id === 'traffic-feed-detected');
   const uploadFormRef = useRef<VideoUploadFormHandles>(null);
 
+  useEffect(() => {
+    // Load data from localStorage on initial render
+    const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (storedData) {
+      try {
+        const parsedData = JSON.parse(storedData);
+        // We can't store the file, so we just restore the metadata
+        if (parsedData && parsedData.id && parsedData.name) {
+          toast({
+            title: "Sesi Sebelumnya Dipulihkan",
+            description: `Video "${parsedData.name}" dimuat. Unggah kembali file untuk menganalisis.`,
+          });
+          // We create a dummy file object
+          const dummyFile = new File([], parsedData.fileName || "file_not_found", { type: "video/mp4" });
+          setCurrentVideo({ ...parsedData, file: dummyFile });
+        }
+      } catch (error) {
+        console.error("Failed to parse video history from localStorage", error);
+      }
+    }
+  }, [toast]);
 
   useEffect(() => {
-    if (currentVideo) {
+    if (currentVideo && currentVideo.file.size > 0) {
       const url = URL.createObjectURL(currentVideo.file);
       setVideoSrc(url);
       setDetectionResult(null);
 
-      // Clean up the previous object URL if it exists
+      // Save to localStorage (without the file object)
+      const dataToStore = { id: currentVideo.id, name: currentVideo.name, fileName: currentVideo.file.name };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToStore));
+
       return () => {
         URL.revokeObjectURL(url);
       };
-    } else {
+    } else if (!currentVideo) {
       setVideoSrc(null);
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
     }
   }, [currentVideo]);
 
   const handleVideoUpload = (name: string, file: File) => {
     const newVideoItem: VideoHistoryItem = { id: Date.now().toString(), name, file };
-    setVideoHistory(prev => {
-        if (prev.find(v => v.id === newVideoItem.id)) return prev;
-        return [newVideoItem, ...prev];
-    });
     setCurrentVideo(newVideoItem);
-  };
-
-  const handleSelectFromHistory = (video: VideoHistoryItem) => {
-    setCurrentVideo(video);
-  };
-
-  const handleDeleteFromHistory = (videoId: string) => {
-    setVideoHistory(prev => prev.filter(v => v.id !== videoId));
-    if (currentVideo?.id === videoId) {
-      setCurrentVideo(null);
-    }
     toast({
-      title: "Video Dihapus",
-      description: "Video telah dihapus dari riwayat sesi ini.",
+        title: "Video Ditambahkan",
+        description: `"${name}" telah dijadikan video aktif.`,
+    });
+  };
+
+  const handleDeleteCurrentVideo = () => {
+    setCurrentVideo(null);
+    toast({
+      title: "Video Aktif Dihapus",
+      description: "Video telah dihapus dari sesi ini.",
     });
   };
   
@@ -72,6 +91,10 @@ export default function HistoryPage() {
   };
 
   const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+    if (file.size === 0) {
+      reject(new Error("File tidak ditemukan. Harap unggah ulang file video."));
+      return;
+    }
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result as string);
@@ -101,10 +124,10 @@ export default function HistoryPage() {
           });
           setDetectionResult(result);
       }
-    } catch (error) {
+    } catch (error: any) {
        toast({
             title: "Gagal Memproses Video",
-            description: "Terjadi kesalahan saat membaca file video.",
+            description: error.message || "Terjadi kesalahan saat membaca file video.",
             variant: "destructive",
         });
     } finally {
@@ -165,9 +188,8 @@ export default function HistoryPage() {
                     </CardContent>
                 </Card>
                 <VideoHistoryCard 
-                  videoHistory={videoHistory}
-                  onSelectFromHistory={handleSelectFromHistory}
-                  onDeleteFromHistory={handleDeleteFromHistory}
+                  currentVideo={currentVideo}
+                  onDeleteCurrentVideo={handleDeleteCurrentVideo}
                   onAddNew={handleAddNew}
                 />
               </div>
