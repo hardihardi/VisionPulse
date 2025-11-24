@@ -1,11 +1,11 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
-import { VideoUploadForm } from '@/components/dashboard/video-upload-form';
+import { VideoUploadForm, VideoUploadFormHandles } from '@/components/dashboard/video-upload-form';
 import { VideoHistoryCard, VideoHistoryItem } from '@/components/traffic/video-history-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
@@ -25,6 +25,7 @@ export default function HistoryPage() {
   const [detectionResult, setDetectionResult] = useState<EnhanceLicensePlateRecognitionOutput | null>(null);
   const { toast } = useToast();
   const placeholder = PlaceHolderImages.find(img => img.id === 'traffic-feed-detected');
+  const uploadFormRef = useRef<VideoUploadFormHandles>(null);
 
 
   useEffect(() => {
@@ -44,14 +45,32 @@ export default function HistoryPage() {
 
   const handleVideoUpload = (name: string, file: File) => {
     const newVideoItem: VideoHistoryItem = { id: Date.now().toString(), name, file };
-    setVideoHistory(prev => [newVideoItem, ...prev]);
+    setVideoHistory(prev => {
+        if (prev.find(v => v.id === newVideoItem.id)) return prev;
+        return [newVideoItem, ...prev];
+    });
     setCurrentVideo(newVideoItem);
   };
 
   const handleSelectFromHistory = (video: VideoHistoryItem) => {
     setCurrentVideo(video);
   };
+
+  const handleDeleteFromHistory = (videoId: string) => {
+    setVideoHistory(prev => prev.filter(v => v.id !== videoId));
+    if (currentVideo?.id === videoId) {
+      setCurrentVideo(null);
+    }
+    toast({
+      title: "Video Dihapus",
+      description: "Video telah dihapus dari riwayat sesi ini.",
+    });
+  };
   
+  const handleAddNew = () => {
+    uploadFormRef.current?.focusNameInput();
+  };
+
   const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -129,7 +148,7 @@ export default function HistoryPage() {
                 <DetectionResultCard detectionResult={detectionResult} />
               </div>
               <div className="lg:col-span-1 flex flex-col gap-6">
-                <VideoUploadForm onVideoUpload={handleVideoUpload} />
+                <VideoUploadForm ref={uploadFormRef} onVideoUpload={handleVideoUpload} />
                 <Card>
                     <CardHeader>
                         <CardTitle>Kontrol Analisis</CardTitle>
@@ -148,6 +167,8 @@ export default function HistoryPage() {
                 <VideoHistoryCard 
                   videoHistory={videoHistory}
                   onSelectFromHistory={handleSelectFromHistory}
+                  onDeleteFromHistory={handleDeleteFromHistory}
+                  onAddNew={handleAddNew}
                 />
               </div>
             </main>
