@@ -13,6 +13,7 @@ import type { TrafficDataPoint, VehicleCount } from '@/lib/types';
 import { Car, Users, Truck, Zap } from 'lucide-react';
 import { getTrafficSummary } from '@/app/(actions)/summarize';
 import { useToast } from '@/hooks/use-toast';
+import { CameraStatusCard } from './camera-status-card';
 
 
 type TimeFrame = 'live' | '15min' | '1hour' | 'daily';
@@ -134,6 +135,7 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
               </div>
               <div className="lg:col-span-1 flex flex-col gap-6">
                 <AiSummary trafficData={filteredData} />
+                <CameraStatusCard />
               </div>
             </main>
           </div>

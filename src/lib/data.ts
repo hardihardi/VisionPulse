@@ -1,4 +1,5 @@
-import type { TrafficDataPoint, VehicleCount } from '@/lib/types';
+
+import type { TrafficDataPoint, VehicleCount, CameraData } from '@/lib/types';
 
 // Generate mock data for the last 3 hours
 export function generateInitialTrafficData(): TrafficDataPoint[] {
@@ -48,4 +49,35 @@ export function generateNewDataPoint(previousData: TrafficDataPoint[]): TrafficD
   const pcu = Math.max(0, Math.floor(licensePlates * (1.2 + Math.random() * 0.6)));
 
   return { timestamp: newTimestamp, licensePlates, pcu };
+}
+
+
+// --- Camera Status Data ---
+export const initialCameraData: CameraData[] = [
+    { id: 'CAM-001', location: 'Main Street', vehicles: 45 },
+    { id: 'CAM-002', location: 'Highway Exit', vehicles: 78 },
+    { id: 'CAM-003', location: 'Shopping District', vehicles: 32 },
+    { id: 'CAM-004', location: 'School Zone', vehicles: 0 },
+    { id: 'CAM-005', location: 'Industrial Area', vehicles: 56 },
+];
+
+export function updateCameraData(camera: CameraData): CameraData {
+    let change = Math.floor(Math.random() * 5) - 2; // -2 to +2
+    
+    // Make changes more significant for busy areas
+    if (camera.location === 'Highway Exit' || camera.location === 'Industrial Area') {
+        change = Math.floor(Math.random() * 10) - 4; // -4 to +5
+    }
+
+    if (camera.location === 'School Zone') {
+        // Less fluctuation, mostly 0 or small numbers
+        if (Math.random() > 0.8) {
+            change = Math.floor(Math.random() * 3);
+        } else {
+            return { ...camera, vehicles: 0 };
+        }
+    }
+
+    const newCount = Math.max(0, camera.vehicles + change);
+    return { ...camera, vehicles: newCount };
 }
