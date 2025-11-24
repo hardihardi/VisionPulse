@@ -6,9 +6,15 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileVideo, History } from 'lucide-react';
 
+export interface VideoHistoryItem {
+  id: string;
+  name: string;
+  file: File;
+}
+
 interface VideoHistoryCardProps {
-  videoHistory: File[];
-  onSelectFromHistory: (file: File) => void;
+  videoHistory: VideoHistoryItem[];
+  onSelectFromHistory: (file: VideoHistoryItem) => void;
 }
 
 export function VideoHistoryCard({ videoHistory, onSelectFromHistory }: VideoHistoryCardProps) {
@@ -22,9 +28,9 @@ export function VideoHistoryCard({ videoHistory, onSelectFromHistory }: VideoHis
         <ScrollArea className="h-48">
           {videoHistory.length > 0 ? (
             <div className="space-y-2">
-              {videoHistory.map((video, index) => (
+              {videoHistory.map((video) => (
                 <Button
-                  key={index}
+                  key={video.id}
                   variant="ghost"
                   className="w-full justify-start text-left"
                   onClick={() => onSelectFromHistory(video)}
