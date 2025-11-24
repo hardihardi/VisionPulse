@@ -15,7 +15,7 @@ export function CameraStatusCard() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCameras(prevCameras => prevCameras.map(updateCameraData));
-    }, 3500); // Update every 3.5 seconds for a different rhythm
+    }, 2500); // Update every 2.5 seconds for a more dynamic feel
 
     return () => clearInterval(interval);
   }, []);

@@ -65,18 +65,23 @@ export function updateCameraData(camera: CameraData): CameraData {
     let change = Math.floor(Math.random() * 5) - 2; // -2 to +2
     
     // Make changes more significant for busy areas
-    if (camera.location === 'Highway Exit' || camera.location === 'Industrial Area') {
+    if (camera.location.includes('Highway') || camera.location.includes('Industrial')) {
         change = Math.floor(Math.random() * 10) - 4; // -4 to +5
     }
 
-    if (camera.location === 'School Zone') {
-        // Less fluctuation, mostly 0 or small numbers
-        if (Math.random() > 0.8) {
-            change = Math.floor(Math.random() * 3);
-        } else {
-            return { ...camera, vehicles: 0 };
+    if (camera.location.includes('School')) {
+        // Less fluctuation, mostly 0 or small numbers during off-peak
+        const hour = new Date().getHours();
+        if (hour < 7 || hour > 16) {
+           return { ...camera, vehicles: Math.floor(Math.random() * 3) };
         }
+        change = Math.floor(Math.random() * 7) - 3;
     }
+    
+    if (camera.location.includes('Shopping')) {
+        change = Math.floor(Math.random() * 8) - 3; // -3 to +4
+    }
+
 
     const newCount = Math.max(0, camera.vehicles + change);
     return { ...camera, vehicles: newCount };
