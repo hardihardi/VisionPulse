@@ -3,7 +3,7 @@
 
 import { Bar, BarChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const generateTrafficCountData = () => {
@@ -52,9 +52,27 @@ const colors = {
 };
 
 
-export function TrafficCountingChart() {
+interface TrafficCountingChartProps {
+    isAnalyzing: boolean;
+}
+
+export function TrafficCountingChart({ isAnalyzing }: TrafficCountingChartProps) {
     const isMobile = useIsMobile();
-    const chartData = useMemo(() => generateTrafficCountData(), []);
+    const [chartData, setChartData] = useState(generateTrafficCountData());
+
+    useEffect(() => {
+      let interval: NodeJS.Timeout | undefined;
+      if (isAnalyzing) {
+        interval = setInterval(() => {
+          setChartData(generateTrafficCountData());
+        }, 5000); // Update data every 5 seconds
+      } else {
+        setChartData([]);
+      }
+      return () => {
+        if (interval) clearInterval(interval);
+      };
+    }, [isAnalyzing]);
     
     const renderDesktopChart = () => (
         <ResponsiveContainer width="100%" height={350}>
@@ -116,9 +134,11 @@ export function TrafficCountingChart() {
             <CardHeader>
                 <CardTitle>Traffic Counting (Volume Kendaraan / 15 Menit)</CardTitle>
                 <CardDescription>
-                    {isMobile 
-                        ? "Total volume kendaraan mendekat dan menjauh."
-                        : "Keterangan: **(M)** = Mendekat, **(J)** = Menjauh"
+                    {isAnalyzing
+                        ? isMobile
+                            ? "Total volume kendaraan mendekat dan menjauh."
+                            : "Keterangan: **(M)** = Mendekat, **(J)** = Menjauh"
+                        : "Mulai analisis untuk melihat data."
                     }
                 </CardDescription>
             </CardHeader>

@@ -243,7 +243,7 @@ export function TrafficDashboard() {
                   </CardContent>
                 </Card>
                 <DetectionResultCard detectionResult={detectionResult} />
-                <TrafficCountingChart />
+                <TrafficCountingChart isAnalyzing={isAnalyzing} />
                 <PcuCoefficient
                   coefficients={pcuCoefficients}
                   onUpdate={setPcuCoefficients}
