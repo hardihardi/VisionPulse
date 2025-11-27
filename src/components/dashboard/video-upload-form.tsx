@@ -19,6 +19,8 @@ import { Upload, Link } from "lucide-react";
 import { useRef, useImperativeHandle, forwardRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { VideoHistoryItem } from "@/hooks/use-video-history";
+
 
 const formSchema = z.object({
   name: z.string().min(3, {
@@ -33,15 +35,16 @@ const formSchema = z.object({
 
 
 interface VideoUploadFormProps {
-  onVideoUpload: (name: string, file: File) => void;
+  onVideoSelect: (item: VideoHistoryItem) => void;
 }
+
 
 export interface VideoUploadFormHandles {
   focusNameInput: () => void;
 }
 
 export const VideoUploadForm = forwardRef<VideoUploadFormHandles, VideoUploadFormProps>(
-  ({ onVideoUpload }, ref) => {
+  ({ onVideoSelect }, ref) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const nameInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
@@ -67,24 +70,40 @@ export const VideoUploadForm = forwardRef<VideoUploadFormHandles, VideoUploadFor
     };
 
     function onSubmit(values: z.infer<typeof formSchema>) {
-      if (values.video) {
-        onVideoUpload(values.name, values.video);
-        toast({
-          title: "Video Ditambahkan",
-          description: `"${values.name}" telah ditambahkan ke riwayat.`,
-        });
-        form.reset();
-        if(fileInputRef.current) {
-          fileInputRef.current.value = "";
+        const newVideoItem: Omit<VideoHistoryItem, 'source'> & { source?: VideoHistoryItem['source'] } = {
+            id: Date.now().toString(),
+            name: values.name,
+        };
+
+        if (activeTab === 'upload' && values.video) {
+            newVideoItem.source = { type: 'file', file: values.video };
+            onVideoSelect(newVideoItem as VideoHistoryItem);
+            toast({
+                title: "Video Ditambahkan",
+                description: `"${values.name}" telah ditambahkan dan dijadikan video aktif.`,
+            });
+        } else if (activeTab === 'url' && values.url) {
+            newVideoItem.source = { type: 'url', url: values.url };
+            onVideoSelect(newVideoItem as VideoHistoryItem);
+            toast({
+                title: "Video dari URL Ditambahkan",
+                description: `Video dari tautan "${values.name}" telah dijadikan video aktif.`,
+            });
+        } else {
+             toast({
+                title: "Input Tidak Lengkap",
+                description: "Silakan pilih file atau masukkan URL yang valid.",
+                variant: "destructive",
+            });
+            return;
         }
-      } else if (values.url) {
-        toast({
-            title: "Fitur Dalam Pengembangan",
-            description: "Analisis video dari URL akan segera tersedia.",
-            variant: "default",
-        });
-      }
+
+        form.reset();
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
     }
+
 
     return (
       <Card>

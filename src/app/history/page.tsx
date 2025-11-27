@@ -19,6 +19,27 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useVideoHistory, VideoHistoryItem } from '@/hooks/use-video-history';
 
 
+function getYouTubeEmbedUrl(url: string): string | null {
+    let videoId: string | null = null;
+    try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname === 'youtu.be') {
+            videoId = urlObj.pathname.slice(1);
+        } else if (urlObj.hostname.includes('youtube.com')) {
+            videoId = urlObj.searchParams.get('v');
+        }
+    } catch(e) {
+        // Not a valid URL, but might be a raw embed link
+        return null;
+    }
+    
+    if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+    }
+    return null;
+}
+
+
 export default function HistoryPage() {
   const { currentVideo, videoSrc, setCurrentVideo, loadVideo, toBase64 } = useVideoHistory();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -38,12 +59,11 @@ export default function HistoryPage() {
   }, [currentVideo])
 
 
-  const handleVideoUpload = (name: string, file: File) => {
-    const newVideoItem: VideoHistoryItem = { id: Date.now().toString(), name, file };
-    setCurrentVideo(newVideoItem);
+  const handleVideoUpload = (videoItem: VideoHistoryItem) => {
+    setCurrentVideo(videoItem);
     toast({
         title: "Video Aktif Diperbarui",
-        description: `"${name}" telah dijadikan video aktif.`,
+        description: `"${videoItem.name}" telah dijadikan video aktif.`,
     });
   };
 
@@ -60,10 +80,10 @@ export default function HistoryPage() {
   };
 
   const handleAnalyzeVideo = async () => {
-    if (!currentVideo || !currentVideo.file) {
+    if (!currentVideo || currentVideo.source.type !== 'file' || !currentVideo.source.file) {
       toast({
         title: "Analisis Gagal",
-        description: "Tidak ada video aktif atau file tidak ditemukan. Mohon unggah kembali.",
+        description: "Tidak ada video file yang aktif atau file tidak ditemukan. Fitur analisis dari URL belum didukung.",
         variant: "destructive",
       });
       return;
@@ -73,7 +93,7 @@ export default function HistoryPage() {
     setDetectionResult(null);
 
     try {
-      const videoDataUri = await toBase64(currentVideo.file);
+      const videoDataUri = await toBase64(currentVideo.source.file);
       const { result, error } = await getEnhancedRecognition({ videoDataUri });
 
       if (error) {
@@ -100,6 +120,37 @@ export default function HistoryPage() {
     }
   };
   
+  const renderVideoPlayer = () => {
+    if (!videoSrc) {
+        return placeholder && (
+            <Image 
+                src={placeholder.imageUrl} 
+                alt={placeholder.description} 
+                fill
+                className="object-cover"
+                data-ai-hint={placeholder.imageHint}
+            />
+        );
+    }
+    
+    const embedUrl = getYouTubeEmbedUrl(videoSrc);
+
+    if (embedUrl) {
+        return (
+            <iframe
+                src={embedUrl}
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
+            ></iframe>
+        );
+    }
+
+    // Fallback to standard video player for blob URLs or direct video links
+    return <video src={videoSrc} className="w-full h-full object-cover" controls autoPlay loop muted />;
+  };
 
   return (
     <SidebarProvider>
@@ -119,30 +170,20 @@ export default function HistoryPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="aspect-video overflow-hidden rounded-md relative bg-muted">
-                        {videoSrc ? (
-                            <video src={videoSrc} className="w-full h-full object-cover" controls autoPlay loop muted />
-                        ) : placeholder && (
-                            <Image 
-                                src={placeholder.imageUrl} 
-                                alt={placeholder.description} 
-                                fill
-                                className="object-cover"
-                                data-ai-hint={placeholder.imageHint}
-                            />
-                        )}
+                           {renderVideoPlayer()}
                         </div>
                     </CardContent>
                 </Card>
                 <DetectionResultCard detectionResult={detectionResult} />
               </div>
               <div className="lg:col-span-1 flex flex-col gap-6">
-                <VideoUploadForm ref={uploadFormRef} onVideoUpload={handleVideoUpload} />
+                <VideoUploadForm ref={uploadFormRef} onVideoSelect={handleVideoUpload} />
                 <Card>
                     <CardHeader>
                         <CardTitle>Kontrol Analisis</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Button onClick={handleAnalyzeVideo} disabled={!currentVideo || isAnalyzing} className="w-full">
+                        <Button onClick={handleAnalyzeVideo} disabled={!currentVideo || isAnalyzing || currentVideo.source.type === 'url'} className="w-full">
                             {isAnalyzing ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

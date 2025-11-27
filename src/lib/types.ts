@@ -1,4 +1,5 @@
 
+
 export interface TrafficDataPoint {
   timestamp: number;
   licensePlates: number;
@@ -25,10 +26,17 @@ export interface CameraData {
 }
 
 export interface VideoHistoryItem {
-  id: string;
-  name: string;
-  file: File;
+    id: string;
+    name: string;
+    source: {
+        type: 'file';
+        file: File;
+    } | {
+        type: 'url';
+        url: string;
+    };
 }
+
 
 export interface VehicleStats {
   name: string;

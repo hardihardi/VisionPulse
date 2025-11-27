@@ -7,8 +7,15 @@ import { useToast } from './use-toast';
 export interface VideoHistoryItem {
     id: string;
     name: string;
-    file: File;
+    source: {
+        type: 'file';
+        file: File;
+    } | {
+        type: 'url';
+        url: string;
+    };
 }
+
 
 const LOCAL_STORAGE_KEY = 'visionpulse-video-history';
 
@@ -24,24 +31,44 @@ export function useVideoHistory() {
     const setCurrentVideo = useCallback((videoItem: VideoHistoryItem | null) => {
         _setCurrentVideo(videoItem);
 
-        if (videoItem) {
-            // Store metadata in localStorage
-            const dataToStore = { id: videoItem.id, name: videoItem.name, fileName: videoItem.file.name, type: videoItem.file.type };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToStore));
-            
-            // Keep the file object in the session cache
-            fileCache = videoItem.file;
+        // Revoke previous object URL if it exists
+        if (videoSrc && videoSrc.startsWith('blob:')) {
+            URL.revokeObjectURL(videoSrc);
+        }
 
-            // Create and set the object URL
-            const url = URL.createObjectURL(videoItem.file);
-            setVideoSrc(url);
+        if (videoItem) {
+            let dataToStore: any;
+            if (videoItem.source.type === 'file') {
+                const file = videoItem.source.file;
+                dataToStore = { 
+                    id: videoItem.id, 
+                    name: videoItem.name, 
+                    source: { 
+                        type: 'file', 
+                        fileName: file.name, 
+                        fileType: file.type 
+                    } 
+                };
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToStore));
+                fileCache = file; // Cache the file object
+                setVideoSrc(URL.createObjectURL(file));
+            } else { // type is 'url'
+                dataToStore = { 
+                    id: videoItem.id, 
+                    name: videoItem.name, 
+                    source: { 
+                        type: 'url', 
+                        url: videoItem.source.url 
+                    } 
+                };
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToStore));
+                fileCache = null; // Clear file cache for URL type
+                setVideoSrc(videoItem.source.url);
+            }
         } else {
-            // Clear localStorage, file cache, and video source
+            // Clear everything
             localStorage.removeItem(LOCAL_STORAGE_KEY);
             fileCache = null;
-            if (videoSrc) {
-                URL.revokeObjectURL(videoSrc);
-            }
             setVideoSrc(null);
         }
     }, [videoSrc]);
@@ -52,22 +79,37 @@ export function useVideoHistory() {
             try {
                 const parsedData = JSON.parse(storedData);
                 if (parsedData && parsedData.id && parsedData.name) {
-                    let file: File;
-                    // Check if the file is in our session cache
-                    if (fileCache && fileCache.name === parsedData.fileName) {
-                         file = fileCache;
-                    } else {
-                        // If not, create a dummy file. The user will need to re-upload for analysis.
-                        file = new File([], parsedData.fileName, { type: parsedData.type });
-                        toast({
-                            title: "Sesi Video Dipulihkan",
-                            description: `Video "${parsedData.name}" dimuat. Unggah kembali file jika ingin menganalisis ulang.`,
-                        });
+                    let videoItem: VideoHistoryItem;
+                    if (parsedData.source.type === 'file') {
+                        let file: File;
+                        if (fileCache && fileCache.name === parsedData.source.fileName) {
+                            file = fileCache;
+                        } else {
+                            file = new File([], parsedData.source.fileName, { type: parsedData.source.fileType });
+                             toast({
+                                title: "Sesi Video Dipulihkan",
+                                description: `Video "${parsedData.name}" dimuat. Unggah kembali file jika ingin menganalisis ulang.`,
+                            });
+                        }
+                        videoItem = { 
+                            id: parsedData.id,
+                            name: parsedData.name,
+                            source: { type: 'file', file }
+                        };
+                         if (videoItem.source.file.size > 0) {
+                            setVideoSrc(URL.createObjectURL(videoItem.source.file));
+                        } else {
+                            setVideoSrc(null);
+                        }
+                    } else { // type is 'url'
+                         videoItem = {
+                            id: parsedData.id,
+                            name: parsedData.name,
+                            source: { type: 'url', url: parsedData.source.url }
+                        };
+                        setVideoSrc(videoItem.source.url);
                     }
-                    const videoItem = { ...parsedData, file };
                     _setCurrentVideo(videoItem);
-                    const url = URL.createObjectURL(file);
-                    setVideoSrc(url);
                 }
             } catch (error) {
                 console.error("Failed to parse video history from localStorage", error);

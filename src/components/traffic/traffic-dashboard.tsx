@@ -29,6 +29,26 @@ const initialCoefficients: PcuCoefficients = {
     truk: 3.0,
 };
 
+function getYouTubeEmbedUrl(url: string): string | null {
+    let videoId: string | null = null;
+    try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname === 'youtu.be') {
+            videoId = urlObj.pathname.slice(1);
+        } else if (urlObj.hostname.includes('youtube.com')) {
+            videoId = urlObj.searchParams.get('v');
+        }
+    } catch(e) {
+        return null;
+    }
+    
+    if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+    }
+    return null;
+}
+
+
 export function TrafficDashboard() {
   const { currentVideo, videoSrc, loadVideo, toBase64 } = useVideoHistory();
   const [status, setStatus] = useState<SystemStatus>("STOPPED");
@@ -44,12 +64,12 @@ export function TrafficDashboard() {
   }, [loadVideo]);
 
   const handleStatusChange = async (newStatus: SystemStatus) => {
-    if (newStatus === 'STARTED' && currentVideo?.file) {
+    if (newStatus === 'STARTED' && currentVideo?.source.type === 'file' && currentVideo.source.file) {
         setStatus('ANALYZING');
         setDetectionResult(null);
 
         try {
-          const videoDataUri = await toBase64(currentVideo.file);
+          const videoDataUri = await toBase64(currentVideo.source.file);
           const result = await getEnhancedRecognition({ videoDataUri });
 
           if (result.error) {
@@ -78,10 +98,53 @@ export function TrafficDashboard() {
     } else if (newStatus === 'STOPPED') {
         setStatus('STOPPED');
         setDetectionResult(null);
-    } else {
+    } else if (newStatus === 'STARTED' && currentVideo?.source.type === 'url') {
+        toast({
+            title: "Fitur Belum Tersedia",
+            description: "Analisis dari URL video belum didukung.",
+            variant: "default",
+        });
+    }
+     else {
         setStatus(newStatus);
     }
   }
+  
+  const renderVideoPlayer = () => {
+    if (!videoSrc) {
+      return (
+        <div className='w-full h-full flex flex-col items-center justify-center text-center'>
+            <Image 
+                src={placeholder?.imageUrl || ''} 
+                alt={placeholder?.description || ''} 
+                width={600}
+                height={400}
+                className="object-cover opacity-20"
+                data-ai-hint={placeholder?.imageHint}
+            />
+            <p className="absolute text-muted-foreground">Tidak ada video aktif. Silakan unggah di halaman Riwayat.</p>
+        </div>
+      );
+    }
+
+    const embedUrl = getYouTubeEmbedUrl(videoSrc);
+
+    if (embedUrl) {
+      return (
+        <iframe
+          src={embedUrl}
+          title="YouTube video player"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="w-full h-full"
+        ></iframe>
+      );
+    }
+    
+    return <video src={videoSrc} className="w-full h-full object-cover" controls autoPlay loop muted />;
+  };
+
 
   return (
     <SidebarProvider>
@@ -98,21 +161,7 @@ export function TrafficDashboard() {
                   </CardHeader>
                   <CardContent>
                       <div className="aspect-video overflow-hidden rounded-md relative bg-muted">
-                      {videoSrc ? (
-                          <video src={videoSrc} className="w-full h-full object-cover" controls autoPlay loop muted />
-                      ) : placeholder && (
-                          <div className='w-full h-full flex flex-col items-center justify-center text-center'>
-                            <Image 
-                                src={placeholder.imageUrl} 
-                                alt={placeholder.description} 
-                                width={600}
-                                height={400}
-                                className="object-cover opacity-20"
-                                data-ai-hint={placeholder.imageHint}
-                            />
-                             <p className="absolute text-muted-foreground">Tidak ada video aktif. Silakan unggah di halaman Riwayat.</p>
-                          </div>
-                      )}
+                        {renderVideoPlayer()}
                       </div>
                   </CardContent>
               </Card>
