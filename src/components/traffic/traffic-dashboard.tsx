@@ -48,6 +48,20 @@ function getYouTubeEmbedUrl(url: string): string | null {
     return null;
 }
 
+// Function to generate a random Indonesian license plate
+const generateRandomPlate = () => {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const numbers = '0123456789';
+    const randomChar = (source: string) => source[Math.floor(Math.random() * source.length)];
+    const regionCode = ['B', 'D', 'L', 'N', 'F'][Math.floor(Math.random() * 5)];
+    let plateNumber = '';
+    for(let i = 0; i < 4; i++) plateNumber += randomChar(numbers);
+    let series = '';
+    for(let i = 0; i < 2; i++) series += randomChar(letters);
+    
+    return `${regionCode} ${plateNumber} ${series}`;
+};
+
 
 export function TrafficDashboard() {
   const { currentVideo, videoSrc, loadVideo, toBase64 } = useVideoHistory();
@@ -68,23 +82,35 @@ export function TrafficDashboard() {
       if (!currentVideo) {
         toast({
             title: "Analisis Gagal",
-            description: "Tidak ada video aktif. Silakan unggah video di halaman Riwayat.",
+            description: "Tidak ada video aktif. Silakan pilih atau unggah video di halaman Riwayat.",
             variant: "destructive",
         });
         return;
       }
+      
+      setStatus('ANALYZING');
+      setDetectionResult(null);
+
+      // If it's a URL, simulate the analysis
       if (currentVideo.source.type === 'url') {
-        toast({
-            title: "Fitur Belum Tersedia",
-            description: "Analisis dari URL video belum didukung. Silakan gunakan video yang diunggah.",
-            variant: "default",
-        });
+        setTimeout(() => {
+            const mockResult: EnhanceLicensePlateRecognitionOutput = {
+                licensePlate: generateRandomPlate(),
+                enhancementResult: "Simulasi analisis dari stream URL berhasil.",
+                accuracyAchieved: `${(Math.random() * (99 - 85) + 85).toFixed(2)}%`,
+            };
+            setDetectionResult(mockResult);
+            setStatus('STARTED'); // Analysis 'complete'
+            toast({
+              title: "Analisis Simulasi Berhasil",
+              description: `Deteksi dari URL selesai: ${mockResult.licensePlate}`,
+          });
+        }, 3000); // Simulate a 3-second analysis time
         return;
       }
-      if (currentVideo.source.type === 'file' && currentVideo.source.file) {
-        setStatus('ANALYZING');
-        setDetectionResult(null);
 
+      // If it's a file, proceed with the actual analysis
+      if (currentVideo.source.type === 'file' && currentVideo.source.file) {
         try {
           const videoDataUri = await toBase64(currentVideo.source.file);
           const result = await getEnhancedRecognition({ videoDataUri });
@@ -204,3 +230,4 @@ export function TrafficDashboard() {
     </SidebarProvider>
   );
 }
+
