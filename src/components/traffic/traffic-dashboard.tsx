@@ -21,6 +21,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { useVideoHistory } from '@/hooks/use-video-history';
 import { RealtimeDetectionStats } from './realtimedetection-stats';
+import { DetectionResultCard } from '../dashboard/detection-result-card';
 
 const initialCoefficients: PcuCoefficients = {
     sepedaMotor: 0.25,
@@ -113,21 +114,21 @@ export function TrafficDashboard() {
       if (currentVideo.source.type === 'file' && currentVideo.source.file) {
         try {
           const videoDataUri = await toBase64(currentVideo.source.file);
-          const result = await getEnhancedRecognition({ videoDataUri });
+          const { result, error } = await getEnhancedRecognition({ videoDataUri });
 
-          if (result.error) {
+          if (error) {
               toast({
                   title: "Deteksi Gagal",
-                  description: result.error,
+                  description: error,
                   variant: "destructive",
               });
               setStatus('STOPPED');
-          } else if (result.result) {
+          } else if (result) {
               toast({
                   title: "Deteksi Berhasil",
-                  description: `Plat nomor terdeteksi: ${result.result.licensePlate}`,
+                  description: `Plat nomor terdeteksi: ${result.licensePlate}`,
               });
-              setDetectionResult(result.result);
+              setDetectionResult(result);
               setStatus('STARTED'); // Analysis complete
           }
         } catch (error: any) {
@@ -202,6 +203,7 @@ export function TrafficDashboard() {
                       </div>
                   </CardContent>
               </Card>
+                <DetectionResultCard detectionResult={detectionResult} />
                 <TrafficCountingChart />
                 <PcuCoefficient coefficients={pcuCoefficients} onUpdate={setPcuCoefficients} />
               </div>
@@ -231,3 +233,4 @@ export function TrafficDashboard() {
   );
 }
 
+    
