@@ -43,7 +43,7 @@ function getYouTubeEmbedUrl(url: string): string | null {
     }
     
     if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}`;
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
     }
     return null;
 }
@@ -64,7 +64,24 @@ export function TrafficDashboard() {
   }, [loadVideo]);
 
   const handleStatusChange = async (newStatus: SystemStatus) => {
-    if (newStatus === 'STARTED' && currentVideo?.source.type === 'file' && currentVideo.source.file) {
+    if (newStatus === 'STARTED') {
+      if (!currentVideo) {
+        toast({
+            title: "Analisis Gagal",
+            description: "Tidak ada video aktif. Silakan unggah video di halaman Riwayat.",
+            variant: "destructive",
+        });
+        return;
+      }
+      if (currentVideo.source.type === 'url') {
+        toast({
+            title: "Fitur Belum Tersedia",
+            description: "Analisis dari URL video belum didukung. Silakan gunakan video yang diunggah.",
+            variant: "default",
+        });
+        return;
+      }
+      if (currentVideo.source.type === 'file' && currentVideo.source.file) {
         setStatus('ANALYZING');
         setDetectionResult(null);
 
@@ -95,18 +112,10 @@ export function TrafficDashboard() {
             });
             setStatus('STOPPED');
         }
+      }
     } else if (newStatus === 'STOPPED') {
         setStatus('STOPPED');
         setDetectionResult(null);
-    } else if (newStatus === 'STARTED' && currentVideo?.source.type === 'url') {
-        toast({
-            title: "Fitur Belum Tersedia",
-            description: "Analisis dari URL video belum didukung.",
-            variant: "default",
-        });
-    }
-     else {
-        setStatus(newStatus);
     }
   }
   
@@ -114,14 +123,16 @@ export function TrafficDashboard() {
     if (!videoSrc) {
       return (
         <div className='w-full h-full flex flex-col items-center justify-center text-center'>
-            <Image 
-                src={placeholder?.imageUrl || ''} 
-                alt={placeholder?.description || ''} 
-                width={600}
-                height={400}
-                className="object-cover opacity-20"
-                data-ai-hint={placeholder?.imageHint}
-            />
+            {placeholder && (
+              <Image 
+                  src={placeholder.imageUrl} 
+                  alt={placeholder.description} 
+                  width={600}
+                  height={400}
+                  className="object-cover opacity-20"
+                  data-ai-hint={placeholder.imageHint}
+              />
+            )}
             <p className="absolute text-muted-foreground">Tidak ada video aktif. Silakan unggah di halaman Riwayat.</p>
         </div>
       );
@@ -171,7 +182,7 @@ export function TrafficDashboard() {
 
               <div className="lg:col-span-1 flex flex-col gap-6">
                 <ControlStatus 
-                    isStartEnabled={!!currentVideo}
+                    isStartEnabled={!!currentVideo && currentVideo.source.type !== 'url'}
                     status={status}
                     onStatusChange={handleStatusChange}
                 />

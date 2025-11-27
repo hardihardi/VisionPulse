@@ -2,9 +2,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export type SystemStatus = "STOPPED" | "STARTED" | "ANALYZING";
 
@@ -16,6 +17,7 @@ interface ControlStatusProps {
 
 export function ControlStatus({ isStartEnabled, status, onStatusChange }: ControlStatusProps) {
   const [startTime, setStartTime] = useState<Date | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (status === "STARTED" || status === "ANALYZING") {
@@ -26,6 +28,18 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
       setStartTime(null);
     }
   }, [status, startTime]);
+
+  const handleStartClick = () => {
+    if (!isStartEnabled) {
+      toast({
+        title: 'Analisis Belum Siap',
+        description: 'Pastikan video dari file sudah dipilih sebelum memulai analisis.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    onStatusChange("STARTED");
+  };
 
   const formatStartTime = (date: Date | null) => {
     if (!date) return '-';
@@ -61,6 +75,7 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
     <Card>
       <CardHeader>
         <CardTitle>Kontrol & Status Sistem</CardTitle>
+        <CardDescription>Mulai atau hentikan analisis video aktif.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-sm">
@@ -70,8 +85,9 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
         <div className="flex flex-col sm:flex-row gap-2">
           <Button 
             className="w-full bg-green-600 hover:bg-green-700" 
-            onClick={() => onStatusChange("STARTED")}
+            onClick={handleStartClick}
             disabled={!isStartEnabled || isProcessing || status === 'STARTED'}
+            title={!isStartEnabled ? "Analisis dari URL belum didukung" : "Mulai Analisis"}
           >
             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {isProcessing ? 'Menganalisis...' : 'Mulai Analisis Video'}

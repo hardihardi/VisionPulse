@@ -34,7 +34,7 @@ function getYouTubeEmbedUrl(url: string): string | null {
     }
     
     if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}`;
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
     }
     return null;
 }
@@ -80,14 +80,32 @@ export default function HistoryPage() {
   };
 
   const handleAnalyzeVideo = async () => {
-    if (!currentVideo || currentVideo.source.type !== 'file' || !currentVideo.source.file) {
-      toast({
+    if (!currentVideo) {
+       toast({
         title: "Analisis Gagal",
-        description: "Tidak ada video file yang aktif atau file tidak ditemukan. Fitur analisis dari URL belum didukung.",
+        description: "Tidak ada video yang aktif.",
         variant: "destructive",
       });
       return;
-    };
+    }
+    
+    if (currentVideo.source.type === 'url') {
+      toast({
+        title: "Fitur Belum Didukung",
+        description: "Analisis video dari URL belum didukung. Silakan unggah file video.",
+        variant: "default",
+      });
+      return;
+    }
+
+    if (!currentVideo.source.file) {
+       toast({
+        title: "Analisis Gagal",
+        description: "File video tidak ditemukan.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsAnalyzing(true);
     setDetectionResult(null);
