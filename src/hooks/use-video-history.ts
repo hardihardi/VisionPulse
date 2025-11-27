@@ -78,7 +78,7 @@ export function useVideoHistory() {
         if (storedData) {
             try {
                 const parsedData = JSON.parse(storedData);
-                if (parsedData && parsedData.id && parsedData.name) {
+                if (parsedData && parsedData.id && parsedData.name && parsedData.source) {
                     let videoItem: VideoHistoryItem;
                     if (parsedData.source.type === 'file') {
                         let file: File;
