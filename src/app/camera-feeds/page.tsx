@@ -12,8 +12,8 @@ import { Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
-function CameraFeedCard({ camera, isAnomaly }: { camera: CameraData; isAnomaly?: boolean }) {
-  const placeholder = PlaceHolderImages.find(img => img.id === 'traffic-feed-detected');
+function CameraFeedCard({ camera, isAnomaly, imageIndex }: { camera: CameraData; isAnomaly?: boolean; imageIndex: number }) {
+  const placeholder = PlaceHolderImages[imageIndex % PlaceHolderImages.length];
 
   return (
     <Card className={cn("overflow-hidden transition-all hover:shadow-lg", isAnomaly && "border-destructive/50 ring-2 ring-destructive/20")}>
@@ -29,7 +29,7 @@ function CameraFeedCard({ camera, isAnomaly }: { camera: CameraData; isAnomaly?:
               alt={`Umpan dari ${camera.location}`}
               fill
               className="object-cover"
-              data-ai-hint="traffic road"
+              data-ai-hint={placeholder.imageHint}
             />
           )}
           {isAnomaly && (
@@ -63,11 +63,12 @@ export default function CameraFeedsPage() {
               description="Pantau semua umpan kamera lalu lintas secara terpusat."
             />
             <main className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {initialCameraData.map(camera => (
+              {initialCameraData.map((camera, index) => (
                 <CameraFeedCard 
                   key={camera.id} 
                   camera={camera} 
                   isAnomaly={anomalyCameraIds.includes(camera.id)}
+                  imageIndex={index}
                 />
               ))}
             </main>

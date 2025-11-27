@@ -1,10 +1,34 @@
 {
   "placeholderImages": [
     {
-      "id": "traffic-feed",
-      "description": "A placeholder image for a live traffic camera feed.",
+      "id": "traffic-feed-1",
+      "description": "A placeholder image for a live traffic camera feed on a highway.",
+      "imageUrl": "https://images.unsplash.com/photo-1581456495146-65a71b2c8e52?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0cmFmZmljJTIwaGlnaHdheXxlbnwwfHx8fDE3NjM5MTIwMjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "traffic highway"
+    },
+    {
+      "id": "traffic-feed-2",
+      "description": "A placeholder image for a live traffic camera feed in a city intersection.",
       "imageUrl": "https://images.unsplash.com/photo-1530035398653-4e46e1813e53?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx0cmFmZmljJTIwY2FtZXJhfGVufDB8fHx8MTc2MzkxMTgzN3ww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "traffic camera"
+      "imageHint": "traffic intersection"
+    },
+    {
+      "id": "traffic-feed-3",
+      "description": "A placeholder image for a live traffic camera feed on a busy street.",
+      "imageUrl": "https://images.unsplash.com/photo-1528503834460-269223389470?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxidXN5JTIwc3RyZWV0fGVufDB8fHx8MTc2MzkxMjA4NHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "busy street"
+    },
+    {
+      "id": "traffic-feed-4",
+      "description": "A placeholder image for a live traffic camera in a school zone.",
+      "imageUrl": "https://images.unsplash.com/photo-1618221373229-4568b543c65c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzY2hvb2wlMjB6b25lfGVufDB8fHx8MTc2MzkxMjEyN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "school zone"
+    },
+    {
+      "id": "traffic-feed-5",
+      "description": "A placeholder image for a live traffic camera in an industrial area.",
+      "imageUrl": "https://images.unsplash.com/photo-1580691880583-93c3a418b76c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxpbmR1c3RyaWFsJTIwYXJlYXxlbnwwfHx8fDE3NjM5MTIxNTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "industrial area"
     },
     {
       "id": "traffic-feed-detected",
