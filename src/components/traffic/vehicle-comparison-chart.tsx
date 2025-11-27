@@ -4,6 +4,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Bar, BarChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const initialChartData = [
     { name: '08-09', Normal: 0, Opposite: 0 },
@@ -22,8 +24,11 @@ const generateRandomData = () => {
     }));
 };
 
+type FilterType = 'Semua' | 'Normal' | 'Opposite';
+
 export function VehicleComparisonChart() {
   const [chartData, setChartData] = useState(generateRandomData());
+  const [filter, setFilter] = useState<FilterType>('Semua');
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -35,9 +40,24 @@ export function VehicleComparisonChart() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Perbandingan Volume Kendaraan (kend./jam)</CardTitle>
-        <CardDescription>Perbandingan volume lalu lintas antara arah Normal dan Opposite.</CardDescription>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+        <div>
+          <CardTitle>Perbandingan Volume Kendaraan (kend./jam)</CardTitle>
+          <CardDescription>Perbandingan volume lalu lintas antara arah Normal dan Opposite.</CardDescription>
+        </div>
+        <div className="flex items-center gap-1 rounded-md bg-muted p-1 self-start">
+            {(['Semua', 'Normal', 'Opposite'] as FilterType[]).map((f) => (
+              <Button
+                key={f}
+                variant={filter === f ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setFilter(f)}
+                className={cn("capitalize px-2 sm:px-3", filter === f && "bg-background shadow-sm hover:bg-background text-foreground")}
+              >
+                {f}
+              </Button>
+            ))}
+          </div>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
@@ -66,8 +86,12 @@ export function VehicleComparisonChart() {
               }}
             />
             <Legend />
-            <Bar dataKey="Normal" name="Arah Normal" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Opposite" name="Arah Opposite" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+            {(filter === 'Semua' || filter === 'Normal') && (
+                <Bar dataKey="Normal" name="Arah Normal" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+            )}
+            {(filter === 'Semua' || filter === 'Opposite') && (
+                <Bar dataKey="Opposite" name="Arah Opposite" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+            )}
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
