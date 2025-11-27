@@ -33,7 +33,7 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
     if (!isStartEnabled) {
       toast({
         title: 'Analisis Belum Siap',
-        description: 'Pastikan video dari file sudah dipilih sebelum memulai analisis.',
+        description: 'Pastikan ada video aktif sebelum memulai analisis. Anda bisa mengunggahnya di halaman Riwayat.',
         variant: 'destructive',
       });
       return;
@@ -87,7 +87,6 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
             className="w-full bg-green-600 hover:bg-green-700" 
             onClick={handleStartClick}
             disabled={!isStartEnabled || isProcessing || status === 'STARTED'}
-            title={!isStartEnabled ? "Analisis dari URL belum didukung" : "Mulai Analisis"}
           >
             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {isProcessing ? 'Menganalisis...' : 'Mulai Analisis Video'}
