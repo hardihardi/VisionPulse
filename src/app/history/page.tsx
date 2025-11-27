@@ -65,6 +65,13 @@ export default function HistoryPage() {
         title: "Video Aktif Diperbarui",
         description: `"${videoItem.name}" telah dijadikan video aktif.`,
     });
+    if (videoItem.source.type === 'url') {
+      toast({
+        title: "Informasi Fitur",
+        description: "Analisis video dari URL belum didukung. Anda dapat melihat pratinjau video.",
+        variant: "default",
+      });
+    }
   };
 
   const handleDeleteCurrentVideo = () => {
@@ -201,7 +208,12 @@ export default function HistoryPage() {
                         <CardTitle>Kontrol Analisis</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Button onClick={handleAnalyzeVideo} disabled={!currentVideo || isAnalyzing || currentVideo.source.type === 'url'} className="w-full">
+                        <Button 
+                          onClick={handleAnalyzeVideo} 
+                          disabled={!currentVideo || isAnalyzing || currentVideo.source.type === 'url'} 
+                          className="w-full"
+                          title={currentVideo?.source.type === 'url' ? 'Analisis dari URL belum didukung' : ''}
+                        >
                             {isAnalyzing ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
