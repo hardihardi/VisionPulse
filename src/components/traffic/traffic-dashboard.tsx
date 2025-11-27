@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { useVideoHistory } from '@/hooks/use-video-history';
 import { RealtimeDetectionStats } from './realtimedetection-stats';
 import { DetectionResultCard } from '../dashboard/detection-result-card';
+import { VehicleComparisonChart } from './vehicle-comparison-chart';
 
 const initialCoefficients: PcuCoefficients = {
     sepedaMotor: 0.25,
@@ -238,6 +239,9 @@ export function TrafficDashboard() {
               <div className="lg:col-span-3">
                 <MovingAverageChart />
               </div>
+               <div className="lg:col-span-3">
+                <VehicleComparisonChart />
+              </div>
               <div className="lg:col-span-3">
                 <CumulativeVolumeChart />
               </div>
@@ -248,5 +252,3 @@ export function TrafficDashboard() {
     </SidebarProvider>
   );
 }
-
-    
