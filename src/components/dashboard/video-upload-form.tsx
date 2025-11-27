@@ -15,17 +15,22 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Upload } from "lucide-react";
-import { useRef, useImperativeHandle, forwardRef } from "react";
+import { Upload, Link } from "lucide-react";
+import { useRef, useImperativeHandle, forwardRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const formSchema = z.object({
   name: z.string().min(3, {
     message: "Nama video harus minimal 3 karakter.",
   }),
-  video: z.instanceof(File, { message: "Video harus diunggah." })
-    .refine(file => file.size > 0, "Video harus diunggah."),
+  video: z.instanceof(File).optional(),
+  url: z.string().url({ message: "Harap masukkan URL yang valid." }).optional(),
+}).refine(data => data.video || data.url, {
+  message: "Anda harus mengunggah file atau menyediakan URL.",
+  path: ["video"],
 });
+
 
 interface VideoUploadFormProps {
   onVideoUpload: (name: string, file: File) => void;
@@ -40,6 +45,7 @@ export const VideoUploadForm = forwardRef<VideoUploadFormHandles, VideoUploadFor
     const fileInputRef = useRef<HTMLInputElement>(null);
     const nameInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
+    const [activeTab, setActiveTab] = useState("upload");
 
     useImperativeHandle(ref, () => ({
       focusNameInput() {
@@ -52,6 +58,7 @@ export const VideoUploadForm = forwardRef<VideoUploadFormHandles, VideoUploadFor
       defaultValues: {
         name: "",
         video: undefined,
+        url: "",
       },
     });
 
@@ -60,15 +67,22 @@ export const VideoUploadForm = forwardRef<VideoUploadFormHandles, VideoUploadFor
     };
 
     function onSubmit(values: z.infer<typeof formSchema>) {
-      onVideoUpload(values.name, values.video);
-      toast({
-        title: "Video Ditambahkan",
-        description: `"${values.name}" telah ditambahkan ke riwayat.`,
-      });
-      form.reset();
-      // Reset file input value display
-      if(fileInputRef.current) {
-        fileInputRef.current.value = "";
+      if (values.video) {
+        onVideoUpload(values.name, values.video);
+        toast({
+          title: "Video Ditambahkan",
+          description: `"${values.name}" telah ditambahkan ke riwayat.`,
+        });
+        form.reset();
+        if(fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      } else if (values.url) {
+        toast({
+            title: "Fitur Dalam Pengembangan",
+            description: "Analisis video dari URL akan segera tersedia.",
+            variant: "default",
+        });
       }
     }
 
@@ -76,59 +90,90 @@ export const VideoUploadForm = forwardRef<VideoUploadFormHandles, VideoUploadFor
       <Card>
         <CardHeader>
           <CardTitle>Unggah Video Baru</CardTitle>
-          <CardDescription>Beri nama dan unggah video untuk dianalisis.</CardDescription>
+          <CardDescription>Pilih metode input video untuk dianalisis.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nama Video</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Contoh: Lalu Lintas Pagi Hari" 
-                        {...field}
-                        ref={nameInputRef}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="video"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>File Video</FormLabel>
-                    <FormControl>
-                      <div>
-                        <Button type="button" size="sm" variant="outline" onClick={handleUploadClick}>
-                          <Upload className="mr-2 h-4 w-4" />
-                          Pilih File
-                        </Button>
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          className="hidden"
-                          accept="video/*"
-                          onChange={(e) => field.onChange(e.target.files?.[0])}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload">Unggah File</TabsTrigger>
+              <TabsTrigger value="url">Gunakan URL</TabsTrigger>
+            </TabsList>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nama Video</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Contoh: Lalu Lintas Pagi Hari" 
+                          {...field}
+                          ref={nameInputRef}
                         />
-                        {field.value && <span className="ml-4 text-sm text-muted-foreground truncate">{field.value.name}</span>}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <TabsContent value="upload" className="space-y-4 m-0">
+                  <FormField
+                    control={form.control}
+                    name="video"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>File Video</FormLabel>
+                        <FormControl>
+                          <div>
+                            <Button type="button" size="sm" variant="outline" onClick={handleUploadClick}>
+                              <Upload className="mr-2 h-4 w-4" />
+                              Pilih File
+                            </Button>
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              className="hidden"
+                              accept="video/*"
+                              onChange={(e) => field.onChange(e.target.files?.[0])}
+                            />
+                            {field.value && <span className="ml-4 text-sm text-muted-foreground truncate">{field.value.name}</span>}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
 
-              <Button type="submit" className="w-full">Simpan ke Riwayat</Button>
-            </form>
-          </Form>
+                <TabsContent value="url" className="space-y-4 m-0">
+                  <FormField
+                    control={form.control}
+                    name="url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>URL Video</FormLabel>
+                        <FormControl>
+                            <div className="relative">
+                                <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                    placeholder="https://contoh.com/video.mp4" 
+                                    {...field} 
+                                    className="pl-9"
+                                />
+                            </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+
+                <Button type="submit" className="w-full">Simpan ke Riwayat</Button>
+              </form>
+            </Form>
+          </Tabs>
         </CardContent>
       </Card>
     );
