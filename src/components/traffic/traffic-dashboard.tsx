@@ -182,7 +182,7 @@ export function TrafficDashboard() {
 
               <div className="lg:col-span-1 flex flex-col gap-6">
                 <ControlStatus 
-                    isStartEnabled={!!currentVideo && currentVideo.source.type !== 'url'}
+                    isStartEnabled={!!currentVideo}
                     status={status}
                     onStatusChange={handleStatusChange}
                 />
