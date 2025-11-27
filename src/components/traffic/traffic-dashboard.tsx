@@ -78,6 +78,29 @@ export function TrafficDashboard() {
     loadVideo();
   }, [loadVideo]);
 
+  // Effect for real-time simulation update
+  useEffect(() => {
+    let simulationInterval: NodeJS.Timeout | undefined;
+
+    if (isAnalyzing && currentVideo?.source.type === 'url') {
+      simulationInterval = setInterval(() => {
+        const mockResult: EnhanceLicensePlateRecognitionOutput = {
+          licensePlate: generateRandomPlate(),
+          enhancementResult: "Simulasi analisis dari stream URL berhasil.",
+          accuracyAchieved: `${(Math.random() * (99 - 85) + 85).toFixed(2)}%`,
+        };
+        setDetectionResult(mockResult);
+      }, 4000); // Update every 4 seconds
+    }
+
+    return () => {
+      if (simulationInterval) {
+        clearInterval(simulationInterval);
+      }
+    };
+  }, [isAnalyzing, currentVideo]);
+
+
   const handleStatusChange = async (newStatus: SystemStatus) => {
     if (newStatus === 'STARTED') {
       if (!currentVideo) {
@@ -92,21 +115,14 @@ export function TrafficDashboard() {
       setStatus('ANALYZING');
       setDetectionResult(null);
 
-      // If it's a URL, simulate the analysis
+      // If it's a URL, start the simulation loop but don't set status to STARTED immediately
       if (currentVideo.source.type === 'url') {
-        setTimeout(() => {
-            const mockResult: EnhanceLicensePlateRecognitionOutput = {
-                licensePlate: generateRandomPlate(),
-                enhancementResult: "Simulasi analisis dari stream URL berhasil.",
-                accuracyAchieved: `${(Math.random() * (99 - 85) + 85).toFixed(2)}%`,
-            };
-            setDetectionResult(mockResult);
-            setStatus('STARTED'); // Analysis 'complete'
-            toast({
-              title: "Analisis Simulasi Berhasil",
-              description: `Deteksi dari URL selesai: ${mockResult.licensePlate}`,
-          });
-        }, 3000); // Simulate a 3-second analysis time
+        setStatus('ANALYZING');
+        // The useEffect hook will handle the periodic updates
+        toast({
+            title: "Analisis Simulasi Dimulai",
+            description: `Memulai pemantauan real-time dari stream URL.`,
+        });
         return;
       }
 
@@ -129,7 +145,7 @@ export function TrafficDashboard() {
                   description: `Plat nomor terdeteksi: ${result.licensePlate}`,
               });
               setDetectionResult(result);
-              setStatus('STARTED'); // Analysis complete
+              setStatus('STARTED'); // Analysis complete for file
           }
         } catch (error: any) {
            toast({

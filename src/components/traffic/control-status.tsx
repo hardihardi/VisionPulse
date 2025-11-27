@@ -55,7 +55,7 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
 
   const getStatusText = () => {
     switch (status) {
-        case 'STARTED': return 'ANALYSIS COMPLETE';
+        case 'STARTED': return 'ANALISIS SELESAI';
         case 'ANALYZING': return 'MENGANALISIS...';
         case 'STOPPED': return 'DIHENTIKAN';
     }
