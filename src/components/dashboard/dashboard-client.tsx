@@ -32,8 +32,9 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
           // Using a free, no-key reverse geocoding service.
           const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`);
           const data = await response.json();
-          const { city, suburb, town, village } = data.address;
-          setLocation(suburb || city || town || village || "Lokasi Tidak Dikenal");
+          const { city, suburb, town, village, county, state } = data.address;
+          const locationName = suburb || city || town || village || county || state || "Lokasi Tidak Dikenal";
+          setLocation(locationName);
         } catch (error) {
           console.error("Error fetching location name", error);
           setLocation("Jakarta"); // Fallback
@@ -98,8 +99,8 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
               title="Dasbor Utama" 
               description={`Analisis lalu lintas dan ringkasan data untuk ${location}.`} 
             />
-            <main className="grid flex-1 items-start gap-4 sm:gap-6 lg:gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              <div className="grid w-full auto-rows-max gap-4 sm:gap-6 md:col-span-2 lg:col-span-3 xl:col-span-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <main className="grid flex-1 items-start gap-4 sm:gap-6 lg:gap-8 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid w-full auto-rows-max gap-4 sm:gap-6 md:col-span-2 lg:col-span-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 <StatsCard 
                   title="Total Kendaraan" 
                   value={totalVehicles.toString()}
@@ -126,14 +127,14 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
                   variant='destructive'
                 />
               </div>
-              <div className="md:col-span-2 lg:col-span-3 xl:col-span-3">
+              <div className="md:col-span-2 lg:col-span-3">
                 <TrafficTrendsChart 
                   data={filteredData} 
                   timeFrame={timeFrame}
                   onTimeFrameChange={setTimeFrame}
                 />
               </div>
-              <div className="md:col-span-2 lg:col-span-3 xl:col-span-1 flex flex-col gap-6">
+              <div className="md:col-span-2 lg:col-span-1 flex flex-col gap-6">
                 <AiSummary trafficData={filteredData} />
                 <CameraStatusCard />
               </div>
