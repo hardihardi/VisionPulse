@@ -81,19 +81,19 @@ export function TrafficTrendsChart({ data, timeFrame, onTimeFrameChange }: Traff
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
             <CardTitle>Tren Lalu Lintas</CardTitle>
             <CardDescription>Jumlah plat nomor terdeteksi dari waktu ke waktu.</CardDescription>
           </div>
-          <div className="flex items-center gap-1 rounded-md bg-muted p-1">
+          <div className="flex items-center gap-1 rounded-md bg-muted p-1 self-start sm:self-center">
             {(['live', '15min', '1hour', 'daily'] as TimeFrame[]).map((tf) => (
               <Button
                 key={tf}
                 variant={timeFrame === tf ? "default" : "ghost"}
                 size="sm"
                 onClick={() => onTimeFrameChange(tf)}
-                className={cn("capitalize px-3", timeFrame === tf && "bg-background shadow-sm hover:bg-background text-foreground")}
+                className={cn("capitalize px-2 sm:px-3", timeFrame === tf && "bg-background shadow-sm hover:bg-background text-foreground")}
               >
                 {tf === 'live' && 'Live'}
                 {tf === '15min' && '15 Mnt'}
