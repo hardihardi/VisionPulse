@@ -4,6 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import * as XLSX from 'xlsx';
 
 interface ExportReportProps {
   isAnalyzing: boolean;
@@ -46,21 +47,37 @@ export function ExportReport({ isAnalyzing, trafficData }: ExportReportProps) {
     }
   }
 
+  const downloadXLSX = (data: any[]) => {
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "TrafficData");
+    XLSX.writeFile(workbook, `laporan_traffic_counting_${new Date().toISOString()}.xlsx`);
+  }
+
   const handleExport = (type: string) => {
-    if (type === 'CSV (Raw)') {
-      if (trafficData.length > 0) {
-        downloadCSV(trafficData);
-        toast({
-          title: "Ekspor Laporan Dimulai",
-          description: `Laporan ${type} Anda sedang diunduh...`,
-        });
-      } else {
-        toast({
+    const exportDataAvailable = isAnalyzing && trafficData.length > 0;
+    
+    if (!exportDataAvailable) {
+       toast({
           title: "Ekspor Gagal",
-          description: `Tidak ada data untuk diekspor.`,
+          description: `Tidak ada data untuk diekspor. Mulai analisis untuk mengumpulkan data.`,
           variant: "destructive"
         });
-      }
+        return;
+    }
+
+    if (type === 'CSV (Raw)') {
+      downloadCSV(trafficData);
+      toast({
+        title: "Ekspor Laporan Dimulai",
+        description: `Laporan ${type} Anda sedang diunduh...`,
+      });
+    } else if (type === 'XLSX') {
+      downloadXLSX(trafficData);
+       toast({
+        title: "Ekspor Laporan Dimulai",
+        description: `Laporan ${type} Anda sedang diunduh...`,
+      });
     } else {
       toast({
         title: "Fitur Belum Tersedia",
@@ -70,11 +87,11 @@ export function ExportReport({ isAnalyzing, trafficData }: ExportReportProps) {
   };
 
   const buttons = [
-    { type: 'XLSX', label: 'Ekspor XLSX' },
-    { type: 'CSV (Raw)', label: 'Ekspor CSV' },
-    { type: 'Grafik Traffic Counting', label: 'Grafik Counting' },
-    { type: 'Grafik Moving Average', label: 'Grafik Moving Avg' },
-    { type: 'Grafik Volume Kendaraan', label: 'Grafik Volume' },
+    { type: 'XLSX', label: 'Ekspor XLSX', enabled: true },
+    { type: 'CSV (Raw)', label: 'Ekspor CSV', enabled: true },
+    { type: 'Grafik Traffic Counting', label: 'Grafik Counting', enabled: false },
+    { type: 'Grafik Moving Average', label: 'Grafik Moving Avg', enabled: false },
+    { type: 'Grafik Volume Kendaraan', label: 'Grafik Volume', enabled: false },
   ];
 
   return (
@@ -86,10 +103,10 @@ export function ExportReport({ isAnalyzing, trafficData }: ExportReportProps) {
         {buttons.map((btn) => (
           <Button
             key={btn.type}
-            variant={btn.type === 'CSV (Raw)' ? 'default' : 'outline'}
+            variant={btn.enabled ? 'default' : 'outline'}
             onClick={() => handleExport(btn.type)}
-            disabled={!isAnalyzing && btn.type === 'CSV (Raw)'}
-            title={!isAnalyzing && btn.type === 'CSV (Raw)' ? "Mulai analisis untuk mengaktifkan ekspor" : ""}
+            disabled={!isAnalyzing && btn.enabled}
+            title={!isAnalyzing && btn.enabled ? "Mulai analisis untuk mengaktifkan ekspor" : ""}
           >
             {btn.label}
           </Button>
