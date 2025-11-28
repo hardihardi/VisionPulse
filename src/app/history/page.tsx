@@ -17,14 +17,6 @@ import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useVideoHistory, VideoHistoryItem } from '@/hooks/use-video-history';
-import type { Metadata } from 'next';
-
-// Note: Metadata object di client component tidak akan berfungsi untuk SEO.
-// Untuk SEO, pindahkan ini ke parent server component atau gunakan `generateMetadata`.
-export const metadata: Metadata = {
-  title: 'Penyimpanan & Analisis Video',
-  description: 'Unggah file video atau gunakan URL untuk dianalisis. Sesi video terakhir disimpan untuk kemudahan akses dan analisis ulang.',
-};
 
 function getYouTubeEmbedUrl(url: string): string | null {
     let videoId: string | null = null;

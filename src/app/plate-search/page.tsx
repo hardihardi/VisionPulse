@@ -22,13 +22,6 @@ import { firestore } from '@/lib/firebase';
 import type { Detection } from '@/lib/types';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
-import type { Metadata } from 'next';
-
-// Note: Metadata object di client component tidak akan berfungsi untuk SEO.
-export const metadata: Metadata = {
-  title: 'Pencarian Plat Nomor',
-  description: 'Cari riwayat deteksi plat nomor kendaraan dari seluruh video yang dianalisis menggunakan database terpusat.',
-};
 
 export default function PlateSearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
