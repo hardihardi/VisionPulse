@@ -272,7 +272,7 @@ export function TrafficDashboard() {
                 <VehicleComparisonChart />
               </div>
               <div className="lg:col-span-3">
-                <CumulativeVolumeChart />
+                <CumulativeVolumeChart isAnalyzing={isAnalyzing} />
               </div>
             </main>
           </div>
