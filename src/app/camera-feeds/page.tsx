@@ -9,7 +9,15 @@ import type { CameraData } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import type { Metadata } from 'next';
+
+// Note: Metadata object di client component tidak akan berfungsi untuk SEO.
+// Untuk SEO, pindahkan ini ke parent server component atau gunakan `generateMetadata`.
+// Tapi untuk saat ini kita letakkan di sini untuk referensi.
+export const metadata: Metadata = {
+  title: 'Umpan Kamera Langsung',
+  description: 'Pantau semua umpan kamera lalu lintas yang terhubung dalam satu galeri terpusat.',
+};
 
 function CameraFeedCard({ camera, isAnomaly }: { camera: CameraData; isAnomaly?: boolean; }) {
   // Menggunakan video placeholder. Idealnya, ini akan menjadi URL stream langsung.
