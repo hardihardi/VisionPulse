@@ -11,7 +11,6 @@ import { AiSummary } from '@/components/dashboard/ai-summary';
 import { generateNewDataPoint, generateLatestVehicleCounts } from '@/lib/data';
 import type { TrafficDataPoint, VehicleCount } from '@/lib/types';
 import { Car, Users, Truck, Zap } from 'lucide-react';
-import { getTrafficSummary } from '@/app/(actions)/summarize';
 import { useToast } from '@/hooks/use-toast';
 import { CameraStatusCard } from './camera-status-card';
 
@@ -23,6 +22,7 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
   const [vehicleCounts, setVehicleCounts] = useState<VehicleCount[]>(initialVehicleCounts);
   const [location, setLocation] = useState<string>("Mendeteksi lokasi...");
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('live');
+  const { toast } = useToast();
 
   // Location Detection
   useEffect(() => {
@@ -49,8 +49,25 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
   // Live Data Simulation
   useEffect(() => {
     const interval = setInterval(() => {
+      let anomalyDetected = false;
+      let anomalyDescription = "";
+
       setTrafficData(prevData => {
-        const newData = [...prevData, generateNewDataPoint(prevData)];
+        const newDataPoint = generateNewDataPoint(prevData);
+        
+        // Simple anomaly detection logic
+        if (Math.random() < 0.1) { // 10% chance of anomaly
+            const lastPoint = prevData[prevData.length-1];
+            if (lastPoint && newDataPoint.pcu > lastPoint.pcu * 1.8) {
+                anomalyDetected = true;
+                anomalyDescription = `Kemacetan tiba-tiba terdeteksi di ${location}.`;
+            } else {
+                 anomalyDetected = true;
+                 anomalyDescription = `Kendaraan berhenti di lokasi terlarang terdeteksi di ${location}.`;
+            }
+        }
+        
+        const newData = [...prevData, newDataPoint];
         // Keep the last 24 hours of data (288 points * 5 mins)
         if (newData.length > 288) {
           return newData.slice(newData.length - 288);
@@ -58,10 +75,19 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
         return newData;
       });
       setVehicleCounts(generateLatestVehicleCounts());
+
+      if (anomalyDetected) {
+          toast({
+              title: "Peringatan Anomali Real-Time",
+              description: anomalyDescription,
+              variant: "destructive"
+          });
+      }
+
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [location, toast]);
 
   const filteredData = useMemo(() => {
     const now = Date.now();
