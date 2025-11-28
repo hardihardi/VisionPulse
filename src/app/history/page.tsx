@@ -76,6 +76,7 @@ export default function HistoryPage() {
 
   const handleDeleteCurrentVideo = () => {
     setCurrentVideo(null);
+    setDetectionResult(null);
     toast({
       title: "Video Aktif Dihapus",
       description: "Video telah dihapus dari sesi ini.",
@@ -184,7 +185,7 @@ export default function HistoryPage() {
         <SidebarInset>
           <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
             <DashboardHeader 
-              title="Riwayat Penyimpanan Video" 
+              title="Penyimpanan Video" 
               description="Kelola dan analisis kembali video yang telah diunggah." 
             />
             <main className="grid gap-6 grid-cols-1 lg:grid-cols-3">

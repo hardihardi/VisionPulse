@@ -53,10 +53,10 @@ export function MainSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname === '/history'} tooltip="Riwayat Video">
+            <SidebarMenuButton asChild isActive={pathname === '/history'} tooltip="Penyimpanan Video">
               <Link href="/history">
                 <History />
-                <span>Riwayat Video</span>
+                <span>Penyimpanan Video</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
