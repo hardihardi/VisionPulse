@@ -6,14 +6,14 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
 import { initialCameraData } from '@/lib/data';
 import type { CameraData } from '@/lib/types';
-import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
-function CameraFeedCard({ camera, isAnomaly, imageIndex }: { camera: CameraData; isAnomaly?: boolean; imageIndex: number }) {
-  const placeholder = PlaceHolderImages[imageIndex % PlaceHolderImages.length];
+function CameraFeedCard({ camera, isAnomaly }: { camera: CameraData; isAnomaly?: boolean; }) {
+  // Menggunakan video placeholder. Idealnya, ini akan menjadi URL stream langsung.
+  const videoUrl = "https://storage.googleapis.com/aifire.dev-dependencies.appspot.com/templates/vision-pulse-traffic-video-720.mp4";
 
   return (
     <Card className={cn("overflow-hidden transition-all hover:shadow-lg", isAnomaly && "border-destructive/50 ring-2 ring-destructive/20")}>
@@ -23,15 +23,14 @@ function CameraFeedCard({ camera, isAnomaly, imageIndex }: { camera: CameraData;
       </CardHeader>
       <CardContent className="p-0">
         <div className="aspect-video relative">
-          {placeholder && (
-            <Image
-              src={placeholder.imageUrl}
-              alt={`Umpan dari ${camera.location}`}
-              fill
-              className="object-cover"
-              data-ai-hint={placeholder.imageHint}
-            />
-          )}
+          <video
+            src={videoUrl}
+            className="w-full h-full object-cover"
+            autoPlay
+            loop
+            muted
+            playsInline // Atribut penting untuk autoplay di browser mobile
+          />
           {isAnomaly && (
             <div className="absolute top-2 right-2 flex items-center gap-2 text-xs bg-destructive text-destructive-foreground py-1 px-2 rounded-full">
               <Zap className="w-3 h-3" />
@@ -63,12 +62,11 @@ export default function CameraFeedsPage() {
               description="Pantau semua umpan kamera lalu lintas secara terpusat."
             />
             <main className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {initialCameraData.map((camera, index) => (
+              {initialCameraData.map((camera) => (
                 <CameraFeedCard 
                   key={camera.id} 
                   camera={camera} 
                   isAnomaly={anomalyCameraIds.includes(camera.id)}
-                  imageIndex={index}
                 />
               ))}
             </main>
