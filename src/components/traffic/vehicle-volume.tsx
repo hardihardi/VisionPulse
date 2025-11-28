@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -23,82 +22,69 @@ const vehicleOrder: (keyof PcuCoefficients)[] = ['mobil', 'bus', 'truk', 'sepeda
 
 export function VehicleVolume({ isAnalyzing, coefficients }: VehicleVolumeProps) {
     const [stats, setStats] = useState(initialStats);
-    const [totals, setTotals] = useState({ totalKendaraan: 0, totalPcu: 0.0, detectionRate: 80.0 });
+    const [totals, setTotals] = useState({ totalKendaraan: 0, totalPcu: 0.0 });
     const [processingTime, setProcessingTime] = useState(0);
 
     useEffect(() => {
-        let interval: NodeJS.Timeout | undefined;
+        let statsInterval: NodeJS.Timeout | undefined;
         let timerInterval: NodeJS.Timeout | undefined;
 
         if (isAnalyzing) {
             setProcessingTime(0);
+            setStats(initialStats);
+            setTotals({ totalKendaraan: 0, totalPcu: 0.0 });
+
+
             timerInterval = setInterval(() => {
                 setProcessingTime(prev => prev + 1);
             }, 1000);
 
-            interval = setInterval(() => {
+            statsInterval = setInterval(() => {
                 setStats(prevStats => {
                     const newStats = { ...prevStats };
                     
                     vehicleOrder.forEach(key => {
-                        const newCount = prevStats[key].count + Math.floor(Math.random() * 3);
                         newStats[key] = {
                             ...newStats[key],
-                            count: newCount,
-                            // Recalculate PCU with current coefficients
-                            pcu: newCount * coefficients[key],
+                            count: newStats[key].count + Math.floor(Math.random() * 3),
                         };
-                    });
-
-                    const totalVehiclesToday = Object.values(newStats).reduce((sum, s) => sum + s.count, 0);
-
-                    // Update progress based on new total
-                    vehicleOrder.forEach(key => {
-                        newStats[key].progress = totalVehiclesToday > 0 ? (newStats[key].count / totalVehiclesToday) * 100 : 0;
                     });
                     
                     return newStats;
                 });
             }, 2500);
         } else {
-            setStats(initialStats);
-            setTotals({ totalKendaraan: 0, totalPcu: 0.0, detectionRate: 80.0 });
             setProcessingTime(0);
+            setStats(initialStats);
+             setTotals({ totalKendaraan: 0, totalPcu: 0.0 });
         }
 
         return () => {
-            if (interval) clearInterval(interval);
+            if (statsInterval) clearInterval(statsInterval);
             if (timerInterval) clearInterval(timerInterval);
         };
-    // Re-run effect if isAnalyzing changes, but not coefficients to avoid resetting counts.
     }, [isAnalyzing]);
 
 
     useEffect(() => {
-        // This effect runs when stats or coefficients change.
-        // It recalculates PCU values without resetting counts.
         const newStats = { ...stats };
         let totalKendaraan = 0;
-        let totalPcu = 0;
+        let totalPcu = 0.0;
 
         vehicleOrder.forEach(key => {
-            newStats[key] = {
-                ...newStats[key],
-                pcu: newStats[key].count * coefficients[key],
-            };
+            const pcuValue = newStats[key].count * coefficients[key];
+            newStats[key].pcu = pcuValue;
             totalKendaraan += newStats[key].count;
-            totalPcu += newStats[key].pcu;
+            totalPcu += pcuValue;
         });
 
         vehicleOrder.forEach(key => {
             newStats[key].progress = totalKendaraan > 0 ? (newStats[key].count / totalKendaraan) * 100 : 0;
         });
-
+        
         setStats(newStats);
-        setTotals(prevTotals => ({ ...prevTotals, totalKendaraan, totalPcu }));
-    // We only want this effect to run when coefficients change, to update calculations.
-    // The stats dependency is removed to avoid loops, direct calculation is sufficient.
-    }, [coefficients]);
+        setTotals({ totalKendaraan, totalPcu });
+    }, [stats.mobil.count, coefficients]); // Depend on a changing stat and coefficients
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
@@ -107,8 +93,8 @@ export function VehicleVolume({ isAnalyzing, coefficients }: VehicleVolumeProps)
     }
     
     const getStatusText = () => {
-        if (isAnalyzing) return 'ANALYZING';
-        return 'STOPPED';
+        if (isAnalyzing) return 'MENGANALISIS';
+        return 'DIHENTIKAN';
     }
 
     return (
