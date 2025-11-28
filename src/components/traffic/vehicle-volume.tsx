@@ -39,17 +39,18 @@ export function VehicleVolume({ isAnalyzing, coefficients }: VehicleVolumeProps)
             interval = setInterval(() => {
                 setStats(prevStats => {
                     const newStats = { ...prevStats };
-                    let totalVehiclesToday = 0;
                     
                     vehicleOrder.forEach(key => {
                         const newCount = prevStats[key].count + Math.floor(Math.random() * 3);
-                        totalVehiclesToday += newCount;
                         newStats[key] = {
                             ...newStats[key],
                             count: newCount,
+                            // Recalculate PCU with current coefficients
                             pcu: newCount * coefficients[key],
                         };
                     });
+
+                    const totalVehiclesToday = Object.values(newStats).reduce((sum, s) => sum + s.count, 0);
 
                     // Update progress based on new total
                     vehicleOrder.forEach(key => {
@@ -69,16 +70,35 @@ export function VehicleVolume({ isAnalyzing, coefficients }: VehicleVolumeProps)
             if (interval) clearInterval(interval);
             if (timerInterval) clearInterval(timerInterval);
         };
-    }, [isAnalyzing, coefficients]);
+    // Re-run effect if isAnalyzing changes, but not coefficients to avoid resetting counts.
+    }, [isAnalyzing]);
 
 
     useEffect(() => {
-        const totalKendaraan = Object.values(stats).reduce((sum, s) => sum + s.count, 0);
-        const totalPcu = Object.values(stats).reduce((sum, s) => sum + s.pcu, 0);
-        const detectionRate = Math.min(99, Math.max(75, totals.detectionRate + (Math.random() - 0.5) * 2));
-        
-        setTotals({ totalKendaraan, totalPcu, detectionRate });
-    }, [stats]);
+        // This effect runs when stats or coefficients change.
+        // It recalculates PCU values without resetting counts.
+        const newStats = { ...stats };
+        let totalKendaraan = 0;
+        let totalPcu = 0;
+
+        vehicleOrder.forEach(key => {
+            newStats[key] = {
+                ...newStats[key],
+                pcu: newStats[key].count * coefficients[key],
+            };
+            totalKendaraan += newStats[key].count;
+            totalPcu += newStats[key].pcu;
+        });
+
+        vehicleOrder.forEach(key => {
+            newStats[key].progress = totalKendaraan > 0 ? (newStats[key].count / totalKendaraan) * 100 : 0;
+        });
+
+        setStats(newStats);
+        setTotals(prevTotals => ({ ...prevTotals, totalKendaraan, totalPcu }));
+    // We only want this effect to run when coefficients change, to update calculations.
+    // The stats dependency is removed to avoid loops, direct calculation is sufficient.
+    }, [coefficients]);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
