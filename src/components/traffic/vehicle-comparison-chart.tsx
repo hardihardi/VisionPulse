@@ -58,26 +58,38 @@ const generateRandomData = () => {
 
 type DirectionFilterType = 'Semua' | 'Normal' | 'Opposite';
 
-export function VehicleComparisonChart() {
+interface VehicleComparisonChartProps {
+  isAnalyzing: boolean;
+}
+
+export function VehicleComparisonChart({ isAnalyzing }: VehicleComparisonChartProps) {
   const [rawData, setRawData] = useState(generateRandomData());
   const [directionFilter, setDirectionFilter] = useState<DirectionFilterType>('Semua');
   const [vehicleFilter, setVehicleFilter] = useState<VehicleTypeKey>('Semua');
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRawData(generateRandomData());
-    }, 5000); 
+    let interval: NodeJS.Timeout | undefined;
+    if (isAnalyzing) {
+      interval = setInterval(() => {
+        setRawData(generateRandomData());
+      }, 5000); 
+    } else {
+      setRawData([]);
+    }
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isAnalyzing]);
 
   const chartData = useMemo(() => {
+    if (!isAnalyzing) return [];
     return rawData.map(item => ({
       name: item.name,
       Normal: item.Normal[vehicleFilter],
       Opposite: item.Opposite[vehicleFilter],
     }));
-  }, [rawData, vehicleFilter]);
+  }, [rawData, vehicleFilter, isAnalyzing]);
   
   const vehicleTypeLabel = vehicleFilter === 'Semua' ? 'Semua Kendaraan' : vehicleTypes[vehicleFilter as keyof typeof vehicleTypes];
 
@@ -86,7 +98,12 @@ export function VehicleComparisonChart() {
       <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <CardTitle>Perbandingan Volume Kendaraan (kend./jam)</CardTitle>
-          <CardDescription>Perbandingan volume lalu lintas untuk: <strong>{vehicleTypeLabel}</strong></CardDescription>
+          <CardDescription>
+            {isAnalyzing
+              ? `Perbandingan volume lalu lintas untuk: ${vehicleTypeLabel}`
+              : "Mulai analisis untuk melihat data."
+            }
+          </CardDescription>
         </div>
         <div className="flex flex-col gap-2 items-start sm:items-end">
             <div className="flex items-center gap-1 rounded-md bg-muted p-1 self-start">

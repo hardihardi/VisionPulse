@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -273,7 +272,7 @@ export function TrafficDashboard() {
                 <MovingAverageChart isAnalyzing={isAnalyzing} />
               </div>
               <div className="lg:col-span-3">
-                <VehicleComparisonChart />
+                <VehicleComparisonChart isAnalyzing={isAnalyzing} />
               </div>
               <div className="lg:col-span-3">
                 <CumulativeVolumeChart isAnalyzing={isAnalyzing} />
