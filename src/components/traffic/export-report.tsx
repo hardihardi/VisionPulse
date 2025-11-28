@@ -5,13 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
+import { toPng } from 'html-to-image';
+import type { RefObject } from 'react';
 
 interface ExportReportProps {
   isAnalyzing: boolean;
   trafficData: any[]; // Data from the TrafficCountingChart
+  chartRef: RefObject<HTMLDivElement>;
 }
 
-export function ExportReport({ isAnalyzing, trafficData }: ExportReportProps) {
+export function ExportReport({ isAnalyzing, trafficData, chartRef }: ExportReportProps) {
   const { toast } = useToast();
 
   const convertToCSV = (data: any[]) => {
@@ -54,6 +57,37 @@ export function ExportReport({ isAnalyzing, trafficData }: ExportReportProps) {
     XLSX.writeFile(workbook, `laporan_traffic_counting_${new Date().toISOString()}.xlsx`);
   }
 
+  const downloadChartImage = () => {
+    if (!chartRef.current) {
+        toast({
+            title: "Ekspor Gagal",
+            description: "Referensi grafik tidak ditemukan.",
+            variant: "destructive"
+        });
+        return;
+    }
+
+    toPng(chartRef.current, { cacheBust: true })
+        .then((dataUrl) => {
+            const link = document.createElement('a');
+            link.download = `grafik_traffic_counting_${new Date().toISOString()}.png`;
+            link.href = dataUrl;
+            link.click();
+            toast({
+              title: "Ekspor Grafik Dimulai",
+              description: `Grafik Anda sedang diunduh...`,
+            });
+        })
+        .catch((err) => {
+            console.error(err);
+            toast({
+                title: "Ekspor Grafik Gagal",
+                description: "Terjadi kesalahan saat membuat gambar dari grafik.",
+                variant: "destructive"
+            });
+        });
+  };
+
   const handleExport = (type: string) => {
     const exportDataAvailable = isAnalyzing && trafficData.length > 0;
     
@@ -78,6 +112,8 @@ export function ExportReport({ isAnalyzing, trafficData }: ExportReportProps) {
         title: "Ekspor Laporan Dimulai",
         description: `Laporan ${type} Anda sedang diunduh...`,
       });
+    } else if (type === 'Grafik Traffic Counting') {
+        downloadChartImage();
     } else {
       toast({
         title: "Fitur Belum Tersedia",
@@ -89,7 +125,7 @@ export function ExportReport({ isAnalyzing, trafficData }: ExportReportProps) {
   const buttons = [
     { type: 'XLSX', label: 'Ekspor XLSX', enabled: true },
     { type: 'CSV (Raw)', label: 'Ekspor CSV', enabled: true },
-    { type: 'Grafik Traffic Counting', label: 'Grafik Counting', enabled: false },
+    { type: 'Grafik Traffic Counting', label: 'Grafik Counting', enabled: true },
     { type: 'Grafik Moving Average', label: 'Grafik Moving Avg', enabled: false },
     { type: 'Grafik Volume Kendaraan', label: 'Grafik Volume', enabled: false },
   ];

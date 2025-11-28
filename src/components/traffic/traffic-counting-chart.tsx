@@ -1,6 +1,7 @@
 
 "use client"
 
+import { forwardRef } from 'react';
 import { Bar, BarChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -22,7 +23,8 @@ interface TrafficCountingChartProps {
     chartData: any[];
 }
 
-export function TrafficCountingChart({ isAnalyzing, chartData }: TrafficCountingChartProps) {
+export const TrafficCountingChart = forwardRef<HTMLDivElement, TrafficCountingChartProps>(
+    ({ isAnalyzing, chartData }, ref) => {
     const isMobile = useIsMobile();
     
     const renderDesktopChart = () => (
@@ -81,7 +83,7 @@ export function TrafficCountingChart({ isAnalyzing, chartData }: TrafficCounting
     );
 
     return (
-        <Card>
+        <Card ref={ref}>
             <CardHeader>
                 <CardTitle>Traffic Counting (Volume Kendaraan / 15 Menit)</CardTitle>
                 <CardDescription>
@@ -98,4 +100,6 @@ export function TrafficCountingChart({ isAnalyzing, chartData }: TrafficCounting
             </CardContent>
         </Card>
     );
-}
+});
+
+TrafficCountingChart.displayName = 'TrafficCountingChart';

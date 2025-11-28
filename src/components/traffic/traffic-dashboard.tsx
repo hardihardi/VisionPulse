@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
@@ -125,6 +125,7 @@ export function TrafficDashboard() {
   const placeholder = PlaceHolderImages.find(
     (img) => img.id === 'traffic-feed-detected'
   );
+  const trafficCountingChartRef = useRef<HTMLDivElement>(null);
 
   const { toast } = useToast();
   const isAnalyzing = status === 'ANALYZING' || status === 'STARTED';
@@ -329,7 +330,7 @@ export function TrafficDashboard() {
                   </CardContent>
                 </Card>
                 <DetectionResultCard detectionResult={detectionResult} />
-                <TrafficCountingChart isAnalyzing={isAnalyzing} chartData={trafficCountData} />
+                <TrafficCountingChart ref={trafficCountingChartRef} isAnalyzing={isAnalyzing} chartData={trafficCountData} />
                 <PcuCoefficient
                   coefficients={pcuCoefficients}
                   onUpdate={setPcuCoefficients}
@@ -347,7 +348,7 @@ export function TrafficDashboard() {
                   isAnalyzing={isAnalyzing}
                   coefficients={pcuCoefficients}
                 />
-                <ExportReport isAnalyzing={isAnalyzing} trafficData={trafficCountData} />
+                <ExportReport isAnalyzing={isAnalyzing} trafficData={trafficCountData} chartRef={trafficCountingChartRef} />
               </div>
 
               <div className="lg:col-span-3">
