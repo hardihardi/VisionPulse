@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
+  // Generate initial data using the default profile. The client will then update it based on location.
   const initialTrafficData = generateInitialTrafficData();
   const initialVehicleCounts = generateLatestVehicleCounts();
   

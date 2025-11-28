@@ -1,14 +1,14 @@
 
 "use client"
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { TrafficTrendsChart } from '@/components/dashboard/traffic-trends-chart';
 import { AiSummary } from '@/components/dashboard/ai-summary';
-import { generateNewDataPoint, generateLatestVehicleCounts } from '@/lib/data';
+import { generateNewDataPoint, generateLatestVehicleCounts, getTrafficProfile, TrafficProfile } from '@/lib/data';
 import type { TrafficDataPoint, VehicleCount } from '@/lib/types';
 import { Car, Users, Truck, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -20,31 +20,44 @@ type TimeFrame = 'live' | '15min' | '1hour' | 'daily';
 export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { initialTrafficData: TrafficDataPoint[], initialVehicleCounts: VehicleCount[] }) {
   const [trafficData, setTrafficData] = useState<TrafficDataPoint[]>(initialTrafficData);
   const [vehicleCounts, setVehicleCounts] = useState<VehicleCount[]>(initialVehicleCounts);
-  const [location, setLocation] = useState<string>("Mendeteksi lokasi...");
+  const [locationName, setLocationName] = useState<string>("Mendeteksi lokasi...");
+  const [trafficProfile, setTrafficProfile] = useState<TrafficProfile>(getTrafficProfile('default'));
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('live');
   const { toast } = useToast();
 
-  // Location Detection
+  // Location Detection and Profile Selection
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
-          // Using a free, no-key reverse geocoding service.
           const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`);
           const data = await response.json();
           const { city, suburb, town, village, county, state } = data.address;
-          const locationName = suburb || city || town || village || county || state || "Lokasi Tidak Dikenal";
-          setLocation(locationName);
+          const detectedCity = city || state || "Unknown";
+          
+          const profile = getTrafficProfile(detectedCity);
+          setTrafficProfile(profile);
+
+          const locationDisplayName = suburb || city || town || village || county || state || "Lokasi Tidak Dikenal";
+          setLocationName(locationDisplayName);
+          
+           toast({
+            title: "Profil Lalu Lintas Dimuat",
+            description: `Menggunakan profil lalu lintas untuk ${profile.name}.`,
+          });
+
         } catch (error) {
           console.error("Error fetching location name", error);
-          setLocation("Jakarta"); // Fallback
+          setLocationName("Jakarta"); // Fallback
+          setTrafficProfile(getTrafficProfile('Jakarta'));
         }
       },
       () => {
-        setLocation("Jakarta"); // Fallback on permission denial
+        setLocationName("Jakarta"); // Fallback on permission denial
+        setTrafficProfile(getTrafficProfile('Jakarta'));
       }
     );
-  }, []);
+  }, [toast]);
 
   // Live Data Simulation
   useEffect(() => {
@@ -53,17 +66,17 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
       let anomalyDescription = "";
 
       setTrafficData(prevData => {
-        const newDataPoint = generateNewDataPoint(prevData);
+        const newDataPoint = generateNewDataPoint(prevData, trafficProfile);
         
         // Simple anomaly detection logic
         if (Math.random() < 0.1) { // 10% chance of anomaly
             const lastPoint = prevData[prevData.length-1];
-            if (lastPoint && newDataPoint.pcu > lastPoint.pcu * 1.8) {
+            if (lastPoint && newDataPoint.pcu > lastPoint.pcu * trafficProfile.anomalyMultiplier) {
                 anomalyDetected = true;
-                anomalyDescription = `Kemacetan tiba-tiba terdeteksi di ${location}.`;
-            } else {
+                anomalyDescription = `Kemacetan tiba-tiba terdeteksi di ${locationName}.`;
+            } else if (Math.random() < 0.3) { // Nested chance for other type
                  anomalyDetected = true;
-                 anomalyDescription = `Kendaraan berhenti di lokasi terlarang terdeteksi di ${location}.`;
+                 anomalyDescription = `Kendaraan berhenti di lokasi terlarang terdeteksi di ${locationName}.`;
             }
         }
         
@@ -74,7 +87,7 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
         }
         return newData;
       });
-      setVehicleCounts(generateLatestVehicleCounts());
+      setVehicleCounts(generateLatestVehicleCounts(trafficProfile));
 
       if (anomalyDetected) {
           toast({
@@ -87,7 +100,7 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [location, toast]);
+  }, [locationName, toast, trafficProfile]);
 
   const filteredData = useMemo(() => {
     const now = Date.now();
@@ -105,15 +118,14 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
     }
   }, [trafficData, timeFrame]);
 
-  const latestData = useMemo(() => filteredData[filteredData.length - 1] || {}, [filteredData]);
-  const livePcu = useMemo(() => vehicleCounts.reduce((acc, v) => acc + v.count * v.pcuFactor, 0), [vehicleCounts]);
-
   const totalVehicles = useMemo(() => filteredData.reduce((sum, d) => sum + d.licensePlates, 0), [filteredData]);
   const averagePcu = useMemo(() => {
     if (filteredData.length === 0) return 0;
     const totalPcu = filteredData.reduce((sum, d) => sum + d.pcu, 0);
     return Math.round(totalPcu / filteredData.length);
   }, [filteredData]);
+  
+  const averageSpeed = useMemo(() => trafficProfile.averageSpeed, [trafficProfile]);
 
   return (
     <SidebarProvider>
@@ -123,7 +135,7 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
           <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
             <DashboardHeader 
               title="Dasbor Utama" 
-              description={`Analisis lalu lintas dan ringkasan data untuk ${location}.`} 
+              description={`Analisis lalu lintas dan ringkasan data untuk ${locationName}.`} 
             />
             <main className="grid flex-1 items-start gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <div className="grid w-full auto-rows-max gap-6 col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
@@ -141,9 +153,9 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
                 />
                 <StatsCard 
                   title="Kecepatan Rata-Rata" 
-                  value="45 km/h"
+                  value={`${averageSpeed} km/h`}
                   icon={<Truck />}
-                  change="Estimasi"
+                  change={`Estimasi (${trafficProfile.name})`}
                 />
                 <StatsCard 
                   title="Peristiwa Anomali" 
