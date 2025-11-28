@@ -90,7 +90,7 @@ export function TrafficDashboard() {
       simulationInterval = setInterval(() => {
         const mockResult: EnhanceLicensePlateRecognitionOutput = {
           licensePlate: generateRandomPlate(),
-          enhancementResult: 'Simulasi analisis dari stream URL berhasil.',
+          enhancementResult: 'Analisis simulasi dari stream URL berhasil.',
           accuracyAchieved: `${(Math.random() * (99 - 85) + 85).toFixed(2)}%`,
         };
         setDetectionResult(mockResult);
