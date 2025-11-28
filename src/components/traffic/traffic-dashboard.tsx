@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -32,6 +33,40 @@ const initialCoefficients: PcuCoefficients = {
   bus: 2.5,
   truk: 3.0,
 };
+
+const generateTrafficCountData = () => {
+    const data = [];
+    const periods = ['00:00-00:15', '00:15-00:30', '00:30-00:45', '00:45-01:00'];
+    
+    for (const period of periods) {
+        const mobilM = Math.floor(Math.random() * 20);
+        const busM = Math.floor(Math.random() * 5);
+        const trukM = Math.floor(Math.random() * 8);
+        const motorM = Math.floor(Math.random() * 30);
+        
+        const mobilJ = Math.floor(Math.random() * 18);
+        const busJ = Math.floor(Math.random() * 4);
+        const trukJ = Math.floor(Math.random() * 7);
+        const motorJ = Math.floor(Math.random() * 25);
+
+        const entry: { [key: string]: any } = { 
+            name: period,
+            'Mobil (M)': mobilM,
+            'Bus (M)': busM,
+            'Truk (M)': trukM,
+            'Sepeda Motor (M)': motorM,
+            'Mobil (J)': mobilJ,
+            'Bus (J)': busJ,
+            'Truk (J)': trukJ,
+            'Sepeda Motor (J)': motorJ,
+            'Total Mendekat': mobilM + busM + trukM + motorM,
+            'Total Menjauh': mobilJ + busJ + trukJ + motorJ,
+        };
+        
+        data.push(entry);
+    }
+    return data;
+}
 
 function getYouTubeEmbedUrl(url: string): string | null {
   let videoId: string | null = null;
@@ -86,6 +121,7 @@ export function TrafficDashboard() {
     useState<EnhanceLicensePlateRecognitionOutput | null>(null);
   const [pcuCoefficients, setPcuCoefficients] =
     useState<PcuCoefficients>(initialCoefficients);
+  const [trafficCountData, setTrafficCountData] = useState<any[]>([]);
   const placeholder = PlaceHolderImages.find(
     (img) => img.id === 'traffic-feed-detected'
   );
@@ -111,33 +147,41 @@ export function TrafficDashboard() {
   // Effect for real-time simulation update
   useEffect(() => {
     let simulationInterval: NodeJS.Timeout | undefined;
+    let dataGenerationInterval: NodeJS.Timeout | undefined;
 
-    if (isAnalyzing && currentVideo?.source.type === 'url') {
-      simulationInterval = setInterval(() => {
-        const mockResult: EnhanceLicensePlateRecognitionOutput = {
-          licensePlate: generateRandomPlate(),
-          enhancementResult: 'Analisis simulasi dari stream URL berhasil.',
-          accuracyAchieved: `${(Math.random() * (99 - 85) + 85).toFixed(2)}%`,
-        };
-        setDetectionResult(mockResult);
-        if (currentVideo) {
-          saveDetection({
-            plate: mockResult.licensePlate,
-            videoName: currentVideo.name,
-            videoId: currentVideo.id,
-          });
+    if (isAnalyzing) {
+        // Run once at the beginning
+        setTrafficCountData(generateTrafficCountData());
+
+        // Then set an interval
+        dataGenerationInterval = setInterval(() => {
+            setTrafficCountData(generateTrafficCountData());
+        }, 5000); // Update data every 5 seconds
+
+        if (currentVideo?.source.type === 'url') {
+            simulationInterval = setInterval(() => {
+                const mockResult: EnhanceLicensePlateRecognitionOutput = {
+                    licensePlate: generateRandomPlate(),
+                    enhancementResult: 'Analisis simulasi dari stream URL berhasil.',
+                    accuracyAchieved: `${(Math.random() * (99 - 85) + 85).toFixed(2)}%`,
+                };
+                setDetectionResult(mockResult);
+                if (currentVideo) {
+                    saveDetection({
+                        plate: mockResult.licensePlate,
+                        videoName: currentVideo.name,
+                        videoId: currentVideo.id,
+                    });
+                }
+            }, 4000); // Update every 4 seconds
         }
-      }, 4000); // Update every 4 seconds
     } else {
-      if (simulationInterval) {
-        clearInterval(simulationInterval);
-      }
+        setTrafficCountData([]); // Clear data when stopped
     }
 
     return () => {
-      if (simulationInterval) {
-        clearInterval(simulationInterval);
-      }
+      if (simulationInterval) clearInterval(simulationInterval);
+      if (dataGenerationInterval) clearInterval(dataGenerationInterval);
     };
   }, [isAnalyzing, currentVideo]);
 
@@ -285,7 +329,7 @@ export function TrafficDashboard() {
                   </CardContent>
                 </Card>
                 <DetectionResultCard detectionResult={detectionResult} />
-                <TrafficCountingChart isAnalyzing={isAnalyzing} />
+                <TrafficCountingChart isAnalyzing={isAnalyzing} chartData={trafficCountData} />
                 <PcuCoefficient
                   coefficients={pcuCoefficients}
                   onUpdate={setPcuCoefficients}
@@ -303,7 +347,7 @@ export function TrafficDashboard() {
                   isAnalyzing={isAnalyzing}
                   coefficients={pcuCoefficients}
                 />
-                <ExportReport isAnalyzing={isAnalyzing} />
+                <ExportReport isAnalyzing={isAnalyzing} trafficData={trafficCountData} />
               </div>
 
               <div className="lg:col-span-3">

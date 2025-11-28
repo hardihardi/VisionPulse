@@ -3,42 +3,7 @@
 
 import { Bar, BarChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useMemo, useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-
-const generateTrafficCountData = () => {
-    const data = [];
-    const periods = ['00:00-00:15', '00:15-00:30', '00:30-00:45', '00:45-01:00'];
-    
-    for (const period of periods) {
-        const mobilM = Math.floor(Math.random() * 20);
-        const busM = Math.floor(Math.random() * 5);
-        const trukM = Math.floor(Math.random() * 8);
-        const motorM = Math.floor(Math.random() * 30);
-        
-        const mobilJ = Math.floor(Math.random() * 18);
-        const busJ = Math.floor(Math.random() * 4);
-        const trukJ = Math.floor(Math.random() * 7);
-        const motorJ = Math.floor(Math.random() * 25);
-
-        const entry: { [key: string]: any } = { 
-            name: period,
-            'Mobil (M)': mobilM,
-            'Bus (M)': busM,
-            'Truk (M)': trukM,
-            'Sepeda Motor (M)': motorM,
-            'Mobil (J)': mobilJ,
-            'Bus (J)': busJ,
-            'Truk (J)': trukJ,
-            'Sepeda Motor (J)': motorJ,
-            'Total Mendekat': mobilM + busM + trukM + motorM,
-            'Total Menjauh': mobilJ + busJ + trukJ + motorJ,
-        };
-        
-        data.push(entry);
-    }
-    return data;
-}
 
 const colors = {
     'Mobil (M)': 'hsl(var(--chart-1))',
@@ -54,25 +19,11 @@ const colors = {
 
 interface TrafficCountingChartProps {
     isAnalyzing: boolean;
+    chartData: any[];
 }
 
-export function TrafficCountingChart({ isAnalyzing }: TrafficCountingChartProps) {
+export function TrafficCountingChart({ isAnalyzing, chartData }: TrafficCountingChartProps) {
     const isMobile = useIsMobile();
-    const [chartData, setChartData] = useState(generateTrafficCountData());
-
-    useEffect(() => {
-      let interval: NodeJS.Timeout | undefined;
-      if (isAnalyzing) {
-        interval = setInterval(() => {
-          setChartData(generateTrafficCountData());
-        }, 5000); // Update data every 5 seconds
-      } else {
-        setChartData([]);
-      }
-      return () => {
-        if (interval) clearInterval(interval);
-      };
-    }, [isAnalyzing]);
     
     const renderDesktopChart = () => (
         <ResponsiveContainer width="100%" height={350}>
