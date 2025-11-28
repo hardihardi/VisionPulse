@@ -6,7 +6,7 @@ VisionPulse adalah aplikasi web dasbor analitik canggih yang dirancang untuk mem
 
 - **Dasbor Utama**: Tampilan ringkas metrik lalu lintas utama seperti total kendaraan, Satuan Kendaraan Roda Empat (SKR) rata-rata, dan peristiwa anomali.
 - **Analisis Lalu Lintas Real-Time**: Halaman khusus untuk analisis mendalam dari satu umpan video aktif, menampilkan statistik deteksi, volume kendaraan per jenis, dan grafik volume kumulatif.
-- **Umpan Kamera Terpusat**: Galeri yang menampilkan semua umpan kamera lalu lintas yang terhubung, dengan penanda visual untuk anomali.
+- **Umpan Kamera Terpusat**: Galeri yang menampilkan semua umpan kamera lalu lintas yang terhubung dalam bentuk video yang diputar otomatis, dengan penanda visual untuk anomali.
 - **Penyimpanan & Manajemen Video**: Kemampuan untuk mengunggah file video atau menggunakan URL (misalnya, YouTube) sebagai sumber analisis. Sesi video terakhir disimpan untuk kemudahan akses.
 - **Pencarian Plat Nomor Berbasis Database**: Setiap plat nomor yang terdeteksi secara otomatis disimpan ke Firebase Firestore. Halaman pencarian memungkinkan pengguna untuk mencari riwayat deteksi plat nomor di seluruh video.
 - **Ringkasan Lalu Lintas Berbasis AI**: Menggunakan Genkit untuk menghasilkan ringkasan naratif dari pola lalu lintas berdasarkan data numerik.
@@ -86,6 +86,14 @@ npm install
 ### 3. Konfigurasi Variabel Lingkungan
 
 Salin file `.env.example` (jika ada) menjadi `.env` dan isi dengan kredensial yang diperlukan, terutama untuk Firebase dan Genkit.
+
+```
+# .env
+# Kredensial untuk Google Genkit / Google AI
+GEMINI_API_KEY=AIzaSy...
+
+# Informasi lainnya jika diperlukan
+```
 
 ### 4. Jalankan Server Pengembangan
 
