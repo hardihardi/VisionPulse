@@ -23,7 +23,7 @@ import { useVideoHistory } from '@/hooks/use-video-history';
 import { RealtimeDetectionStats } from './realtimedetection-stats';
 import { DetectionResultCard } from '../dashboard/detection-result-card';
 import { VehicleComparisonChart } from './vehicle-comparison-chart';
-import { firestore } from '@/firebase/client';
+import { firestore } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 

@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { firestore } from '@/firebase/client';
+import { firestore } from '@/lib/firebase';
 import type { Detection } from '@/lib/types';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
