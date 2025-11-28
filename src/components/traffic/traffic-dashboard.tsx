@@ -82,6 +82,17 @@ export function TrafficDashboard() {
     loadVideo();
   }, [loadVideo]);
 
+  // Effect for auto-starting analysis when video changes
+  useEffect(() => {
+    if (currentVideo) {
+      handleStatusChange('STARTED');
+    } else {
+      handleStatusChange('STOPPED');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentVideo]);
+
+
   // Effect for real-time simulation update
   useEffect(() => {
     let simulationInterval: NodeJS.Timeout | undefined;
