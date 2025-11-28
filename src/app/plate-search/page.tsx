@@ -1,31 +1,89 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { firestore } from '@/firebase/client';
+import type { Detection } from '@/lib/types';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
 
 
 export default function PlateSearchPage() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [results, setResults] = useState<Detection[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
-  // Data tiruan untuk tampilan awal
-  const mockDetections = [
-    // { id: '1', plate: 'B 1234 ABC', timestamp: '2024-07-29 10:15:23', videoName: 'Lalu Lintas Pagi' },
-    // { id: '2', plate: 'D 5678 XYZ', timestamp: '2024-07-29 10:17:45', videoName: 'Lalu Lintas Pagi' },
-  ];
+  // Fetch latest detections on initial load
+  useEffect(() => {
+    const fetchLatestDetections = async () => {
+      setIsLoading(true);
+      try {
+        const detectionsRef = collection(firestore, 'detections');
+        const q = query(detectionsRef, orderBy('timestamp', 'desc'), limit(10));
+        const querySnapshot = await getDocs(q);
+        const latestDetections = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            timestamp: data.timestamp.toDate(),
+          } as Detection;
+        });
+        setResults(latestDetections);
+      } catch (error) {
+        console.error("Error fetching latest detections: ", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchLatestDetections();
+  }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
+    
+    setIsLoading(true);
+    setHasSearched(true);
+    setResults([]);
+
+    try {
+      const detectionsRef = collection(firestore, 'detections');
+      // Simple text search. For more complex queries, a search service like Algolia would be needed.
+      const q = query(detectionsRef, where('plate', '>=', searchTerm), where('plate', '<=', searchTerm + '\uf8ff'));
+      
+      const querySnapshot = await getDocs(q);
+      const searchResults = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          timestamp: data.timestamp.toDate(),
+        } as Detection;
+      });
+      setResults(searchResults);
+    } catch (error) {
+      console.error("Error searching detections: ", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -44,12 +102,21 @@ export default function PlateSearchPage() {
                     <CardDescription>Masukkan plat nomor untuk memulai pencarian.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form className="flex w-full items-center space-x-2">
+                    <form onSubmit={handleSearch} className="flex w-full items-center space-x-2">
                         <div className="relative flex-grow">
                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input type="text" placeholder="Contoh: B 1234 ABC" className="pl-9" />
+                            <Input 
+                              type="text" 
+                              placeholder="Contoh: B 1234 ABC" 
+                              className="pl-9"
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
-                        <Button type="submit">Cari Plat</Button>
+                        <Button type="submit" disabled={isLoading}>
+                          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Cari Plat
+                        </Button>
                     </form>
                 </CardContent>
                </Card>
@@ -67,16 +134,25 @@ export default function PlateSearchPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {mockDetections.length > 0 ? mockDetections.map(d => (
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={3} className="h-24 text-center">
+                                      <div className="flex justify-center items-center">
+                                        <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary" />
+                                        <span className="text-muted-foreground">Mencari...</span>
+                                      </div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : results.length > 0 ? results.map(d => (
                                 <TableRow key={d.id}>
                                     <TableCell className="font-medium">{d.plate}</TableCell>
-                                    <TableCell>{d.timestamp}</TableCell>
+                                    <TableCell>{format(d.timestamp, "d MMMM yyyy, HH:mm:ss", { locale: id })}</TableCell>
                                     <TableCell>{d.videoName}</TableCell>
                                 </TableRow>
                             )) : (
                                 <TableRow>
                                     <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
-                                        Belum ada hasil. Silakan mulai pencarian.
+                                        {hasSearched ? "Tidak ada hasil ditemukan." : "10 deteksi terakhir ditampilkan. Silakan mulai pencarian."}
                                     </TableCell>
                                 </TableRow>
                             )}

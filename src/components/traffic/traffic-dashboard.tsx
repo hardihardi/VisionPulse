@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
-import type { PcuCoefficients } from '@/lib/types';
+import type { PcuCoefficients, Detection } from '@/lib/types';
 import { ControlStatus, SystemStatus } from './control-status';
 import { VehicleVolume } from './vehicle-volume';
 import { ExportReport } from './export-report';
@@ -23,6 +23,9 @@ import { useVideoHistory } from '@/hooks/use-video-history';
 import { RealtimeDetectionStats } from './realtimedetection-stats';
 import { DetectionResultCard } from '../dashboard/detection-result-card';
 import { VehicleComparisonChart } from './vehicle-comparison-chart';
+import { firestore } from '@/firebase/client';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
 
 const initialCoefficients: PcuCoefficients = {
   sepedaMotor: 0.25,
@@ -65,6 +68,18 @@ const generateRandomPlate = () => {
   return `${regionCode} ${plateNumber} ${series}`;
 };
 
+const saveDetection = async (detection: Omit<Detection, 'id' | 'timestamp'>) => {
+  try {
+    await addDoc(collection(firestore, 'detections'), {
+      ...detection,
+      timestamp: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error("Error writing document: ", error);
+  }
+};
+
+
 export function TrafficDashboard() {
   const { currentVideo, videoSrc, loadVideo, toBase64 } = useVideoHistory();
   const [status, setStatus] = useState<SystemStatus>('STOPPED');
@@ -106,6 +121,13 @@ export function TrafficDashboard() {
           accuracyAchieved: `${(Math.random() * (99 - 85) + 85).toFixed(2)}%`,
         };
         setDetectionResult(mockResult);
+        if (currentVideo) {
+          saveDetection({
+            plate: mockResult.licensePlate,
+            videoName: currentVideo.name,
+            videoId: currentVideo.id,
+          });
+        }
       }, 4000); // Update every 4 seconds
     } else {
       if (simulationInterval) {
@@ -168,6 +190,11 @@ export function TrafficDashboard() {
             });
             setDetectionResult(result);
             setStatus('STARTED'); // Analysis complete for file
+            saveDetection({
+              plate: result.licensePlate,
+              videoName: currentVideo.name,
+              videoId: currentVideo.id,
+            });
           }
         } catch (error: any) {
           toast({

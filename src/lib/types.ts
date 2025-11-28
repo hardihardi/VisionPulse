@@ -44,3 +44,11 @@ export interface VehicleStats {
   pcu: number;
   progress: number;
 }
+
+export interface Detection {
+  id?: string;
+  plate: string;
+  timestamp: Date;
+  videoName: string;
+  videoId: string;
+}
