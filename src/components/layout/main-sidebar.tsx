@@ -1,4 +1,3 @@
-
 "use client"
 
 import {
@@ -14,7 +13,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Logo } from "@/components/logo"
-import { LayoutDashboard, Settings, TrafficCone, History, Video } from "lucide-react"
+import { LayoutDashboard, Settings, TrafficCone, History, Video, Search } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -57,6 +56,14 @@ export function MainSidebar() {
               <Link href="/history">
                 <History />
                 <span>Penyimpanan Video</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname === '/plate-search'} tooltip="Pencarian Plat">
+              <Link href="/plate-search">
+                <Search />
+                <span>Pencarian Plat</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
