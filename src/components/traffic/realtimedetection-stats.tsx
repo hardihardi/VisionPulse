@@ -33,7 +33,7 @@ export function RealtimeDetectionStats({ isAnalyzing }: RealtimeDetectionStatsPr
   });
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: NodeJS.Timeout | undefined;
 
     if (isAnalyzing) {
       interval = setInterval(() => {
@@ -77,26 +77,26 @@ export function RealtimeDetectionStats({ isAnalyzing }: RealtimeDetectionStatsPr
       <CardContent className="grid gap-4">
         <StatDisplay 
           title="Plat Nomor Terdeteksi" 
-          value={stats.platesDetected.toString()}
+          value={isAnalyzing ? stats.platesDetected.toString() : "0"}
           unit="plat" 
           icon={Car}
         />
         <StatDisplay 
           title="Tingkat Deteksi" 
-          value={`~${stats.detectionRate.toFixed(0)}`}
+          value={isAnalyzing ? `~${stats.detectionRate.toFixed(0)}` : "0"}
           unit="%" 
           icon={ShieldCheck}
         />
         <StatDisplay 
           title="Kecepatan Rata-rata" 
-          value={stats.averageSpeed.toFixed(1)}
+          value={isAnalyzing ? stats.averageSpeed.toFixed(1) : "0.0"}
           unit="km/h" 
           icon={Gauge}
         />
         <StatDisplay 
           title="Kepadatan Lalu Lintas" 
-          value={stats.trafficDensity}
-          unit={`${stats.vehiclesPerPeriod} kend./periode`}
+          value={isAnalyzing ? stats.trafficDensity : "-"}
+          unit={isAnalyzing ? `${stats.vehiclesPerPeriod} kend./periode` : ""}
           icon={Thermometer}
         />
       </CardContent>
