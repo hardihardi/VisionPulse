@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, forwardRef } from 'react';
 import { Bar, BarChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,112 +63,116 @@ interface VehicleComparisonChartProps {
   isAnalyzing: boolean;
 }
 
-export function VehicleComparisonChart({ isAnalyzing }: VehicleComparisonChartProps) {
-  const [rawData, setRawData] = useState(generateRandomData());
-  const [directionFilter, setDirectionFilter] = useState<DirectionFilterType>('Semua');
-  const [vehicleFilter, setVehicleFilter] = useState<VehicleTypeKey>('Semua');
+export const VehicleComparisonChart = forwardRef<HTMLDivElement, VehicleComparisonChartProps>(
+  ({ isAnalyzing }, ref) => {
+    const [rawData, setRawData] = useState(generateRandomData());
+    const [directionFilter, setDirectionFilter] = useState<DirectionFilterType>('Semua');
+    const [vehicleFilter, setVehicleFilter] = useState<VehicleTypeKey>('Semua');
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout | undefined;
-    if (isAnalyzing) {
-      interval = setInterval(() => {
-        setRawData(generateRandomData());
-      }, 5000); 
-    } else {
-      setRawData([]);
-    }
+    useEffect(() => {
+      let interval: NodeJS.Timeout | undefined;
+      if (isAnalyzing) {
+        interval = setInterval(() => {
+          setRawData(generateRandomData());
+        }, 5000); 
+      } else {
+        setRawData([]);
+      }
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isAnalyzing]);
+      return () => {
+        if (interval) clearInterval(interval);
+      };
+    }, [isAnalyzing]);
 
-  const chartData = useMemo(() => {
-    if (!isAnalyzing) return [];
-    return rawData.map(item => ({
-      name: item.name,
-      Normal: item.Normal[vehicleFilter],
-      Opposite: item.Opposite[vehicleFilter],
-    }));
-  }, [rawData, vehicleFilter, isAnalyzing]);
-  
-  const vehicleTypeLabel = vehicleFilter === 'Semua' ? 'Semua Kendaraan' : vehicleTypes[vehicleFilter as keyof typeof vehicleTypes];
+    const chartData = useMemo(() => {
+      if (!isAnalyzing) return [];
+      return rawData.map(item => ({
+        name: item.name,
+        Normal: item.Normal[vehicleFilter],
+        Opposite: item.Opposite[vehicleFilter],
+      }));
+    }, [rawData, vehicleFilter, isAnalyzing]);
+    
+    const vehicleTypeLabel = vehicleFilter === 'Semua' ? 'Semua Kendaraan' : vehicleTypes[vehicleFilter as keyof typeof vehicleTypes];
 
-  return (
-    <Card>
-      <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <CardTitle>Perbandingan Volume Kendaraan (kend./jam)</CardTitle>
-          <CardDescription>
-            {isAnalyzing
-              ? `Perbandingan volume lalu lintas untuk: ${vehicleTypeLabel}`
-              : "Mulai analisis untuk melihat data."
-            }
-          </CardDescription>
-        </div>
-        <div className="flex flex-col gap-2 items-start sm:items-end">
-            <div className="flex items-center gap-1 rounded-md bg-muted p-1 self-start">
-                {(['Semua', 'Normal', 'Opposite'] as DirectionFilterType[]).map((f) => (
-                  <Button
-                    key={f}
-                    variant={directionFilter === f ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setDirectionFilter(f)}
-                    className={cn("capitalize px-2 sm:px-3", directionFilter === f && "bg-background shadow-sm hover:bg-background text-foreground")}
-                  >
-                    {f}
-                  </Button>
-                ))}
-            </div>
-            <Select onValueChange={(value) => setVehicleFilter(value as VehicleTypeKey)} defaultValue="Semua">
-                <SelectTrigger className="w-[220px]">
-                    <SelectValue placeholder="Pilih Jenis Kendaraan" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="Semua">Semua Kendaraan</SelectItem>
-                    {Object.entries(vehicleTypes).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-            <XAxis 
-                dataKey="name" 
-                stroke="hsl(var(--muted-foreground))" 
-                fontSize={12} 
-                tickLine={false} 
-                axisLine={false} 
-                label={{ value: 'Jam', position: 'insideBottom', offset: -5, fill: 'hsl(var(--muted-foreground))' }}
-            />
-            <YAxis 
-                stroke="hsl(var(--muted-foreground))" 
-                fontSize={12} 
-                tickLine={false} 
-                axisLine={false} 
-                label={{ value: 'Volume (kend./jam)', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }}
-            />
-            <Tooltip
-              contentStyle={{
-                background: "hsl(var(--background))",
-                borderColor: "hsl(var(--border))",
-                borderRadius: "var(--radius)",
-              }}
-            />
-            <Legend />
-            {(directionFilter === 'Semua' || directionFilter === 'Normal') && (
-                <Bar dataKey="Normal" name="Arah Normal" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-            )}
-            {(directionFilter === 'Semua' || directionFilter === 'Opposite') && (
-                <Bar dataKey="Opposite" name="Arah Opposite" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-            )}
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
-  );
-}
+    return (
+      <Card ref={ref}>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <CardTitle>Perbandingan Volume Kendaraan (kend./jam)</CardTitle>
+            <CardDescription>
+              {isAnalyzing
+                ? `Perbandingan volume lalu lintas untuk: ${vehicleTypeLabel}`
+                : "Mulai analisis untuk melihat data."
+              }
+            </CardDescription>
+          </div>
+          <div className="flex flex-col gap-2 items-start sm:items-end">
+              <div className="flex items-center gap-1 rounded-md bg-muted p-1 self-start">
+                  {(['Semua', 'Normal', 'Opposite'] as DirectionFilterType[]).map((f) => (
+                    <Button
+                      key={f}
+                      variant={directionFilter === f ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setDirectionFilter(f)}
+                      className={cn("capitalize px-2 sm:px-3", directionFilter === f && "bg-background shadow-sm hover:bg-background text-foreground")}
+                    >
+                      {f}
+                    </Button>
+                  ))}
+              </div>
+              <Select onValueChange={(value) => setVehicleFilter(value as VehicleTypeKey)} defaultValue="Semua">
+                  <SelectTrigger className="w-[220px]">
+                      <SelectValue placeholder="Pilih Jenis Kendaraan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="Semua">Semua Kendaraan</SelectItem>
+                      {Object.entries(vehicleTypes).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis 
+                  dataKey="name" 
+                  stroke="hsl(var(--muted-foreground))" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  label={{ value: 'Jam', position: 'insideBottom', offset: -5, fill: 'hsl(var(--muted-foreground))' }}
+              />
+              <YAxis 
+                  stroke="hsl(var(--muted-foreground))" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  label={{ value: 'Volume (kend./jam)', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "hsl(var(--background))",
+                  borderColor: "hsl(var(--border))",
+                  borderRadius: "var(--radius)",
+                }}
+              />
+              <Legend />
+              {(directionFilter === 'Semua' || directionFilter === 'Normal') && (
+                  <Bar dataKey="Normal" name="Arah Normal" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+              )}
+              {(directionFilter === 'Semua' || directionFilter === 'Opposite') && (
+                  <Bar dataKey="Opposite" name="Arah Opposite" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+              )}
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+    );
+  }
+);
+
+VehicleComparisonChart.displayName = 'VehicleComparisonChart';

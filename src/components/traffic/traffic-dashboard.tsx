@@ -127,6 +127,7 @@ export function TrafficDashboard() {
   );
   const trafficCountingChartRef = useRef<HTMLDivElement>(null);
   const movingAverageChartRef = useRef<HTMLDivElement>(null);
+  const vehicleComparisonChartRef = useRef<HTMLDivElement>(null);
 
   const { toast } = useToast();
   const isAnalyzing = status === 'ANALYZING' || status === 'STARTED';
@@ -353,7 +354,8 @@ export function TrafficDashboard() {
                   isAnalyzing={isAnalyzing} 
                   trafficData={trafficCountData} 
                   countingChartRef={trafficCountingChartRef}
-                  movingAverageChartRef={movingAverageChartRef} 
+                  movingAverageChartRef={movingAverageChartRef}
+                  vehicleComparisonChartRef={vehicleComparisonChartRef}
                 />
               </div>
 
@@ -361,7 +363,7 @@ export function TrafficDashboard() {
                 <MovingAverageChart ref={movingAverageChartRef} isAnalyzing={isAnalyzing} />
               </div>
               <div className="lg:col-span-3">
-                <VehicleComparisonChart isAnalyzing={isAnalyzing} />
+                <VehicleComparisonChart ref={vehicleComparisonChartRef} isAnalyzing={isAnalyzing} />
               </div>
               <div className="lg:col-span-3">
                 <CumulativeVolumeChart isAnalyzing={isAnalyzing} />

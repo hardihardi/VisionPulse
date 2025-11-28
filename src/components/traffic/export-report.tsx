@@ -13,9 +13,10 @@ interface ExportReportProps {
   trafficData: any[]; // Data from the TrafficCountingChart
   countingChartRef: RefObject<HTMLDivElement>;
   movingAverageChartRef: RefObject<HTMLDivElement>;
+  vehicleComparisonChartRef: RefObject<HTMLDivElement>;
 }
 
-export function ExportReport({ isAnalyzing, trafficData, countingChartRef, movingAverageChartRef }: ExportReportProps) {
+export function ExportReport({ isAnalyzing, trafficData, countingChartRef, movingAverageChartRef, vehicleComparisonChartRef }: ExportReportProps) {
   const { toast } = useToast();
 
   const convertToCSV = (data: any[]) => {
@@ -100,7 +101,7 @@ export function ExportReport({ isAnalyzing, trafficData, countingChartRef, movin
         });
         return;
     }
-     if (['Grafik Traffic Counting', 'Grafik Moving Average'].includes(type) && !isAnalyzing) {
+     if (['Grafik Traffic Counting', 'Grafik Moving Average', 'Grafik Volume Kendaraan'].includes(type) && !isAnalyzing) {
        toast({
           title: "Ekspor Gagal",
           description: `Mulai analisis untuk mengaktifkan ekspor grafik.`,
@@ -126,6 +127,8 @@ export function ExportReport({ isAnalyzing, trafficData, countingChartRef, movin
         downloadChartImage(countingChartRef, 'Traffic Counting');
     } else if (type === 'Grafik Moving Average') {
         downloadChartImage(movingAverageChartRef, 'Moving Average');
+    } else if (type === 'Grafik Volume Kendaraan') {
+        downloadChartImage(vehicleComparisonChartRef, 'Volume Kendaraan');
     } else {
       toast({
         title: "Fitur Belum Tersedia",
@@ -139,7 +142,7 @@ export function ExportReport({ isAnalyzing, trafficData, countingChartRef, movin
     { type: 'CSV (Raw)', label: 'Ekspor CSV', enabled: true },
     { type: 'Grafik Traffic Counting', label: 'Grafik Counting', enabled: true },
     { type: 'Grafik Moving Average', label: 'Grafik Moving Avg', enabled: true },
-    { type: 'Grafik Volume Kendaraan', label: 'Grafik Volume', enabled: false },
+    { type: 'Grafik Volume Kendaraan', label: 'Grafik Volume', enabled: true },
   ];
 
   return (
