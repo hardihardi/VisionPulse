@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
-import type { PcuCoefficients, Detection } from '@/lib/types';
+import type { PcuCoefficients, Detection, Anomaly } from '@/lib/types';
 import { ControlStatus, SystemStatus } from './control-status';
 import { VehicleVolume } from './vehicle-volume';
 import { ExportReport } from './export-report';
@@ -25,6 +26,8 @@ import { DetectionResultCard } from '../dashboard/detection-result-card';
 import { VehicleComparisonChart } from './vehicle-comparison-chart';
 import { firestore } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { generateAnomaly } from '@/lib/data';
+import { AnomalyDetectionCard } from './anomaly-detection-card';
 
 
 const initialCoefficients: PcuCoefficients = {
@@ -119,6 +122,7 @@ export function TrafficDashboard() {
   const [status, setStatus] = useState<SystemStatus>('STOPPED');
   const [detectionResult, setDetectionResult] =
     useState<EnhanceLicensePlateRecognitionOutput | null>(null);
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const [pcuCoefficients, setPcuCoefficients] =
     useState<PcuCoefficients>(initialCoefficients);
   const [trafficCountData, setTrafficCountData] = useState<any[]>([]);
@@ -151,15 +155,24 @@ export function TrafficDashboard() {
   useEffect(() => {
     let simulationInterval: NodeJS.Timeout | undefined;
     let dataGenerationInterval: NodeJS.Timeout | undefined;
+    let anomalyInterval: NodeJS.Timeout | undefined;
 
     if (isAnalyzing) {
         // Run once at the beginning
         setTrafficCountData(generateTrafficCountData());
+        setAnomalies([]);
 
         // Then set an interval
         dataGenerationInterval = setInterval(() => {
             setTrafficCountData(generateTrafficCountData());
         }, 5000); // Update data every 5 seconds
+        
+        anomalyInterval = setInterval(() => {
+          if (Math.random() < 0.3) { // 30% chance to generate an anomaly
+            const newAnomaly = generateAnomaly(currentVideo?.name);
+            setAnomalies(prev => [newAnomaly, ...prev].slice(0, 5)); // Keep last 5
+          }
+        }, 7000); // Check for anomalies every 7 seconds
 
         if (currentVideo?.source.type === 'url') {
             simulationInterval = setInterval(() => {
@@ -180,11 +193,13 @@ export function TrafficDashboard() {
         }
     } else {
         setTrafficCountData([]); // Clear data when stopped
+        setAnomalies([]);
     }
 
     return () => {
       if (simulationInterval) clearInterval(simulationInterval);
       if (dataGenerationInterval) clearInterval(dataGenerationInterval);
+      if (anomalyInterval) clearInterval(anomalyInterval);
     };
   }, [isAnalyzing, currentVideo]);
 
@@ -346,6 +361,7 @@ export function TrafficDashboard() {
                   onStatusChange={handleStatusChange}
                 />
                 <RealtimeDetectionStats isAnalyzing={isAnalyzing} />
+                <AnomalyDetectionCard anomalies={anomalies} isAnalyzing={isAnalyzing} />
                 <VehicleVolume
                   isAnalyzing={isAnalyzing}
                   coefficients={pcuCoefficients}

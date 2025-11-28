@@ -1,5 +1,5 @@
 
-import type { TrafficDataPoint, VehicleCount, CameraData } from '@/lib/types';
+import type { TrafficDataPoint, VehicleCount, CameraData, Anomaly } from '@/lib/types';
 
 // Generate mock data for the last 3 hours
 export function generateInitialTrafficData(): TrafficDataPoint[] {
@@ -85,4 +85,25 @@ export function updateCameraData(camera: CameraData): CameraData {
 
     const newCount = Math.max(0, camera.vehicles + change);
     return { ...camera, vehicles: newCount };
+}
+
+// --- Anomaly Data ---
+const anomalyDescriptions = [
+  "Kemacetan tiba-tiba terdeteksi",
+  "Kendaraan berhenti di lokasi terlarang",
+  "Potensi kecelakaan, lalu lintas melambat",
+  "Objek tidak dikenal di jalan raya",
+  "Pejalan kaki di area berbahaya",
+];
+const locations = ['CAM-001', 'CAM-002', 'CAM-003', 'CAM-004', 'CAM-005'];
+const severities: Array<'high' | 'medium' | 'low'> = ['high', 'medium', 'low'];
+
+export function generateAnomaly(currentLocation: string | undefined): Anomaly {
+    return {
+        id: `ANM-${Date.now()}-${Math.random()}`,
+        description: anomalyDescriptions[Math.floor(Math.random() * anomalyDescriptions.length)],
+        location: currentLocation || locations[Math.floor(Math.random() * locations.length)],
+        timestamp: Date.now(),
+        severity: severities[Math.floor(Math.random() * severities.length)],
+    };
 }

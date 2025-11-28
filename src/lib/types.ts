@@ -52,3 +52,11 @@ export interface Detection {
   videoName: string;
   videoId: string;
 }
+
+export interface Anomaly {
+  id: string;
+  description: string;
+  location: string;
+  timestamp: number;
+  severity: 'high' | 'medium' | 'low';
+}
