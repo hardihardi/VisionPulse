@@ -67,7 +67,7 @@ export function ExportReport({ isAnalyzing, trafficData, chartRef }: ExportRepor
         return;
     }
 
-    toPng(chartRef.current, { cacheBust: true })
+    toPng(chartRef.current, { cacheBust: true, skipFonts: true })
         .then((dataUrl) => {
             const link = document.createElement('a');
             link.download = `grafik_traffic_counting_${new Date().toISOString()}.png`;
