@@ -126,6 +126,7 @@ export function TrafficDashboard() {
     (img) => img.id === 'traffic-feed-detected'
   );
   const trafficCountingChartRef = useRef<HTMLDivElement>(null);
+  const movingAverageChartRef = useRef<HTMLDivElement>(null);
 
   const { toast } = useToast();
   const isAnalyzing = status === 'ANALYZING' || status === 'STARTED';
@@ -348,11 +349,16 @@ export function TrafficDashboard() {
                   isAnalyzing={isAnalyzing}
                   coefficients={pcuCoefficients}
                 />
-                <ExportReport isAnalyzing={isAnalyzing} trafficData={trafficCountData} chartRef={trafficCountingChartRef} />
+                <ExportReport 
+                  isAnalyzing={isAnalyzing} 
+                  trafficData={trafficCountData} 
+                  countingChartRef={trafficCountingChartRef}
+                  movingAverageChartRef={movingAverageChartRef} 
+                />
               </div>
 
               <div className="lg:col-span-3">
-                <MovingAverageChart isAnalyzing={isAnalyzing} />
+                <MovingAverageChart ref={movingAverageChartRef} isAnalyzing={isAnalyzing} />
               </div>
               <div className="lg:col-span-3">
                 <VehicleComparisonChart isAnalyzing={isAnalyzing} />

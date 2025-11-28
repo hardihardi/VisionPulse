@@ -11,10 +11,11 @@ import type { RefObject } from 'react';
 interface ExportReportProps {
   isAnalyzing: boolean;
   trafficData: any[]; // Data from the TrafficCountingChart
-  chartRef: RefObject<HTMLDivElement>;
+  countingChartRef: RefObject<HTMLDivElement>;
+  movingAverageChartRef: RefObject<HTMLDivElement>;
 }
 
-export function ExportReport({ isAnalyzing, trafficData, chartRef }: ExportReportProps) {
+export function ExportReport({ isAnalyzing, trafficData, countingChartRef, movingAverageChartRef }: ExportReportProps) {
   const { toast } = useToast();
 
   const convertToCSV = (data: any[]) => {
@@ -57,7 +58,7 @@ export function ExportReport({ isAnalyzing, trafficData, chartRef }: ExportRepor
     XLSX.writeFile(workbook, `laporan_traffic_counting_${new Date().toISOString()}.xlsx`);
   }
 
-  const downloadChartImage = () => {
+  const downloadChartImage = (chartRef: RefObject<HTMLDivElement>, chartName: string) => {
     if (!chartRef.current) {
         toast({
             title: "Ekspor Gagal",
@@ -70,12 +71,12 @@ export function ExportReport({ isAnalyzing, trafficData, chartRef }: ExportRepor
     toPng(chartRef.current, { cacheBust: true, skipFonts: true })
         .then((dataUrl) => {
             const link = document.createElement('a');
-            link.download = `grafik_traffic_counting_${new Date().toISOString()}.png`;
+            link.download = `grafik_${chartName.replace(/ /g, '_')}_${new Date().toISOString()}.png`;
             link.href = dataUrl;
             link.click();
             toast({
               title: "Ekspor Grafik Dimulai",
-              description: `Grafik Anda sedang diunduh...`,
+              description: `Grafik ${chartName} Anda sedang diunduh...`,
             });
         })
         .catch((err) => {
@@ -91,7 +92,7 @@ export function ExportReport({ isAnalyzing, trafficData, chartRef }: ExportRepor
   const handleExport = (type: string) => {
     const exportDataAvailable = isAnalyzing && trafficData.length > 0;
     
-    if (!exportDataAvailable) {
+    if (['CSV (Raw)', 'XLSX'].includes(type) && !exportDataAvailable) {
        toast({
           title: "Ekspor Gagal",
           description: `Tidak ada data untuk diekspor. Mulai analisis untuk mengumpulkan data.`,
@@ -99,6 +100,15 @@ export function ExportReport({ isAnalyzing, trafficData, chartRef }: ExportRepor
         });
         return;
     }
+     if (['Grafik Traffic Counting', 'Grafik Moving Average'].includes(type) && !isAnalyzing) {
+       toast({
+          title: "Ekspor Gagal",
+          description: `Mulai analisis untuk mengaktifkan ekspor grafik.`,
+          variant: "destructive"
+        });
+        return;
+    }
+
 
     if (type === 'CSV (Raw)') {
       downloadCSV(trafficData);
@@ -113,7 +123,9 @@ export function ExportReport({ isAnalyzing, trafficData, chartRef }: ExportRepor
         description: `Laporan ${type} Anda sedang diunduh...`,
       });
     } else if (type === 'Grafik Traffic Counting') {
-        downloadChartImage();
+        downloadChartImage(countingChartRef, 'Traffic Counting');
+    } else if (type === 'Grafik Moving Average') {
+        downloadChartImage(movingAverageChartRef, 'Moving Average');
     } else {
       toast({
         title: "Fitur Belum Tersedia",
@@ -126,7 +138,7 @@ export function ExportReport({ isAnalyzing, trafficData, chartRef }: ExportRepor
     { type: 'XLSX', label: 'Ekspor XLSX', enabled: true },
     { type: 'CSV (Raw)', label: 'Ekspor CSV', enabled: true },
     { type: 'Grafik Traffic Counting', label: 'Grafik Counting', enabled: true },
-    { type: 'Grafik Moving Average', label: 'Grafik Moving Avg', enabled: false },
+    { type: 'Grafik Moving Average', label: 'Grafik Moving Avg', enabled: true },
     { type: 'Grafik Volume Kendaraan', label: 'Grafik Volume', enabled: false },
   ];
 
