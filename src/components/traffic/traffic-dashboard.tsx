@@ -96,6 +96,10 @@ export function TrafficDashboard() {
         };
         setDetectionResult(mockResult);
       }, 4000); // Update every 4 seconds
+    } else {
+      if (simulationInterval) {
+        clearInterval(simulationInterval);
+      }
     }
 
     return () => {
@@ -117,7 +121,6 @@ export function TrafficDashboard() {
         return;
       }
 
-      setStatus('ANALYZING');
       setDetectionResult(null);
 
       // If it's a URL, start the simulation loop but don't set status to STARTED immediately
@@ -133,6 +136,7 @@ export function TrafficDashboard() {
 
       // If it's a file, proceed with the actual analysis
       if (currentVideo.source.type === 'file' && currentVideo.source.file) {
+        setStatus('ANALYZING');
         try {
           const videoDataUri = await toBase64(currentVideo.source.file);
           const { result, error } = await getEnhancedRecognition({
