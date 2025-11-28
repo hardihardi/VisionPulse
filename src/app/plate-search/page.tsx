@@ -73,7 +73,8 @@ export default function PlateSearchPage() {
     try {
       const detectionsRef = collection(firestore, 'detections');
       // Simple text search. For more complex queries, a search service like Algolia would be needed.
-      const q = query(detectionsRef, where('plate', '>=', searchTerm), where('plate', '<=', searchTerm + '\uf8ff'));
+      const searchTermUpper = searchTerm.toUpperCase();
+      const q = query(detectionsRef, where('plate', '>=', searchTermUpper), where('plate', '<=', searchTermUpper + '\uf8ff'));
       
       const querySnapshot = await getDocs(q);
       const searchResults = querySnapshot.docs
