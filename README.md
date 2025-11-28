@@ -71,8 +71,8 @@ Untuk menjalankan proyek ini di lingkungan pengembangan lokal Anda, ikuti langka
 ### 1. Kloning Repositori
 
 ```bash
-git clone <URL_REPOSITORI_ANDA>
-cd <NAMA_DIREKTORI>
+git clone https://github.com/hardihardi/VisionPulse.git
+cd VisionPulse
 ```
 
 ### 2. Instal Dependensi
@@ -85,15 +85,23 @@ npm install
 
 ### 3. Konfigurasi Variabel Lingkungan
 
-Salin file `.env.example` (jika ada) menjadi `.env` dan isi dengan kredensial yang diperlukan, terutama untuk Firebase dan Genkit.
+Salin file `.env.example` (jika ada) menjadi `.env` dan isi dengan kredensial yang diperlukan, terutama untuk Firebase dan Genkit. Anda perlu membuat proyek Firebase sendiri untuk mendapatkan konfigurasi ini.
 
 ```
 # .env
 # Kredensial untuk Google Genkit / Google AI
 GEMINI_API_KEY=AIzaSy...
 
-# Informasi lainnya jika diperlukan
+# Informasi Firebase (ganti dengan konfigurasi proyek Firebase Anda)
+# Anda bisa mendapatkan ini dari Firebase Console
+NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSy...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=project-id.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=project-id.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
 ```
+File konfigurasi Firebase juga perlu diperbarui di `src/lib/firebase.ts`.
 
 ### 4. Jalankan Server Pengembangan
 
