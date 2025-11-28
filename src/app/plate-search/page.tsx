@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -37,14 +38,20 @@ export default function PlateSearchPage() {
         const detectionsRef = collection(firestore, 'detections');
         const q = query(detectionsRef, orderBy('timestamp', 'desc'), limit(10));
         const querySnapshot = await getDocs(q);
-        const latestDetections = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            timestamp: data.timestamp.toDate(),
-          } as Detection;
-        });
+        const latestDetections = querySnapshot.docs
+          .map(doc => {
+            const data = doc.data();
+            // Add a check to ensure timestamp is not null
+            if (!data.timestamp) {
+              return null;
+            }
+            return {
+              id: doc.id,
+              ...data,
+              timestamp: data.timestamp.toDate(),
+            } as Detection;
+          })
+          .filter((d): d is Detection => d !== null); // Filter out any null entries
         setResults(latestDetections);
       } catch (error) {
         console.error("Error fetching latest detections: ", error);
@@ -69,14 +76,20 @@ export default function PlateSearchPage() {
       const q = query(detectionsRef, where('plate', '>=', searchTerm), where('plate', '<=', searchTerm + '\uf8ff'));
       
       const querySnapshot = await getDocs(q);
-      const searchResults = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          timestamp: data.timestamp.toDate(),
-        } as Detection;
-      });
+      const searchResults = querySnapshot.docs
+        .map(doc => {
+          const data = doc.data();
+          // Add a check to ensure timestamp is not null
+          if (!data.timestamp) {
+            return null;
+          }
+          return {
+            id: doc.id,
+            ...data,
+            timestamp: data.timestamp.toDate(),
+          } as Detection;
+        })
+        .filter((d): d is Detection => d !== null); // Filter out any null entries
       setResults(searchResults);
     } catch (error) {
       console.error("Error searching detections: ", error);
