@@ -1,18 +1,31 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
-export function ExportReport() {
+interface ExportReportProps {
+  isAnalyzing: boolean;
+}
+
+export function ExportReport({ isAnalyzing }: ExportReportProps) {
   const { toast } = useToast();
 
   const handleExport = (type: string) => {
     toast({
-      title: "Ekspor Laporan",
-      description: `Laporan ${type} sedang dibuat...`,
+      title: "Ekspor Laporan Dimulai",
+      description: `Laporan ${type} Anda sedang dibuat...`,
     });
   };
+
+  const buttons = [
+    { type: 'XLSX', label: 'Ekspor XLSX' },
+    { type: 'CSV (Raw)', label: 'Ekspor CSV' },
+    { type: 'Grafik Traffic Counting', label: 'Grafik Counting' },
+    { type: 'Grafik Moving Average', label: 'Grafik Moving Avg' },
+    { type: 'Grafik Volume Kendaraan', label: 'Grafik Volume' },
+  ];
 
   return (
     <Card>
@@ -20,11 +33,17 @@ export function ExportReport() {
         <CardTitle>Ekspor Laporan</CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <Button variant="outline" onClick={() => handleExport('XLSX')}>Ekspor XLSX</Button>
-        <Button variant="outline" onClick={() => handleExport('CSV (Raw)')}>Ekspor CSV</Button>
-        <Button variant="outline" onClick={() => handleExport('Grafik Traffic Counting')}>Grafik Counting</Button>
-        <Button variant="outline" onClick={() => handleExport('Grafik Moving Average')}>Grafik Moving Avg</Button>
-        <Button variant="outline" onClick={() => handleExport('Grafik Volume Kendaraan')}>Grafik Volume</Button>
+        {buttons.map((btn) => (
+          <Button
+            key={btn.type}
+            variant="outline"
+            onClick={() => handleExport(btn.type)}
+            disabled={!isAnalyzing}
+            title={!isAnalyzing ? "Mulai analisis untuk mengaktifkan ekspor" : ""}
+          >
+            {btn.label}
+          </Button>
+        ))}
       </CardContent>
     </Card>
   );

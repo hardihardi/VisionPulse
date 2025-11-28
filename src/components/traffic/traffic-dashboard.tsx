@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -276,7 +277,7 @@ export function TrafficDashboard() {
                   isAnalyzing={isAnalyzing}
                   coefficients={pcuCoefficients}
                 />
-                <ExportReport />
+                <ExportReport isAnalyzing={isAnalyzing} />
               </div>
 
               <div className="lg:col-span-3">
