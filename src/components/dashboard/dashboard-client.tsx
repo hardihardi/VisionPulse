@@ -24,6 +24,7 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
   const [locationName, setLocationName] = useState<string>("Mendeteksi lokasi...");
   const [trafficProfile, setTrafficProfile] = useState<TrafficProfile>(getTrafficProfile('default'));
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('live');
+  const [anomalyCount, setAnomalyCount] = useState(0);
   const { toast } = useToast();
 
   // Location Detection and Profile Selection
@@ -91,6 +92,7 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
       setVehicleCounts(generateLatestVehicleCounts(trafficProfile));
 
       if (anomalyDetected) {
+          setAnomalyCount(prev => prev + 1);
           toast({
               title: "Peringatan Anomali Real-Time",
               description: anomalyDescription,
@@ -160,9 +162,9 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
                 />
                 <StatsCard 
                   title="Peristiwa Anomali" 
-                  value="2"
+                  value={anomalyCount.toString()}
                   icon={<Zap />}
-                  change="Dalam 24 jam terakhir"
+                  change="Dalam sesi ini"
                   variant='destructive'
                 />
               </div>
