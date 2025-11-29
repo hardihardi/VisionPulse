@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -47,13 +48,13 @@ const enhanceLicensePlateRecognitionPrompt = ai.definePrompt({
   name: 'enhanceLicensePlateRecognitionPrompt',
   input: {schema: EnhanceLicensePlateRecognitionInputSchema},
   output: {schema: EnhanceLicensePlateRecognitionOutputSchema},
-  prompt: `You are an expert in license plate recognition from video streams.
+  prompt: `Anda adalah ahli dalam pengenalan plat nomor dari streaming video.
 
-You will receive a video stream. Your task is to analyze the video, identify the clearest view of a vehicle's license plate, and extract the license plate number.
+Anda akan menerima sebuah stream video. Tugas Anda adalah menganalisis video, mengidentifikasi tampilan paling jelas dari plat nomor kendaraan, dan mengekstrak nomor plat tersebut.
 
-Provide the detected license plate number, a brief summary of the detection process, and the confidence score of the detection.
+Berikan nomor plat yang terdeteksi, ringkasan singkat dari proses deteksi, dan tingkat kepercayaan deteksi dalam Bahasa Indonesia.
 
-Video Stream: {{media url=videoDataUri}}
+Stream Video: {{media url=videoDataUri}}
 `,
 });
 

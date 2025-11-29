@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Summarizes traffic patterns from analyzed video data.
@@ -49,7 +50,26 @@ const summarizeTrafficPatternsPrompt = ai.definePrompt({
   name: 'summarizeTrafficPatternsPrompt',
   input: {schema: SummarizeTrafficPatternsInputSchema},
   output: {schema: SummarizeTrafficPatternsOutputSchema},
-  prompt: `You are an expert traffic analyst. Generate a concise summary report highlighting key traffic patterns and any anomalies based on the following data:\n\nLicense Plate Counts:\n{{#each licensePlateCounts}}\n  - Timestamp: {{timestamp}}, Count: {{count}}{{#if anomalies}}\nAnomalies:{{anomalies}}{{/if}}\n{{/each}}\n\nPCU Values:\n{{#each pcuValues}}\n  - Timestamp: {{timestamp}}, Value: {{value}}\n{{/each}}\n\nAnomalies: {{anomalies}}\n\nSummarize the key trends, anomalies, and overall traffic situation.`,
+  prompt: `Anda adalah seorang analis lalu lintas ahli. Buatlah laporan ringkasan yang menyoroti pola lalu lintas utama dan anomali apa pun berdasarkan data berikut. Berikan jawaban dalam Bahasa Indonesia.
+
+Data Jumlah Plat Nomor:
+{{#each licensePlateCounts}}
+  - Waktu: {{timestamp}}, Jumlah: {{count}}
+{{/each}}
+
+Data Nilai SKR (Satuan Kendaraan Roda Empat):
+{{#each pcuValues}}
+  - Waktu: {{timestamp}}, Nilai: {{value}}
+{{/each}}
+
+{{#if anomalies}}
+Anomali Terdeteksi:
+{{#each anomalies}}
+  - {{this}}
+{{/each}}
+{{/if}}
+
+Ringkas tren utama, anomali, dan situasi lalu lintas secara keseluruhan.`,
 });
 
 const summarizeTrafficPatternsFlow = ai.defineFlow(

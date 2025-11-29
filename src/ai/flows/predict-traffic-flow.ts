@@ -43,16 +43,18 @@ const predictTrafficFlowPrompt = ai.definePrompt({
   name: 'predictTrafficFlowPrompt',
   input: {schema: PredictTrafficFlowInputSchema},
   output: {schema: PredictTrafficFlowOutputSchema},
-  prompt: `You are a traffic prediction expert. Based on the historical traffic data provided for the location "{{locationName}}", predict the traffic flow for the next 2-3 hours.
+  prompt: `Anda adalah seorang ahli prediksi lalu lintas. Berdasarkan data historis lalu lintas yang diberikan untuk lokasi "{{locationName}}", prediksikan arus lalu lintas untuk 2-3 jam ke depan.
 
-Analyze the trends in the data, considering potential rush hours or patterns. Provide a concise narrative forecast and classify the predicted congestion level as 'Rendah', 'Sedang', or 'Padat'.
+Analisis tren dalam data, pertimbangkan potensi jam sibuk atau pola yang ada. Berikan prakiraan naratif yang ringkas dan klasifikasikan prediksi tingkat kepadatan sebagai 'Rendah', 'Sedang', atau 'Padat'.
 
-Historical Data:
+Tolong berikan jawaban dalam Bahasa Indonesia.
+
+Data Historis:
 {{#each trafficData}}
-- Time: {{timestamp}}, Vehicles: {{licensePlates}}
+- Waktu: {{timestamp}}, Jumlah Kendaraan: {{licensePlates}}
 {{/each}}
 
-Based on this data, what is the traffic prediction?`,
+Berdasarkan data ini, bagaimana prediksi lalu lintasnya?`,
 });
 
 const predictTrafficFlowFlow = ai.defineFlow(
