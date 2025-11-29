@@ -154,6 +154,17 @@ export function TrafficDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentVideo]);
 
+  // Effect to save detection result to Firestore
+  useEffect(() => {
+    if (detectionResult && currentVideo) {
+      saveDetection({
+        plate: detectionResult.licensePlate,
+        videoName: currentVideo.name,
+        videoId: currentVideo.id,
+      });
+    }
+  }, [detectionResult, currentVideo]);
+
 
   // Effect for real-time simulation update
   useEffect(() => {
@@ -186,13 +197,6 @@ export function TrafficDashboard() {
                     accuracyAchieved: `${(Math.random() * (99 - 85) + 85).toFixed(2)}%`,
                 };
                 setDetectionResult(mockResult);
-                if (currentVideo) {
-                    saveDetection({
-                        plate: mockResult.licensePlate,
-                        videoName: currentVideo.name,
-                        videoId: currentVideo.id,
-                    });
-                }
             }, 4000); // Update every 4 seconds
         }
     } else {
@@ -221,10 +225,9 @@ export function TrafficDashboard() {
 
       setDetectionResult(null);
 
-      // If it's a URL, start the simulation loop but don't set status to STARTED immediately
+      // If it's a URL, start the simulation loop
       if (currentVideo.source.type === 'url') {
         setStatus('ANALYZING');
-        // The useEffect hook will handle the periodic updates
         toast({
           title: 'Analisis Simulasi Dimulai',
           description: `Memulai pemantauan real-time dari stream URL.`,
@@ -255,11 +258,6 @@ export function TrafficDashboard() {
             });
             setDetectionResult(result);
             setStatus('STARTED'); // Analysis complete for file
-            saveDetection({
-              plate: result.licensePlate,
-              videoName: currentVideo.name,
-              videoId: currentVideo.id,
-            });
           }
         } catch (error: any) {
           toast({
