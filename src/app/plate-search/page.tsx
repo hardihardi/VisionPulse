@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit, startAfter, getDocsFromServer } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import type { Detection } from '@/lib/types';
 import { format } from 'date-fns';
@@ -32,6 +32,7 @@ export default function PlateSearchPage() {
   // Fetch latest detections on initial load
   useEffect(() => {
     const fetchLatestDetections = async () => {
+      if (!firestore) return;
       setIsLoading(true);
       try {
         const detectionsRef = collection(firestore, 'detections');
@@ -64,6 +65,7 @@ export default function PlateSearchPage() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
+    if (!firestore) return;
     
     setIsLoading(true);
     setHasSearched(true);
@@ -71,15 +73,22 @@ export default function PlateSearchPage() {
 
     try {
       const detectionsRef = collection(firestore, 'detections');
-      // Simple text search. For more complex queries, a search service like Algolia would be needed.
       const searchTermUpper = searchTerm.toUpperCase();
-      const q = query(detectionsRef, where('plate', '>=', searchTermUpper), where('plate', '<=', searchTermUpper + '\uf8ff'));
+      
+      // Firestore does not support case-insensitive search directly.
+      // A common workaround is to search for a range.
+      const q = query(
+        detectionsRef, 
+        where('plate', '>=', searchTermUpper), 
+        where('plate', '<=', searchTermUpper + '\uf8ff'),
+        orderBy('plate'),
+        orderBy('timestamp', 'desc')
+      );
       
       const querySnapshot = await getDocs(q);
       const searchResults = querySnapshot.docs
         .map(doc => {
           const data = doc.data();
-          // Add a check to ensure timestamp is not null
           if (!data.timestamp) {
             return null;
           }
@@ -89,7 +98,8 @@ export default function PlateSearchPage() {
             timestamp: data.timestamp.toDate(),
           } as Detection;
         })
-        .filter((d): d is Detection => d !== null); // Filter out any null entries
+        .filter((d): d is Detection => d !== null);
+        
       setResults(searchResults);
     } catch (error) {
       console.error("Error searching detections: ", error);

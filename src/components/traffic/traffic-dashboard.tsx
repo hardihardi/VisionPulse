@@ -106,6 +106,10 @@ const generateRandomPlate = () => {
 };
 
 const saveDetection = async (detection: Omit<Detection, 'id' | 'timestamp'>) => {
+  if (!firestore) {
+    console.error("Firestore is not initialized.");
+    return;
+  }
   try {
     await addDoc(collection(firestore, 'detections'), {
       ...detection,
