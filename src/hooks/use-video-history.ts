@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useToast } from './use-toast';
 
 export interface VideoHistoryItem {
@@ -26,14 +25,19 @@ let fileCache: File | null = null;
 export function useVideoHistory() {
     const [currentVideo, _setCurrentVideo] = useState<VideoHistoryItem | null>(null);
     const [videoSrc, setVideoSrc] = useState<string | null>(null);
+    const videoSrcRef = useRef(videoSrc);
     const { toast } = useToast();
+
+    useEffect(() => {
+        videoSrcRef.current = videoSrc;
+    }, [videoSrc]);
 
     const setCurrentVideo = useCallback((videoItem: VideoHistoryItem | null) => {
         _setCurrentVideo(videoItem);
 
         // Revoke previous object URL if it exists
-        if (videoSrc && videoSrc.startsWith('blob:')) {
-            URL.revokeObjectURL(videoSrc);
+        if (videoSrcRef.current && videoSrcRef.current.startsWith('blob:')) {
+            URL.revokeObjectURL(videoSrcRef.current);
         }
 
         if (videoItem) {
@@ -71,7 +75,7 @@ export function useVideoHistory() {
             fileCache = null;
             setVideoSrc(null);
         }
-    }, [videoSrc]);
+    }, []);
 
     const loadVideo = useCallback(() => {
         const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -114,8 +118,19 @@ export function useVideoHistory() {
             } catch (error) {
                 console.error("Failed to parse video history from localStorage", error);
             }
+        } else {
+            // If no video in local storage, set the default YouTube demo video
+            const defaultVideo: VideoHistoryItem = {
+                id: 'default-youtube-video',
+                name: 'Live Demo - Bundaran HI',
+                source: {
+                    type: 'url',
+                    url: 'https://youtu.be/aGfshu1UFd0'
+                }
+            };
+            setCurrentVideo(defaultVideo);
         }
-    }, [toast]);
+    }, [toast, setCurrentVideo]);
     
     const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
         // If file size is 0, it means it's a dummy file from a restored session.
