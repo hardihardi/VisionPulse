@@ -339,8 +339,8 @@ export function TrafficDashboard() {
               title="Dasbor Lalu Lintas"
               description="Pemantauan dan kontrol sistem lalu lintas real-time."
             />
-            <main className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-              <div className="lg:col-span-2 flex flex-col gap-6">
+            <main className="grid gap-6 grid-cols-1 lg:grid-cols-4">
+              <div className="lg:col-span-3 flex flex-col gap-6">
                 <Card>
                   <CardHeader>
                     <CardTitle>
@@ -355,10 +355,9 @@ export function TrafficDashboard() {
                 </Card>
                 <DetectionResultCard detectionResult={detectionResult} />
                 <TrafficCountingChart ref={trafficCountingChartRef} isAnalyzing={isAnalyzing} chartData={trafficCountData} />
-                <PcuCoefficient
-                  coefficients={pcuCoefficients}
-                  onUpdate={setPcuCoefficients}
-                />
+                <MovingAverageChart ref={movingAverageChartRef} isAnalyzing={isAnalyzing} />
+                <VehicleComparisonChart ref={vehicleComparisonChartRef} isAnalyzing={isAnalyzing} />
+                <CumulativeVolumeChart isAnalyzing={isAnalyzing} />
               </div>
 
               <div className="lg:col-span-1 flex flex-col gap-6">
@@ -373,6 +372,10 @@ export function TrafficDashboard() {
                   isAnalyzing={isAnalyzing}
                   coefficients={pcuCoefficients}
                 />
+                <PcuCoefficient
+                  coefficients={pcuCoefficients}
+                  onUpdate={setPcuCoefficients}
+                />
                 <ExportReport 
                   isAnalyzing={isAnalyzing} 
                   trafficData={trafficCountData} 
@@ -380,16 +383,6 @@ export function TrafficDashboard() {
                   movingAverageChartRef={movingAverageChartRef}
                   vehicleComparisonChartRef={vehicleComparisonChartRef}
                 />
-              </div>
-
-              <div className="lg:col-span-3">
-                <MovingAverageChart ref={movingAverageChartRef} isAnalyzing={isAnalyzing} />
-              </div>
-              <div className="lg:col-span-3">
-                <VehicleComparisonChart ref={vehicleComparisonChartRef} isAnalyzing={isAnalyzing} />
-              </div>
-              <div className="lg:col-span-3">
-                <CumulativeVolumeChart isAnalyzing={isAnalyzing} />
               </div>
             </main>
           </div>
