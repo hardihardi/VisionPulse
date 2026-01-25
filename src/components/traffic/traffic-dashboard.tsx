@@ -131,7 +131,7 @@ export function TrafficDashboard() {
   const [status, setStatus] = useState<SystemStatus>('STOPPED');
   const [detectionResult, setDetectionResult] =
     useState<EnhanceLicensePlateRecognitionOutput | null>(null);
-  const [videoDataUri, setVideoDataUri] = useState<string | null>(null);
+  const [analysisInputUri, setAnalysisInputUri] = useState<string | null>(null);
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const [pcuCoefficients, setPcuCoefficients] =
     useState<PcuCoefficients>(initialCoefficients);
@@ -226,11 +226,13 @@ export function TrafficDashboard() {
       }
 
       setDetectionResult(null);
-      setVideoDataUri(null);
+      setAnalysisInputUri(null);
 
       // If it's a URL, start the simulation loop
       if (activeVideo.source.type === 'url') {
         setStatus('ANALYZING');
+        const placeholder = PlaceHolderImages.find(img => img.id === 'traffic-feed-detected');
+        setAnalysisInputUri(placeholder?.imageUrl || null);
         toast({
           title: 'Analisis Simulasi Dimulai',
           description: `Memulai pemantauan real-time dari stream URL.`,
@@ -243,7 +245,7 @@ export function TrafficDashboard() {
         setStatus('ANALYZING');
         try {
           const videoUri = await toBase64(activeVideo.source.file);
-          setVideoDataUri(videoUri); // Store the data URI for the AI card
+          setAnalysisInputUri(videoUri);
           
           const { result, error } = await getEnhancedRecognition({
             videoDataUri: videoUri,
@@ -278,7 +280,7 @@ export function TrafficDashboard() {
     } else if (newStatus === 'STOPPED') {
       setStatus('STOPPED');
       setDetectionResult(null);
-      setVideoDataUri(null);
+      setAnalysisInputUri(null);
     }
   };
 
@@ -368,7 +370,7 @@ export function TrafficDashboard() {
                   onStatusChange={handleStatusChange}
                 />
                 <DetectionResultCard detectionResult={detectionResult} />
-                <AiTrafficAnalysisCard isAnalyzing={isAnalyzing} videoDataUri={videoDataUri} />
+                <AiTrafficAnalysisCard isAnalyzing={isAnalyzing} analysisInputUri={analysisInputUri} />
                 <RealtimeDetectionStats isAnalyzing={isAnalyzing} />
                 <AnomalyDetectionCard anomalies={anomalies} isAnalyzing={isAnalyzing} />
                 <VehicleVolume

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -14,19 +13,19 @@ import { cn } from '@/lib/utils';
 
 interface AiTrafficAnalysisCardProps {
   isAnalyzing: boolean;
-  videoDataUri: string | null;
+  analysisInputUri: string | null;
 }
 
-export function AiTrafficAnalysisCard({ isAnalyzing, videoDataUri }: AiTrafficAnalysisCardProps) {
+export function AiTrafficAnalysisCard({ isAnalyzing, analysisInputUri }: AiTrafficAnalysisCardProps) {
   const [analysis, setAnalysis] = useState<SummarizeTrafficVideoOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleGenerateAnalysis = async () => {
-    if (!videoDataUri) {
+    if (!analysisInputUri) {
       toast({
-        title: 'Video Tidak Tersedia',
-        description: 'Analisis AI hanya dapat dilakukan pada video yang diunggah dari file. Video dari URL tidak didukung untuk fitur ini.',
+        title: 'Sumber Video Tidak Siap',
+        description: 'Pastikan analisis sedang berjalan untuk sumber video yang valid.',
         variant: 'destructive',
       });
       return;
@@ -35,7 +34,7 @@ export function AiTrafficAnalysisCard({ isAnalyzing, videoDataUri }: AiTrafficAn
     setIsLoading(true);
     setAnalysis(null);
 
-    const { result, error } = await getTrafficVideoAnalysis({ videoDataUri });
+    const { result, error } = await getTrafficVideoAnalysis({ videoDataUri: analysisInputUri });
 
     if (error) {
       toast({
@@ -62,19 +61,19 @@ export function AiTrafficAnalysisCard({ isAnalyzing, videoDataUri }: AiTrafficAn
     }
   };
 
-  const isButtonDisabled = isLoading || !isAnalyzing || !videoDataUri;
+  const isButtonDisabled = isLoading || !isAnalyzing || !analysisInputUri;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Analisis Video AI</CardTitle>
-        <CardDescription>Dapatkan analisis mendalam dari file video aktif.</CardDescription>
+        <CardDescription>Dapatkan analisis mendalam dari video aktif.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading && (
           <div className="flex items-center justify-center text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            <span>Menganalisis video... Ini mungkin memakan waktu.</span>
+            <span>Menganalisis... Ini mungkin memakan waktu.</span>
           </div>
         )}
 
@@ -115,9 +114,6 @@ export function AiTrafficAnalysisCard({ isAnalyzing, videoDataUri }: AiTrafficAn
           <BrainCircuit className="mr-2 h-4 w-4" />
           {isLoading ? 'Membuat...' : 'Buat Analisis'}
         </Button>
-        {!videoDataUri && isAnalyzing &&
-             <p className="text-xs text-muted-foreground text-center">Analisis AI hanya tersedia untuk video dari file.</p>
-        }
       </CardContent>
     </Card>
   );
