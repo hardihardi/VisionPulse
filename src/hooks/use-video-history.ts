@@ -38,7 +38,10 @@ export function useVideoHistory() {
 
             let loadedVideos: VideoHistoryItem[] = [];
             if (storedVideos) {
-                const parsedVideos = JSON.parse(storedVideos);
+                const parsedData = JSON.parse(storedVideos);
+                // Backwards compatibility check: ensure parsed data is an array
+                const parsedVideos = Array.isArray(parsedData) ? parsedData : [];
+                
                 // Rehydrate videos, creating dummy files for file-based sources
                 loadedVideos = parsedVideos.map((item: any) => {
                     if (item.source.type === 'file') {
