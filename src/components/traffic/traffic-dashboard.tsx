@@ -33,8 +33,9 @@ import { AnomalyDetectionCard } from './anomaly-detection-card';
 const initialCoefficients: PcuCoefficients = {
   sepedaMotor: 0.25,
   mobil: 1.0,
-  bus: 2.5,
-  truk: 3.0,
+  bus: 1.5,
+  truk: 2.0,
+  trailer: 2.5,
 };
 
 const generateTrafficCountData = () => {
@@ -46,11 +47,13 @@ const generateTrafficCountData = () => {
         const busM = Math.floor(Math.random() * 5);
         const trukM = Math.floor(Math.random() * 8);
         const motorM = Math.floor(Math.random() * 30);
+        const trailerM = Math.floor(Math.random() * 4);
         
         const mobilJ = Math.floor(Math.random() * 18);
         const busJ = Math.floor(Math.random() * 4);
         const trukJ = Math.floor(Math.random() * 7);
         const motorJ = Math.floor(Math.random() * 25);
+        const trailerJ = Math.floor(Math.random() * 3);
 
         const entry: { [key: string]: any } = { 
             name: period,
@@ -58,12 +61,14 @@ const generateTrafficCountData = () => {
             'Bus (M)': busM,
             'Truk (M)': trukM,
             'Sepeda Motor (M)': motorM,
+            'Trailer (M)': trailerM,
             'Mobil (J)': mobilJ,
             'Bus (J)': busJ,
             'Truk (J)': trukJ,
             'Sepeda Motor (J)': motorJ,
-            'Total Mendekat': mobilM + busM + trukM + motorM,
-            'Total Menjauh': mobilJ + busJ + trukJ + motorJ,
+            'Trailer (J)': trailerJ,
+            'Total Mendekat': mobilM + busM + trukM + motorM + trailerM,
+            'Total Menjauh': mobilJ + busJ + trukJ + motorJ + trailerJ,
         };
         
         data.push(entry);

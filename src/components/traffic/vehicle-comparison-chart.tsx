@@ -20,19 +20,19 @@ const initialChartData = [
 ];
 
 const vehicleTypes = {
-  'SM': 'Sepeda Motor (SM)',
-  'MP': 'Mobil Penumpang (MP)',
-  'KS': 'Kendaraan Sedang (KS)',
-  'BB': 'Bus Besar (BB)',
-  'TB': 'Truk Barang (TB)',
+  'SepedaMotor': 'Sepeda Motor',
+  'Mobil': 'Mobil',
+  'Bus': 'Bus',
+  'Truk': 'Truk',
+  'Trailer': 'Trailer'
 };
 
 type VehicleTypeKey = keyof typeof vehicleTypes | 'Semua';
 
 const generateRandomData = () => {
     return initialChartData.map(item => {
-        const normalData: { [key in VehicleTypeKey]: number } = { 'Semua': 0, 'SM': 0, 'MP': 0, 'KS': 0, 'BB': 0, 'TB': 0 };
-        const oppositeData: { [key in VehicleTypeKey]: number } = { 'Semua': 0, 'SM': 0, 'MP': 0, 'KS': 0, 'BB': 0, 'TB': 0 };
+        const normalData: { [key: string]: number } = { 'Semua': 0 };
+        const oppositeData: { [key: string]: number } = { 'Semua': 0 };
         
         let normalTotal = 0;
         let oppositeTotal = 0;
@@ -40,8 +40,8 @@ const generateRandomData = () => {
         Object.keys(vehicleTypes).forEach(key => {
             const normalVal = Math.floor(Math.random() * 200) + 20;
             const oppositeVal = Math.floor(Math.random() * 200) + 20;
-            normalData[key as keyof typeof vehicleTypes] = normalVal;
-            oppositeData[key as keyof typeof vehicleTypes] = oppositeVal;
+            normalData[key] = normalVal;
+            oppositeData[key] = oppositeVal;
             normalTotal += normalVal;
             oppositeTotal += oppositeVal;
         });

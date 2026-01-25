@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React from 'react';
@@ -19,6 +20,7 @@ const vehicleTypes: { id: keyof PcuCoefficients, label: string }[] = [
     { id: 'mobil', label: 'Mobil/LV' },
     { id: 'bus', label: 'Bus' },
     { id: 'truk', label: 'Truk' },
+    { id: 'trailer', label: 'Trailer' },
 ];
 
 export function PcuCoefficient({ coefficients, onUpdate }: PcuCoefficientProps) {
@@ -57,7 +59,7 @@ export function PcuCoefficient({ coefficients, onUpdate }: PcuCoefficientProps) 
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                         {vehicleTypes.map(vehicle => (
                             <div key={vehicle.id} className="space-y-1">
                                 <Label htmlFor={vehicle.id} className="text-xs">{vehicle.label}</Label>

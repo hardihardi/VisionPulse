@@ -17,6 +17,7 @@ export interface PcuCoefficients {
   mobil: number;
   bus: number;
   truk: number;
+  trailer: number;
 }
 
 export interface CameraData {

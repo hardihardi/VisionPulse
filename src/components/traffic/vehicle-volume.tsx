@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -15,9 +16,10 @@ const initialStats: Record<keyof PcuCoefficients, VehicleStats> = {
     bus: { name: 'Bus', count: 0, pcu: 0, progress: 0 },
     truk: { name: 'Truk', count: 0, pcu: 0, progress: 0 },
     sepedaMotor: { name: 'Sepeda Motor', count: 0, pcu: 0, progress: 0 },
+    trailer: { name: 'Trailer', count: 0, pcu: 0, progress: 0 },
 };
 
-const vehicleOrder: (keyof PcuCoefficients)[] = ['mobil', 'bus', 'truk', 'sepedaMotor'];
+const vehicleOrder: (keyof PcuCoefficients)[] = ['mobil', 'bus', 'truk', 'sepedaMotor', 'trailer'];
 
 
 export function VehicleVolume({ isAnalyzing, coefficients }: VehicleVolumeProps) {

@@ -26,8 +26,8 @@ const generateMovingAverageData = () => {
   const now = new Date();
   for (let i = 5; i >= 0; i--) {
     const hour = new Date(now.getTime() - i * 60 * 60 * 1000);
-    const mendekat = Math.random() * 0.5 + 0.2;
-    const menjauh = Math.random() * 0.4 + 0.1;
+    const mendekat = Math.random() * 0.2 + 0.2; // Generates number between 0.2 and 0.4
+    const menjauh = Math.random() * 0.2 + 0.3; // Generates number between 0.3 and 0.5
     data.push({
       name: `${String(hour.getHours()).padStart(2, '0')}:00`,
       pcuMendekat: mendekat,

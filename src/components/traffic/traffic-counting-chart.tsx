@@ -11,10 +11,12 @@ const colors = {
     'Bus (M)': 'hsl(var(--chart-2))',
     'Truk (M)': 'hsl(var(--chart-3))',
     'Sepeda Motor (M)': 'hsl(var(--chart-4))',
-    'Mobil (J)': 'hsl(var(--chart-5))',
-    'Bus (J)': 'hsl(var(--chart-1))',
-    'Truk (J)': 'hsl(var(--chart-2))',
-    'Sepeda Motor (J)': 'hsl(var(--chart-3))',
+    'Trailer (M)': 'hsl(var(--chart-5))',
+    'Mobil (J)': 'hsl(var(--chart-1))',
+    'Bus (J)': 'hsl(var(--chart-2))',
+    'Truk (J)': 'hsl(var(--chart-3))',
+    'Sepeda Motor (J)': 'hsl(var(--chart-4))',
+    'Trailer (J)': 'hsl(var(--chart-5))',
 };
 
 
