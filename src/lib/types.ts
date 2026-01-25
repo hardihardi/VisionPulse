@@ -63,3 +63,15 @@ export interface Anomaly {
   timestamp: number;
   severity: 'high' | 'medium' | 'low';
 }
+
+export interface VehicleClassification {
+  type: 'Sepeda Motor' | 'Mobil' | 'Bus' | 'Truk' | 'Trailer';
+  percentage: number;
+}
+
+export interface TrafficAnalysis {
+  summary: string;
+  congestionLevel: 'Rendah' | 'Sedang' | 'Padat';
+  peakTime: string;
+  vehicleDistribution: VehicleClassification[];
+}

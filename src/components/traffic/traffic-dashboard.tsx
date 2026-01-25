@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -26,6 +27,7 @@ import { firestore } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { generateAnomaly } from '@/lib/data';
 import { AnomalyDetectionCard } from './anomaly-detection-card';
+import { AiTrafficAnalysisCard } from './ai-traffic-analysis-card';
 
 
 const initialCoefficients: PcuCoefficients = {
@@ -129,6 +131,7 @@ export function TrafficDashboard() {
   const [status, setStatus] = useState<SystemStatus>('STOPPED');
   const [detectionResult, setDetectionResult] =
     useState<EnhanceLicensePlateRecognitionOutput | null>(null);
+  const [videoDataUri, setVideoDataUri] = useState<string | null>(null);
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const [pcuCoefficients, setPcuCoefficients] =
     useState<PcuCoefficients>(initialCoefficients);
@@ -223,6 +226,7 @@ export function TrafficDashboard() {
       }
 
       setDetectionResult(null);
+      setVideoDataUri(null);
 
       // If it's a URL, start the simulation loop
       if (activeVideo.source.type === 'url') {
@@ -238,9 +242,11 @@ export function TrafficDashboard() {
       if (activeVideo.source.type === 'file' && activeVideo.source.file) {
         setStatus('ANALYZING');
         try {
-          const videoDataUri = await toBase64(activeVideo.source.file);
+          const videoUri = await toBase64(activeVideo.source.file);
+          setVideoDataUri(videoUri); // Store the data URI for the AI card
+          
           const { result, error } = await getEnhancedRecognition({
-            videoDataUri,
+            videoDataUri: videoUri,
           });
 
           if (error) {
@@ -272,6 +278,7 @@ export function TrafficDashboard() {
     } else if (newStatus === 'STOPPED') {
       setStatus('STOPPED');
       setDetectionResult(null);
+      setVideoDataUri(null);
     }
   };
 
@@ -361,6 +368,7 @@ export function TrafficDashboard() {
                   onStatusChange={handleStatusChange}
                 />
                 <DetectionResultCard detectionResult={detectionResult} />
+                <AiTrafficAnalysisCard isAnalyzing={isAnalyzing} videoDataUri={videoDataUri} />
                 <RealtimeDetectionStats isAnalyzing={isAnalyzing} />
                 <AnomalyDetectionCard anomalies={anomalies} isAnalyzing={isAnalyzing} />
                 <VehicleVolume
