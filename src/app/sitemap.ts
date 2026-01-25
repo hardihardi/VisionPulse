@@ -6,7 +6,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const routes = [
     '/',
-    '/camera-feeds',
     '/history',
     '/plate-search',
   ].map((route) => ({

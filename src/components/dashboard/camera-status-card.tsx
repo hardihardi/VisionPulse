@@ -6,10 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { initialCameraData, updateCameraData } from '@/lib/data';
 import type { CameraData } from '@/lib/types';
-import { Video, ArrowRight } from 'lucide-react';
+import { Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
-import { Button } from '../ui/button';
 
 export function CameraStatusCard() {
   const [cameras, setCameras] = useState<CameraData[]>(initialCameraData.slice(0, 4)); // Tampilkan 4 kamera saja
@@ -24,17 +22,11 @@ export function CameraStatusCard() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader>
         <div>
           <CardTitle>Status Kamera</CardTitle>
           <CardDescription>Kendaraan terdeteksi per lokasi.</CardDescription>
         </div>
-         <Button asChild variant="ghost" size="sm">
-            <Link href="/camera-feeds">
-              Lihat Semua
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Link>
-        </Button>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

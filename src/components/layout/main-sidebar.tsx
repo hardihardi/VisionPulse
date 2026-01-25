@@ -14,7 +14,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Logo } from "@/components/logo"
-import { Settings, TrafficCone, History, Video, Search } from "lucide-react"
+import { Settings, TrafficCone, History, Search } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -33,14 +33,6 @@ export function MainSidebar() {
               <Link href="/">
                 <TrafficCone />
                 <span>Dasbor Utama</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname === '/camera-feeds'} tooltip="Umpan Kamera">
-              <Link href="/camera-feeds">
-                <Video />
-                <span>Umpan Kamera</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
