@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -231,8 +230,6 @@ export function TrafficDashboard() {
       // If it's a URL, start the simulation loop
       if (activeVideo.source.type === 'url') {
         setStatus('ANALYZING');
-        const placeholder = PlaceHolderImages.find(img => img.id === 'traffic-feed-detected');
-        setAnalysisInputUri(placeholder?.imageUrl || null);
         toast({
           title: 'Analisis Simulasi Dimulai',
           description: `Memulai pemantauan real-time dari stream URL.`,
@@ -370,7 +367,11 @@ export function TrafficDashboard() {
                   onStatusChange={handleStatusChange}
                 />
                 <DetectionResultCard detectionResult={detectionResult} />
-                <AiTrafficAnalysisCard isAnalyzing={isAnalyzing} analysisInputUri={analysisInputUri} />
+                <AiTrafficAnalysisCard 
+                  isAnalyzing={isAnalyzing} 
+                  analysisInputUri={analysisInputUri} 
+                  sourceType={activeVideo?.source.type ?? null}
+                />
                 <RealtimeDetectionStats isAnalyzing={isAnalyzing} />
                 <AnomalyDetectionCard anomalies={anomalies} isAnalyzing={isAnalyzing} />
                 <VehicleVolume

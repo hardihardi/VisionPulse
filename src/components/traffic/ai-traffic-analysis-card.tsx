@@ -14,9 +14,10 @@ import { cn } from '@/lib/utils';
 interface AiTrafficAnalysisCardProps {
   isAnalyzing: boolean;
   analysisInputUri: string | null;
+  sourceType: 'file' | 'url' | null;
 }
 
-export function AiTrafficAnalysisCard({ isAnalyzing, analysisInputUri }: AiTrafficAnalysisCardProps) {
+export function AiTrafficAnalysisCard({ isAnalyzing, analysisInputUri, sourceType }: AiTrafficAnalysisCardProps) {
   const [analysis, setAnalysis] = useState<SummarizeTrafficVideoOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -25,7 +26,7 @@ export function AiTrafficAnalysisCard({ isAnalyzing, analysisInputUri }: AiTraff
     if (!analysisInputUri) {
       toast({
         title: 'Sumber Video Tidak Siap',
-        description: 'Pastikan analisis sedang berjalan untuk sumber video yang valid.',
+        description: 'Pastikan analisis sedang berjalan untuk sumber video file yang valid.',
         variant: 'destructive',
       });
       return;
@@ -62,12 +63,19 @@ export function AiTrafficAnalysisCard({ isAnalyzing, analysisInputUri }: AiTraff
   };
 
   const isButtonDisabled = isLoading || !isAnalyzing || !analysisInputUri;
+  
+  const getCardDescription = () => {
+    if (sourceType === 'url' && isAnalyzing) {
+      return "Analisis video AI hanya tersedia untuk sumber video file yang diunggah.";
+    }
+    return "Dapatkan analisis mendalam dari video aktif.";
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Analisis Video AI</CardTitle>
-        <CardDescription>Dapatkan analisis mendalam dari video aktif.</CardDescription>
+        <CardDescription>{getCardDescription()}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading && (
