@@ -348,7 +348,6 @@ export function TrafficDashboard() {
                     </div>
                   </CardContent>
                 </Card>
-                <DetectionResultCard detectionResult={detectionResult} />
                 <TrafficCountingChart ref={trafficCountingChartRef} isAnalyzing={isAnalyzing} chartData={trafficCountData} />
                 <MovingAverageChart ref={movingAverageChartRef} isAnalyzing={isAnalyzing} />
                 <VehicleComparisonChart ref={vehicleComparisonChartRef} isAnalyzing={isAnalyzing} />
@@ -361,6 +360,7 @@ export function TrafficDashboard() {
                   status={status}
                   onStatusChange={handleStatusChange}
                 />
+                <DetectionResultCard detectionResult={detectionResult} />
                 <RealtimeDetectionStats isAnalyzing={isAnalyzing} />
                 <AnomalyDetectionCard anomalies={anomalies} isAnalyzing={isAnalyzing} />
                 <VehicleVolume
