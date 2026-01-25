@@ -147,14 +147,23 @@ export default function HistoryPage() {
   
   const renderVideoPlayer = () => {
     if (!videoSrc) {
-        return placeholder && (
-            <Image 
-                src={placeholder.imageUrl} 
-                alt={placeholder.description} 
-                fill
-                className="object-cover"
-                data-ai-hint={placeholder.imageHint}
-            />
+        return (
+            <div className="w-full h-full flex items-center justify-center bg-muted relative">
+                {placeholder && (
+                    <Image
+                        src={placeholder.imageUrl}
+                        alt={placeholder.description}
+                        fill
+                        className="object-cover opacity-30"
+                        data-ai-hint={placeholder.imageHint}
+                    />
+                )}
+                <div className="absolute inset-0 flex items-center justify-center p-4">
+                    <p className="text-center text-foreground bg-black/50 p-4 rounded-md">
+                       Pilih atau unggah video untuk memulai.
+                    </p>
+                </div>
+            </div>
         );
     }
     

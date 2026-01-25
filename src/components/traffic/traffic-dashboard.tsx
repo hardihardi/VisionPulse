@@ -283,23 +283,24 @@ export function TrafficDashboard() {
 
   const renderVideoPlayer = () => {
     if (!videoSrc) {
-      return (
-        <div className="w-full h-full flex flex-col items-center justify-center text-center">
-          {placeholder && (
-            <Image
-              src={placeholder.imageUrl}
-              alt={placeholder.description}
-              width={600}
-              height={400}
-              className="object-cover opacity-20"
-              data-ai-hint={placeholder.imageHint}
-            />
-          )}
-          <p className="absolute text-muted-foreground">
-            Tidak ada video aktif. Silakan unggah di halaman Riwayat.
-          </p>
-        </div>
-      );
+        return (
+            <div className="w-full h-full flex items-center justify-center bg-muted relative">
+                {placeholder && (
+                    <Image
+                        src={placeholder.imageUrl}
+                        alt={placeholder.description}
+                        fill
+                        className="object-cover opacity-30"
+                        data-ai-hint={placeholder.imageHint}
+                    />
+                )}
+                <div className="absolute inset-0 flex items-center justify-center p-4">
+                    <p className="text-center text-foreground bg-black/50 p-4 rounded-md">
+                        Tidak ada video aktif. <br /> Silakan pilih atau unggah video di halaman Riwayat.
+                    </p>
+                </div>
+            </div>
+        );
     }
 
     const embedUrl = getYouTubeEmbedUrl(videoSrc);
