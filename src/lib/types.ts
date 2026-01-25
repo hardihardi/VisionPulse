@@ -32,6 +32,8 @@ export interface VideoHistoryItem {
     source: {
         type: 'file';
         file: File;
+        fileName: string;
+        fileType: string;
     } | {
         type: 'url';
         url: string;

@@ -1,8 +1,8 @@
-
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useToast } from './use-toast';
+import { useRouter } from 'next/navigation';
 
 export interface VideoHistoryItem {
     id: string;
@@ -10,117 +10,75 @@ export interface VideoHistoryItem {
     source: {
         type: 'file';
         file: File;
+        // Store metadata for persistence
+        fileName: string;
+        fileType: string;
     } | {
         type: 'url';
         url: string;
     };
 }
 
-
-const LOCAL_STORAGE_KEY = 'visionpulse-video-history';
-
-// This is a file cache to hold the actual file object between page navigations.
-// It's a workaround since we can't store the File object in localStorage.
-let fileCache: File | null = null;
+const HISTORY_KEY = 'visionpulse-video-history';
+const ACTIVE_VIDEO_ID_KEY = 'visionpulse-active-video-id';
+// This is a session-level cache for File objects, as they can't be stored in localStorage.
+const fileCache = new Map<string, File>();
 
 export function useVideoHistory() {
-    const [currentVideo, _setCurrentVideo] = useState<VideoHistoryItem | null>(null);
-    const [videoSrc, setVideoSrc] = useState<string | null>(null);
-    const videoSrcRef = useRef(videoSrc);
+    const [videos, setVideos] = useState<VideoHistoryItem[]>([]);
+    const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
     const { toast } = useToast();
+    const router = useRouter();
 
+    // Load initial data from localStorage on mount
     useEffect(() => {
-        videoSrcRef.current = videoSrc;
-    }, [videoSrc]);
+        try {
+            const storedVideos = localStorage.getItem(HISTORY_KEY);
+            const storedActiveId = localStorage.getItem(ACTIVE_VIDEO_ID_KEY);
 
-    const setCurrentVideo = useCallback((videoItem: VideoHistoryItem | null) => {
-        _setCurrentVideo(videoItem);
-
-        // Revoke previous object URL if it exists
-        if (videoSrcRef.current && videoSrcRef.current.startsWith('blob:')) {
-            URL.revokeObjectURL(videoSrcRef.current);
-        }
-
-        if (videoItem) {
-            let dataToStore: any;
-            if (videoItem.source.type === 'file') {
-                const file = videoItem.source.file;
-                dataToStore = { 
-                    id: videoItem.id, 
-                    name: videoItem.name, 
-                    source: { 
-                        type: 'file', 
-                        fileName: file.name, 
-                        fileType: file.type 
-                    } 
-                };
-                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToStore));
-                fileCache = file; // Cache the file object
-                setVideoSrc(URL.createObjectURL(file));
-            } else { // type is 'url'
-                dataToStore = { 
-                    id: videoItem.id, 
-                    name: videoItem.name, 
-                    source: { 
-                        type: 'url', 
-                        url: videoItem.source.url 
-                    } 
-                };
-                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToStore));
-                fileCache = null; // Clear file cache for URL type
-                setVideoSrc(videoItem.source.url);
-            }
-        } else {
-            // Clear everything
-            localStorage.removeItem(LOCAL_STORAGE_KEY);
-            fileCache = null;
-            setVideoSrc(null);
-        }
-    }, []);
-
-    const loadVideo = useCallback(() => {
-        const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (storedData) {
-            try {
-                const parsedData = JSON.parse(storedData);
-                if (parsedData && parsedData.id && parsedData.name && parsedData.source) {
-                    let videoItem: VideoHistoryItem;
-                    if (parsedData.source.type === 'file') {
-                        let file: File;
-                        if (fileCache && fileCache.name === parsedData.source.fileName) {
-                            file = fileCache;
-                        } else {
-                            file = new File([], parsedData.source.fileName, { type: parsedData.source.fileType });
-                             toast({
-                                title: "Sesi Video Dipulihkan",
-                                description: `Video "${parsedData.name}" dimuat. Unggah kembali file jika ingin menganalisis ulang.`,
-                            });
-                        }
-                        videoItem = { 
-                            id: parsedData.id,
-                            name: parsedData.name,
-                            source: { type: 'file', file }
+            let loadedVideos: VideoHistoryItem[] = [];
+            if (storedVideos) {
+                const parsedVideos = JSON.parse(storedVideos);
+                // Rehydrate videos, creating dummy files for file-based sources
+                loadedVideos = parsedVideos.map((item: any) => {
+                    if (item.source.type === 'file') {
+                        const cachedFile = fileCache.get(item.id);
+                        return {
+                            ...item,
+                            source: {
+                                ...item.source,
+                                file: cachedFile || new File([], item.source.fileName, { type: item.source.fileType }),
+                            }
                         };
-                         if (videoItem.source.file.size > 0) {
-                            setVideoSrc(URL.createObjectURL(videoItem.source.file));
-                        } else {
-                            setVideoSrc(null);
-                        }
-                    } else { // type is 'url'
-                         videoItem = {
-                            id: parsedData.id,
-                            name: parsedData.name,
-                            source: { type: 'url', url: parsedData.source.url }
-                        };
-                        setVideoSrc(videoItem.source.url);
                     }
-                    _setCurrentVideo(videoItem);
-                }
-            } catch (error) {
-                console.error("Failed to parse video history from localStorage", error);
+                    return item;
+                });
             }
-        } else {
-            // If no video in local storage, set the default YouTube demo video
+            
+            if (loadedVideos.length === 0) {
+                 // If no videos, add the default demo video
+                const defaultVideo: VideoHistoryItem = {
+                    id: 'default-youtube-video',
+                    name: 'Live Demo - Bundaran HI',
+                    source: {
+                        type: 'url',
+                        url: 'https://youtu.be/aGfshu1UFd0'
+                    }
+                };
+                loadedVideos.push(defaultVideo);
+            }
+
+            setVideos(loadedVideos);
+            
+            const activeId = storedActiveId && loadedVideos.some(v => v.id === storedActiveId)
+                ? storedActiveId
+                : loadedVideos[0]?.id || null;
+
+            setActiveVideoId(activeId);
+
+        } catch (error) {
+            console.error("Failed to load video history from localStorage", error);
+            // On error, start with the default demo video
             const defaultVideo: VideoHistoryItem = {
                 id: 'default-youtube-video',
                 name: 'Live Demo - Bundaran HI',
@@ -129,12 +87,107 @@ export function useVideoHistory() {
                     url: 'https://youtu.be/aGfshu1UFd0'
                 }
             };
-            setCurrentVideo(defaultVideo);
+            setVideos([defaultVideo]);
+            setActiveVideoId(defaultVideo.id);
         }
-    }, [toast, setCurrentVideo]);
+    }, []);
+
+    // Memoize active video and its source URL
+    const activeVideo = useMemo(() => videos.find(v => v.id === activeVideoId), [videos, activeVideoId]);
+    const videoSrc = useMemo(() => {
+        if (!activeVideo) return null;
+        if (activeVideo.source.type === 'url') return activeVideo.source.url;
+        if (activeVideo.source.file?.size > 0) {
+            try {
+                return URL.createObjectURL(activeVideo.source.file);
+            } catch (e) {
+                console.error("Error creating object URL", e);
+                return null;
+            }
+        }
+        return null;
+    }, [activeVideo]);
+
+    // Persist changes to localStorage
+    const persistVideos = (updatedVideos: VideoHistoryItem[]) => {
+        try {
+            // Create a serializable version of the videos array
+            const serializableVideos = updatedVideos.map(video => {
+                if (video.source.type === 'file') {
+                    // Don't store the file object itself
+                    const { file, ...restOfSource } = video.source;
+                    return { ...video, source: restOfSource };
+                }
+                return video;
+            });
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(serializableVideos));
+            setVideos(updatedVideos);
+        } catch (error) {
+            console.error("Failed to save video history to localStorage", error);
+            toast({ title: "Gagal menyimpan riwayat video", variant: "destructive" });
+        }
+    };
+
+    const addVideo = (video: Omit<VideoHistoryItem, 'id'>) => {
+        const newVideo: VideoHistoryItem = { ...video, id: Date.now().toString() };
+        
+        if (newVideo.source.type === 'file') {
+            fileCache.set(newVideo.id, newVideo.source.file);
+        }
+        
+        const updatedVideos = [...videos, newVideo];
+        persistVideos(updatedVideos);
+        toast({ title: "Sumber Video Ditambahkan", description: `"${newVideo.name}" telah ditambahkan.` });
+        return newVideo;
+    };
+
+    const updateVideo = (id: string, updatedVideo: Omit<VideoHistoryItem, 'id'>) => {
+        if (updatedVideo.source.type === 'file') {
+            fileCache.set(id, updatedVideo.source.file);
+        }
+        const updatedVideos = videos.map(v => v.id === id ? { ...updatedVideo, id } : v);
+        persistVideos(updatedVideos);
+        toast({ title: "Sumber Video Diperbarui", description: `"${updatedVideo.name}" telah diperbarui.` });
+    };
+
+    const deleteVideo = (id: string) => {
+        const videoToDelete = videos.find(v => v.id === id);
+        const updatedVideos = videos.filter(v => v.id !== id);
+        
+        fileCache.delete(id);
+        persistVideos(updatedVideos);
+
+        if (id === activeVideoId) {
+            const newActiveId = updatedVideos[0]?.id || null;
+            setActiveVideoIdAndPersist(newActiveId);
+        }
+        toast({ title: "Sumber Video Dihapus", description: `"${videoToDelete?.name}" telah dihapus.` });
+    };
+
+    const setActiveVideoIdAndPersist = (id: string | null) => {
+        localStorage.setItem(ACTIVE_VIDEO_ID_KEY, id || '');
+        setActiveVideoId(id);
+    };
     
+    const analyzeVideo = (id: string) => {
+        const videoToAnalyze = videos.find(v => v.id === id);
+        if (!videoToAnalyze) return;
+
+        if (videoToAnalyze.source.type === 'file' && videoToAnalyze.source.file.size === 0) {
+            toast({
+                title: 'File Tidak Ditemukan',
+                description: 'Unggah kembali file video untuk melanjutkan analisis.',
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        setActiveVideoIdAndPersist(id);
+        toast({ title: 'Analisis Dimulai', description: `Menganalisis "${videoToAnalyze.name}".`});
+        router.push('/');
+    };
+
     const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
-        // If file size is 0, it means it's a dummy file from a restored session.
         if (file.size === 0) {
             reject(new Error("File video tidak ditemukan. Harap unggah kembali file di halaman Riwayat untuk melanjutkan analisis."));
             return;
@@ -145,5 +198,5 @@ export function useVideoHistory() {
         reader.onerror = error => reject(error);
     });
 
-    return { currentVideo, setCurrentVideo, videoSrc, loadVideo, toBase64 };
+    return { videos, activeVideo, videoSrc, addVideo, updateVideo, deleteVideo, analyzeVideo, setActiveVideoId: setActiveVideoIdAndPersist, toBase64 };
 }

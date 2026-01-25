@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -127,7 +125,7 @@ const saveDetection = async (detection: Omit<Detection, 'id' | 'timestamp'>) => 
 
 
 export function TrafficDashboard() {
-  const { currentVideo, videoSrc, loadVideo, toBase64 } = useVideoHistory();
+  const { activeVideo, videoSrc, toBase64 } = useVideoHistory();
   const [status, setStatus] = useState<SystemStatus>('STOPPED');
   const [detectionResult, setDetectionResult] =
     useState<EnhanceLicensePlateRecognitionOutput | null>(null);
@@ -145,30 +143,26 @@ export function TrafficDashboard() {
   const { toast } = useToast();
   const isAnalyzing = status === 'ANALYZING' || status === 'STARTED';
 
-  useEffect(() => {
-    loadVideo();
-  }, [loadVideo]);
-
   // Effect for auto-starting analysis when video changes
   useEffect(() => {
-    if (currentVideo) {
+    if (activeVideo) {
       handleStatusChange('STARTED');
     } else {
       handleStatusChange('STOPPED');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentVideo]);
+  }, [activeVideo]);
 
   // Effect to save detection result to Firestore
   useEffect(() => {
-    if (detectionResult && currentVideo) {
+    if (detectionResult && activeVideo) {
       saveDetection({
         plate: detectionResult.licensePlate,
-        videoName: currentVideo.name,
-        videoId: currentVideo.id,
+        videoName: activeVideo.name,
+        videoId: activeVideo.id,
       });
     }
-  }, [detectionResult, currentVideo]);
+  }, [detectionResult, activeVideo]);
 
 
   // Effect for real-time simulation update
@@ -189,12 +183,12 @@ export function TrafficDashboard() {
         
         anomalyInterval = setInterval(() => {
           if (Math.random() < 0.3) { // 30% chance to generate an anomaly
-            const newAnomaly = generateAnomaly(currentVideo?.name);
+            const newAnomaly = generateAnomaly(activeVideo?.name);
             setAnomalies(prev => [newAnomaly, ...prev].slice(0, 5)); // Keep last 5
           }
         }, 7000); // Check for anomalies every 7 seconds
 
-        if (currentVideo?.source.type === 'url') {
+        if (activeVideo?.source.type === 'url') {
             simulationInterval = setInterval(() => {
                 const mockResult: EnhanceLicensePlateRecognitionOutput = {
                     licensePlate: generateRandomPlate(),
@@ -214,11 +208,11 @@ export function TrafficDashboard() {
       if (dataGenerationInterval) clearInterval(dataGenerationInterval);
       if (anomalyInterval) clearInterval(anomalyInterval);
     };
-  }, [isAnalyzing, currentVideo]);
+  }, [isAnalyzing, activeVideo]);
 
   const handleStatusChange = async (newStatus: SystemStatus) => {
     if (newStatus === 'STARTED') {
-      if (!currentVideo) {
+      if (!activeVideo) {
         toast({
           title: 'Analisis Gagal',
           description:
@@ -231,7 +225,7 @@ export function TrafficDashboard() {
       setDetectionResult(null);
 
       // If it's a URL, start the simulation loop
-      if (currentVideo.source.type === 'url') {
+      if (activeVideo.source.type === 'url') {
         setStatus('ANALYZING');
         toast({
           title: 'Analisis Simulasi Dimulai',
@@ -241,10 +235,10 @@ export function TrafficDashboard() {
       }
 
       // If it's a file, proceed with the actual analysis
-      if (currentVideo.source.type === 'file' && currentVideo.source.file) {
+      if (activeVideo.source.type === 'file' && activeVideo.source.file) {
         setStatus('ANALYZING');
         try {
-          const videoDataUri = await toBase64(currentVideo.source.file);
+          const videoDataUri = await toBase64(activeVideo.source.file);
           const { result, error } = await getEnhancedRecognition({
             videoDataUri,
           });
@@ -345,7 +339,7 @@ export function TrafficDashboard() {
                 <Card>
                   <CardHeader>
                     <CardTitle>
-                      {currentVideo?.name || 'Video Lalu Lintas'}
+                      {activeVideo?.name || 'Video Lalu Lintas'}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -363,7 +357,7 @@ export function TrafficDashboard() {
 
               <div className="lg:col-span-1 flex flex-col gap-6">
                 <ControlStatus
-                  isStartEnabled={!!currentVideo}
+                  isStartEnabled={!!activeVideo}
                   status={status}
                   onStatusChange={handleStatusChange}
                 />

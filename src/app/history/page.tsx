@@ -1,189 +1,227 @@
-
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
-import { VideoUploadForm, VideoUploadFormHandles } from '@/components/dashboard/video-upload-form';
-import { VideoHistoryCard } from '@/components/traffic/video-history-card';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { getEnhancedRecognition } from '@/app/(actions)/enhance-recognition';
-import { DetectionResultCard } from '@/components/dashboard/detection-result-card';
-import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
-import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useVideoHistory, VideoHistoryItem } from '@/hooks/use-video-history';
+import { PlusCircle, MoreHorizontal, Link as LinkIcon, Upload, PlayCircle, Edit, Trash2 } from 'lucide-react';
 
-function getYouTubeEmbedUrl(url: string): string | null {
-    let videoId: string | null = null;
-    try {
-        const urlObj = new URL(url);
-        if (urlObj.hostname === 'youtu.be') {
-            videoId = urlObj.pathname.slice(1);
-        } else if (urlObj.hostname.includes('youtube.com')) {
-            videoId = urlObj.searchParams.get('v');
-        }
-    } catch(e) {
-        // Not a valid URL, but might be a raw embed link
-        return null;
+// Form Schema
+const formSchema = z.object({
+  name: z.string().min(3, { message: "Nama video harus minimal 3 karakter." }),
+  sourceType: z.enum(['file', 'url']),
+  file: z.instanceof(File).optional(),
+  url: z.string().optional(),
+}).superRefine((data, ctx) => {
+    if (data.sourceType === 'url' && (!data.url || !z.string().url().safeParse(data.url).success)) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Harap masukkan URL yang valid.",
+            path: ["url"],
+        });
     }
-    
-    if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
+    if (data.sourceType === 'file' && !data.file) {
+         ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Harap unggah sebuah file video.",
+            path: ["file"],
+        });
     }
-    return null;
+});
+
+type VideoSourceFormValues = z.infer<typeof formSchema>;
+
+
+// The Form component itself
+interface VideoSourceFormProps {
+    onFormSubmit: (values: VideoSourceFormValues) => void;
+    initialData?: VideoHistoryItem | null;
+    setOpen: (open: boolean) => void;
 }
 
-
-export default function HistoryPage() {
-  const { currentVideo, videoSrc, setCurrentVideo, loadVideo, toBase64 } = useVideoHistory();
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [detectionResult, setDetectionResult] = useState<EnhanceLicensePlateRecognitionOutput | null>(null);
-  const { toast } = useToast();
-  const placeholder = PlaceHolderImages.find(img => img.id === 'traffic-feed-detected');
-  const uploadFormRef = useRef<VideoUploadFormHandles>(null);
-
-  useEffect(() => {
-    loadVideo();
-  }, [loadVideo]);
-
-  useEffect(() => {
-    if (currentVideo) {
-      setDetectionResult(null);
-    }
-  }, [currentVideo])
-
-
-  const handleVideoUpload = (videoItem: VideoHistoryItem) => {
-    setCurrentVideo(videoItem);
-    toast({
-        title: "Video Aktif Diperbarui",
-        description: `"${videoItem.name}" telah dijadikan video aktif.`,
+function VideoSourceForm({ onFormSubmit, initialData, setOpen }: VideoSourceFormProps) {
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const form = useForm<VideoSourceFormValues>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            name: initialData?.name || "",
+            sourceType: initialData?.source.type || 'url',
+            file: initialData?.source.type === 'file' ? initialData.source.file : undefined,
+            url: initialData?.source.type === 'url' ? initialData.source.url : "",
+        },
     });
-    if (videoItem.source.type === 'url') {
-      toast({
-        title: "Informasi Fitur",
-        description: "Analisis video dari URL belum didukung. Anda dapat melihat pratinjau video.",
-        variant: "default",
-      });
-    }
-  };
 
-  const handleDeleteCurrentVideo = () => {
-    setCurrentVideo(null);
-    setDetectionResult(null);
-    toast({
-      title: "Video Aktif Dihapus",
-      description: "Video telah dihapus dari sesi ini.",
-    });
-  };
-  
-  const handleAddNew = () => {
-    uploadFormRef.current?.focusNameInput();
-  };
+    const sourceType = form.watch("sourceType");
 
-  const handleAnalyzeVideo = async () => {
-    if (!currentVideo) {
-       toast({
-        title: "Analisis Gagal",
-        description: "Tidak ada video yang aktif.",
-        variant: "destructive",
-      });
-      return;
+    function onSubmit(values: VideoSourceFormValues) {
+        onFormSubmit(values);
+        setOpen(false);
     }
     
-    if (currentVideo.source.type === 'url') {
-      toast({
-        title: "Fitur Belum Didukung",
-        description: "Analisis video dari URL belum didukung. Silakan unggah file video.",
-        variant: "default",
-      });
-      return;
-    }
-
-    if (!currentVideo.source.file) {
-       toast({
-        title: "Analisis Gagal",
-        description: "File video tidak ditemukan.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsAnalyzing(true);
-    setDetectionResult(null);
-
-    try {
-      const videoDataUri = await toBase64(currentVideo.source.file);
-      const { result, error } = await getEnhancedRecognition({ videoDataUri });
-
-      if (error) {
-          toast({
-              title: "Deteksi Gagal",
-              description: error,
-              variant: "destructive",
-          });
-      } else if (result) {
-          toast({
-              title: "Deteksi Berhasil",
-              description: `Plat nomor terdeteksi: ${result.licensePlate}`,
-          });
-          setDetectionResult(result);
-      }
-    } catch (error: any) {
-       toast({
-            title: "Gagal Memproses Video",
-            description: error.message || "Terjadi kesalahan saat membaca file video.",
-            variant: "destructive",
-        });
-    } finally {
-        setIsAnalyzing(false);
-    }
-  };
-  
-  const renderVideoPlayer = () => {
-    if (!videoSrc) {
-        return (
-            <div className="w-full h-full flex items-center justify-center bg-muted relative">
-                {placeholder && (
-                    <Image
-                        src={placeholder.imageUrl}
-                        alt={placeholder.description}
-                        fill
-                        className="object-cover opacity-30"
-                        data-ai-hint={placeholder.imageHint}
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                 <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Nama Lokasi/Video</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Contoh: Lalu Lintas Pagi Hari" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="sourceType"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Tipe Sumber</FormLabel>
+                        <FormControl>
+                            <Tabs value={field.value} onValueChange={(value) => field.onChange(value as 'file' | 'url')} className="w-full">
+                                <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="url">URL</TabsTrigger>
+                                <TabsTrigger value="file">File</TabsTrigger>
+                                </TabsList>
+                            </Tabs>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                
+                {sourceType === 'url' && (
+                    <FormField
+                        control={form.control}
+                        name="url"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>URL Video (YouTube, dll)</FormLabel>
+                            <FormControl>
+                                <div className="relative">
+                                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input placeholder="https://contoh.com/video.mp4" {...field} className="pl-9" />
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
                     />
                 )}
-                <div className="absolute inset-0 flex items-center justify-center p-4">
-                    <p className="text-center text-foreground bg-black/50 p-4 rounded-md">
-                       Pilih atau unggah video untuk memulai.
-                    </p>
-                </div>
-            </div>
-        );
-    }
+
+                {sourceType === 'file' && (
+                     <FormField
+                        control={form.control}
+                        name="file"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>File Video</FormLabel>
+                            <FormControl>
+                            <div>
+                                <Button type="button" size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Pilih File
+                                </Button>
+                                <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="video/*"
+                                onChange={(e) => field.onChange(e.target.files?.[0])}
+                                />
+                                {field.value && <span className="ml-4 text-sm text-muted-foreground truncate">{field.value.name}</span>}
+                            </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                )}
+
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">Batal</Button>
+                    </DialogClose>
+                    <Button type="submit">{initialData ? 'Simpan Perubahan' : 'Tambah Sumber'}</Button>
+                </DialogFooter>
+            </form>
+        </Form>
+    );
+}
+
+// Main Page Component
+export default function HistoryPage() {
+  const { videos, addVideo, updateVideo, deleteVideo, analyzeVideo, activeVideo } = useVideoHistory();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingVideo, setEditingVideo] = useState<VideoHistoryItem | null>(null);
+
+  const handleFormSubmit = (values: VideoSourceFormValues) => {
+    // This assertion is safe because the form schema validates it
+    const file = values.file!;
+    const url = values.url!;
+
+    const videoData: Omit<VideoHistoryItem, 'id'> = {
+        name: values.name,
+        source: values.sourceType === 'url' 
+            ? { type: 'url', url: url } 
+            : { 
+                type: 'file', 
+                file: file, 
+                fileName: file.name,
+                fileType: file.type,
+              }
+    };
     
-    const embedUrl = getYouTubeEmbedUrl(videoSrc);
-
-    if (embedUrl) {
-        return (
-            <iframe
-                src={embedUrl}
-                title="YouTube video player"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full"
-            ></iframe>
-        );
+    if (editingVideo) {
+        updateVideo(editingVideo.id, videoData);
+    } else {
+        addVideo(videoData);
     }
+  };
 
-    // Fallback to standard video player for blob URLs or direct video links
-    return <video src={videoSrc} className="w-full h-full object-cover" controls autoPlay loop muted />;
+  const openEditDialog = (video: VideoHistoryItem) => {
+    setEditingVideo(video);
+    setDialogOpen(true);
+  };
+  
+  const openAddDialog = () => {
+    setEditingVideo(null);
+    setDialogOpen(true);
   };
 
   return (
@@ -193,51 +231,100 @@ export default function HistoryPage() {
         <SidebarInset>
           <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
             <DashboardHeader 
-              title="Penyimpanan Video" 
-              description="Kelola dan analisis kembali video yang telah diunggah." 
+              title="Manajemen Sumber Video"
+              description="Kelola, analisis, dan pratinjau semua sumber video lalu lintas Anda." 
             />
-            <main className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-              <div className="lg:col-span-2 flex flex-col gap-6">
-                <Card>
+            <main className="grid gap-6">
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <Card>
                     <CardHeader>
-                        <CardTitle>{currentVideo?.name || 'Pratinjau Video'}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="aspect-video overflow-hidden rounded-md relative bg-muted">
-                           {renderVideoPlayer()}
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <CardTitle>Daftar Sumber Video</CardTitle>
+                                <CardDescription>Pilih video untuk dianalisis, atau tambahkan sumber baru.</CardDescription>
+                            </div>
+                            <Button onClick={openAddDialog}>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Tambah Sumber Baru
+                            </Button>
                         </div>
-                    </CardContent>
-                </Card>
-                <DetectionResultCard detectionResult={detectionResult} />
-              </div>
-              <div className="lg:col-span-1 flex flex-col gap-6">
-                <VideoUploadForm ref={uploadFormRef} onVideoSelect={handleVideoUpload} />
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Kontrol Analisis</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Button 
-                          onClick={handleAnalyzeVideo} 
-                          disabled={!currentVideo || isAnalyzing || currentVideo.source.type === 'url'} 
-                          className="w-full"
-                          title={currentVideo?.source.type === 'url' ? 'Analisis dari URL belum didukung' : ''}
-                        >
-                            {isAnalyzing ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Menganalisis...
-                                </>
-                            ) : "Mulai Analisis Video"}
-                        </Button>
+                       <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Nama</TableHead>
+                                <TableHead className="hidden md:table-cell">Tipe</TableHead>
+                                <TableHead className="hidden md:table-cell">Status</TableHead>
+                                <TableHead className="text-right">Aksi</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {videos.length > 0 ? videos.map(video => (
+                                <TableRow key={video.id} className={video.id === activeVideo?.id ? 'bg-muted/50' : ''}>
+                                    <TableCell className="font-medium">{video.name}</TableCell>
+                                    <TableCell className="hidden md:table-cell">{video.source.type === 'url' ? 'URL' : 'File'}</TableCell>
+                                    <TableCell className="hidden md:table-cell">{video.id === activeVideo?.id ? 'Aktif' : 'Tidak Aktif'}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="sm" onClick={() => analyzeVideo(video.id)} className="mr-2">
+                                            <PlayCircle className="mr-2 h-4 w-4" /> Analisis
+                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                <span className="sr-only">Buka menu</span>
+                                                <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => openEditDialog(video)}>
+                                                    <Edit className="mr-2 h-4 w-4" /> Sunting
+                                                </DropdownMenuItem>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                            <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Hapus
+                                                        </DropdownMenuItem>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Anda yakin?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                Tindakan ini akan menghapus sumber video "{video.name}" secara permanen.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Batal</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => deleteVideo(video.id)}>Hapus</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            )) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center">
+                                        Belum ada sumber video. Silakan tambahkan satu.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                       </Table>
                     </CardContent>
-                </Card>
-                <VideoHistoryCard 
-                  currentVideo={currentVideo}
-                  onDeleteCurrentVideo={handleDeleteCurrentVideo}
-                  onAddNew={handleAddNew}
-                />
-              </div>
+                  </Card>
+
+                  <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                          <DialogTitle>{editingVideo ? 'Sunting Sumber Video' : 'Tambah Sumber Video Baru'}</DialogTitle>
+                          <DialogDescription>
+                              {editingVideo ? `Perbarui detail untuk "${editingVideo.name}".` : 'Masukkan detail untuk sumber video baru Anda.'}
+                          </DialogDescription>
+                      </DialogHeader>
+                      <VideoSourceForm onFormSubmit={handleFormSubmit} initialData={editingVideo} setOpen={setDialogOpen} />
+                  </DialogContent>
+              </Dialog>
             </main>
           </div>
         </SidebarInset>
