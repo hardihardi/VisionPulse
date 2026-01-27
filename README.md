@@ -1,16 +1,23 @@
 # VisionPulse: Dasbor Analisis Lalu Lintas Cerdas
 
-VisionPulse adalah aplikasi web dasbor analitik canggih yang dirancang untuk memantau, menganalisis, dan melaporkan data lalu lintas secara real-time. Dibangun dengan tumpukan teknologi modern, aplikasi ini memanfaatkan kecerdasan buatan (AI) untuk meningkatkan akurasi deteksi plat nomor dan memberikan ringkasan lalu lintas yang cerdas.
+VisionPulse adalah aplikasi web dasbor analitik canggih yang dirancang untuk memantau, menganalisis, dan melaporkan data lalu lintas secara real-time. Dibangun dengan tumpukan teknologi modern, aplikasi ini memanfaatkan kecerdasan buatan (AI) untuk meningkatkan akurasi deteksi plat nomor, menganalisis video, dan memberikan ringkasan lalu lintas yang cerdas.
+
+Aplikasi ini merupakan prototipe fungsional yang mensimulasikan analisis data lalu lintas dari sumber video file maupun URL, menyajikan hasilnya dalam dasbor yang interaktif dan responsif.
 
 ## Fitur Utama
 
-- **Dasbor Utama**: Tampilan ringkas metrik lalu lintas utama seperti total kendaraan, Satuan Kendaraan Roda Empat (SKR) rata-rata, dan peristiwa anomali.
-- **Analisis Lalu Lintas Real-Time**: Halaman khusus untuk analisis mendalam dari satu umpan video aktif, menampilkan statistik deteksi, volume kendaraan per jenis, dan grafik volume kumulatif.
-- **Umpan Kamera Terpusat**: Galeri yang menampilkan semua umpan kamera lalu lintas yang terhubung dalam bentuk video yang diputar otomatis, dengan penanda visual untuk anomali.
-- **Penyimpanan & Manajemen Video**: Kemampuan untuk mengunggah file video atau menggunakan URL (misalnya, YouTube) sebagai sumber analisis. Sesi video terakhir disimpan untuk kemudahan akses.
-- **Pencarian Plat Nomor Berbasis Database**: Setiap plat nomor yang terdeteksi secara otomatis disimpan ke Firebase Firestore. Halaman pencarian memungkinkan pengguna untuk mencari riwayat deteksi plat nomor di seluruh video.
-- **Ringkasan Lalu Lintas Berbasis AI**: Menggunakan Genkit untuk menghasilkan ringkasan naratif dari pola lalu lintas berdasarkan data numerik.
-- **Desain Responsif & Mode Gelap/Terang**: Antarmuka yang bersih dan modern yang beradaptasi dengan baik di perangkat desktop dan mobile, dengan dukungan tema terang dan gelap.
+-   **Dasbor Analisis Terpadu**: Halaman utama menyajikan antarmuka terpadu untuk analisis video lalu lintas. Menampilkan pemutar video, statistik real-time, dan berbagai panel kontrol dalam satu layar yang efisien.
+-   **Manajemen Sumber Video Fleksibel**: Kelola daftar sumber video Anda dengan mudah. Tambah, sunting, dan hapus sumber video baik dari unggahan file lokal (MP4, AVI) maupun URL (misalnya, YouTube). Riwayat dan video aktif disimpan secara persisten di browser Anda.
+-   **Analisis Video Berbasis AI**:
+    -   **Deteksi Plat Nomor**: Ekstrak nomor plat dari video menggunakan AI. Hasil deteksi akan ditampilkan secara real-time selama analisis berlangsung.
+    -   **Ringkasan Video Cerdas**: Hasilkan laporan analisis terstruktur dari video yang diunggah, mencakup ringkasan naratif, tingkat kepadatan, waktu puncak, dan distribusi jenis kendaraan.
+-   **Visualisasi Data Interaktif**:
+    -   Berbagai grafik seperti *Traffic Counting*, *Moving Average*, *Perbandingan Volume Kendaraan*, dan *Volume Kumulatif* diperbarui secara real-time selama analisis berjalan.
+    -   Semua grafik dapat diekspor sebagai gambar PNG.
+-   **Pencarian Plat Nomor**: Cari riwayat deteksi plat nomor di seluruh video yang tersimpan di database Firebase Firestore.
+-   **Kustomisasi Analisis**: Sesuaikan koefisien SKR (Satuan Kendaraan Roda Empat) untuk setiap jenis kendaraan (Sepeda Motor, Mobil, Bus, Truk, Trailer) untuk analisis yang sesuai dengan standar lokal.
+-   **Ekspor Laporan Lengkap**: Ekspor data agregat dari analisis dalam format XLSX dan CSV untuk pengolahan data lebih lanjut.
+-   **Desain Responsif & Mode Gelap/Terang**: Antarmuka modern yang beradaptasi dengan baik di perangkat desktop dan seluler, dengan dukungan tema terang dan gelap.
 
 ## Tumpukan Teknologi
 
@@ -31,24 +38,21 @@ Struktur folder utama proyek diatur untuk skalabilitas dan keterbacaan.
 ```
 /
 ├── src/
-│   ├── app/                  # Rute aplikasi utama (Pages & Layouts)
-│   │   ├── (actions)/        # Next.js Server Actions (mirip API)
-│   │   ├── api/              # (jika ada) API routes tradisional
-│   │   ├── camera-feeds/     # Halaman Umpan Kamera
-│   │   ├── history/          # Halaman Penyimpanan Video
-│   │   ├── plate-search/     # Halaman Pencarian Plat
-│   │   ├── traffic/          # Halaman Dasbor Lalu Lintas
-│   │   ├── layout.tsx        # Layout root
-│   │   └── page.tsx          # Halaman utama (Dasbor Utama)
+│   ├── app/                  # Rute aplikasi utama
+│   │   ├── (actions)/        # Next.js Server Actions untuk interaksi dengan AI
+│   │   ├── history/          # Halaman Manajemen Sumber Video
+│   │   ├── plate-search/     # Halaman Pencarian Plat Nomor
+│   │   ├── layout.tsx        # Layout root aplikasi
+│   │   └── page.tsx          # Halaman utama (Dasbor Analisis Lalu Lintas)
 │   ├── ai/                   # Konfigurasi dan alur kerja Genkit
-│   │   ├── flows/            # Alur kerja AI (misal: ringkasan, deteksi)
+│   │   ├── flows/            # Alur kerja AI (misal: ringkasan, deteksi plat)
 │   │   └── genkit.ts         # Inisialisasi utama Genkit
 │   ├── components/           # Komponen React yang dapat digunakan kembali
-│   │   ├── dashboard/        # Komponen khusus untuk dasbor
-│   │   ├── layout/           # Komponen layout (misal: sidebar)
-│   │   ├── traffic/          # Komponen khusus untuk analisis lalu lintas
+│   │   ├── dashboard/        # Komponen-komponen pendukung dasbor
+│   │   ├── layout/           # Komponen layout (misal: sidebar, theme-toggle)
+│   │   ├── traffic/          # Komponen utama untuk dasbor analisis lalu lintas
 │   │   └── ui/               # Komponen UI dari ShadCN (Button, Card, dll.)
-│   ├── hooks/                # Custom React Hooks (misal: useVideoHistory)
+│   ├── hooks/                # Custom React Hooks (misal: useVideoHistory, useToast)
 │   ├── lib/                  # Fungsi utilitas, definisi tipe, dan konfigurasi
 │   │   ├── data.ts           # Fungsi untuk menghasilkan data simulasi
 │   │   ├── firebase.ts       # Konfigurasi dan inisialisasi Firebase
@@ -101,7 +105,7 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=project-id.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
 NEXT_PUBLIC_FIREBASE_APP_ID=...
 ```
-File konfigurasi Firebase juga perlu diperbarui di `src/lib/firebase.ts`.
+File konfigurasi Firebase juga perlu diperbarui di `src/lib/firebase.ts` jika Anda tidak menggunakan variabel lingkungan.
 
 ### 4. Jalankan Server Pengembangan
 
