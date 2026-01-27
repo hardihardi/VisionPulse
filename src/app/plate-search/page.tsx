@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { collection, query, where, getDocs, orderBy, limit, startAfter, getDocsFromServer } from 'firebase/firestore';
+import { collection, query, where, getDocsFromServer, orderBy, limit } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import type { Detection } from '@/lib/types';
 import { format } from 'date-fns';
@@ -37,7 +37,7 @@ export default function PlateSearchPage() {
       try {
         const detectionsRef = collection(firestore, 'detections');
         const q = query(detectionsRef, orderBy('timestamp', 'desc'), limit(10));
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocsFromServer(q);
         const latestDetections = querySnapshot.docs
           .map(doc => {
             const data = doc.data();
@@ -85,7 +85,7 @@ export default function PlateSearchPage() {
         orderBy('timestamp', 'desc')
       );
       
-      const querySnapshot = await getDocs(q);
+      const querySnapshot = await getDocsFromServer(q);
       const searchResults = querySnapshot.docs
         .map(doc => {
           const data = doc.data();
