@@ -1,7 +1,6 @@
 # VisionPulse: Dasbor Analisis Lalu Lintas Cerdas
 
-VisionPulse adalah aplikasi web dasbor analitik canggih yang dirancang untuk memantau, menganalisis, dan melaporkan data lalu lintas secara real-time. Dibangun dengan tumpukan teknologi modern, aplikasi ini memanfaatkan kecerdasan buatan (AI) untuk meningkatkan akurasi deteksi plat nomor, menganalisis video, dan memberikan ringkasan lalu lintas yang cerdas.
-
+s
 Aplikasi ini merupakan prototipe fungsional yang mensimulasikan analisis data lalu lintas dari sumber video file maupun URL, menyajikan hasilnya dalam dasbor yang interaktif dan responsif.
 
 ## Fitur Utama
