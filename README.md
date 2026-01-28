@@ -1,6 +1,5 @@
 # VisionPulse: Dasbor Analisis Lalu Lintas Cerdas
 
-s
 Aplikasi ini merupakan prototipe fungsional yang mensimulasikan analisis data lalu lintas dari sumber video file maupun URL, menyajikan hasilnya dalam dasbor yang interaktif dan responsif.
 
 ## Fitur Utama
