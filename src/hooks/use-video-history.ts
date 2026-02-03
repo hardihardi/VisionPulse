@@ -62,10 +62,10 @@ export function useVideoHistory() {
                  // If no videos, add the default demo video
                 const defaultVideo: VideoHistoryItem = {
                     id: 'default-youtube-video',
-                    name: 'Live Demo - Bundaran HI',
+                    name: 'Live Demo - Lalu Lintas Cikarang',
                     source: {
                         type: 'url',
-                        url: 'https://youtu.be/aGfshu1UFd0'
+                        url: 'https://youtu.be/xrX2IqMyb-8'
                     }
                 };
                 loadedVideos.push(defaultVideo);
