@@ -8,7 +8,6 @@ import {
 } from 'react';
 import {
   Bar,
-  BarChart,
   XAxis,
   YAxis,
   Tooltip,
@@ -26,8 +25,8 @@ const generateMovingAverageData = () => {
   const now = new Date();
   for (let i = 5; i >= 0; i--) {
     const hour = new Date(now.getTime() - i * 60 * 60 * 1000);
-    const mendekat = Math.random() * 0.2 + 0.2; // Generates number between 0.2 and 0.4
-    const menjauh = Math.random() * 0.2 + 0.3; // Generates number between 0.3 and 0.5
+    const mendekat = 0;
+    const menjauh = 0;
     data.push({
       name: `${String(hour.getHours()).padStart(2, '0')}:00`,
       pcuMendekat: mendekat,
@@ -40,26 +39,42 @@ const generateMovingAverageData = () => {
 
 interface MovingAverageChartProps {
   isAnalyzing: boolean;
+  backendStats: any;
 }
 
 export const MovingAverageChart = forwardRef<HTMLDivElement, MovingAverageChartProps>(
-  ({ isAnalyzing }, ref) => {
+  ({ isAnalyzing, backendStats }, ref) => {
     const [chartData, setChartData] = useState(generateMovingAverageData());
 
     useEffect(() => {
-      let interval: NodeJS.Timeout | undefined;
-      if (isAnalyzing) {
-        interval = setInterval(() => {
-          setChartData(generateMovingAverageData());
-        }, 5000); // Update data every 5 seconds
-      } else {
-          setChartData([]);
-      }
+        if (!isAnalyzing) {
+            setChartData([]);
+            return;
+        }
 
-      return () => {
-        if (interval) clearInterval(interval);
-      };
-    }, [isAnalyzing]);
+        if (backendStats && backendStats.moving_average_skr) {
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+            const newEntry = {
+                name: timeStr,
+                pcuMendekat: backendStats.moving_average_skr.Mendekat,
+                pcuMenjauh: backendStats.moving_average_skr.Menjauh,
+                pcuTotal: backendStats.moving_average_skr.Mendekat + backendStats.moving_average_skr.Menjauh,
+            };
+
+            setChartData(prev => {
+                if (prev.length === 0) return [newEntry];
+                // Update last entry if same minute, or append
+                if (prev[prev.length - 1].name === timeStr) {
+                    const updated = [...prev];
+                    updated[updated.length - 1] = newEntry;
+                    return updated;
+                }
+                return [...prev.slice(-11), newEntry];
+            });
+        }
+    }, [isAnalyzing, backendStats]);
 
     return (
       <Card ref={ref}>
@@ -98,7 +113,6 @@ export const MovingAverageChart = forwardRef<HTMLDivElement, MovingAverageChartP
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                domain={[0, 1.0]}
               />
               <Tooltip
                 contentStyle={{

@@ -135,6 +135,7 @@ export function TrafficDashboard() {
   const [pcuCoefficients, setPcuCoefficients] =
     useState<PcuCoefficients>(initialCoefficients);
   const [trafficCountData, setTrafficCountData] = useState<any[]>([]);
+  const [backendStats, setBackendStats] = useState<any>(null);
   const placeholder = PlaceHolderImages.find(
     (img) => img.id === 'traffic-feed-detected'
   );
@@ -144,6 +145,7 @@ export function TrafficDashboard() {
 
   const { toast } = useToast();
   const isAnalyzing = status === 'ANALYZING' || status === 'STARTED';
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
   // Effect for auto-starting analysis when video changes
   useEffect(() => {
@@ -167,28 +169,53 @@ export function TrafficDashboard() {
   }, [detectionResult, activeVideo]);
 
 
-  // Effect for real-time simulation update
+  // Effect for real-time simulation and backend update
   useEffect(() => {
     let simulationInterval: NodeJS.Timeout | undefined;
-    let dataGenerationInterval: NodeJS.Timeout | undefined;
+    let backendInterval: NodeJS.Timeout | undefined;
     let anomalyInterval: NodeJS.Timeout | undefined;
 
     if (isAnalyzing) {
-        // Run once at the beginning
-        setTrafficCountData(generateTrafficCountData());
         setAnomalies([]);
 
-        // Then set an interval
-        dataGenerationInterval = setInterval(() => {
-            setTrafficCountData(generateTrafficCountData());
-        }, 5000); // Update data every 5 seconds
+        backendInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`${BACKEND_URL}/traffic-stats`);
+                const data = await response.json();
+                setBackendStats(data.stats);
+
+                // Construct trafficCountData from backend stats for the chart
+                const now = new Date();
+                const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
+                const entry = {
+                    name: timeStr,
+                    'Mobil (M)': data.stats.counts.Mendekat.car || 0,
+                    'Bus (M)': data.stats.counts.Mendekat.bus || 0,
+                    'Truk (M)': data.stats.counts.Mendekat.truck || 0,
+                    'Sepeda Motor (M)': data.stats.counts.Mendekat.motorcycle || 0,
+                    'Trailer (M)': 0,
+                    'Mobil (J)': data.stats.counts.Menjauh.car || 0,
+                    'Bus (J)': data.stats.counts.Menjauh.bus || 0,
+                    'Truk (J)': data.stats.counts.Menjauh.truck || 0,
+                    'Sepeda Motor (J)': data.stats.counts.Menjauh.motorcycle || 0,
+                    'Trailer (J)': 0,
+                    'Total Mendekat': Object.values(data.stats.counts.Mendekat).reduce((a: any, b: any) => a + b, 0),
+                    'Total Menjauh': Object.values(data.stats.counts.Menjauh).reduce((a: any, b: any) => a + b, 0),
+                };
+
+                setTrafficCountData(prev => [...prev.slice(-9), entry]);
+            } catch (error) {
+                console.error("Error fetching stats:", error);
+            }
+        }, 2000);
         
         anomalyInterval = setInterval(() => {
-          if (Math.random() < 0.3) { // 30% chance to generate an anomaly
+          if (Math.random() < 0.1) { // Reduced chance as it's real data now
             const newAnomaly = generateAnomaly(activeVideo?.name);
             setAnomalies(prev => [newAnomaly, ...prev].slice(0, 5)); // Keep last 5
           }
-        }, 7000); // Check for anomalies every 7 seconds
+        }, 10000);
 
         if (activeVideo?.source.type === 'url') {
             simulationInterval = setInterval(() => {
@@ -198,16 +225,17 @@ export function TrafficDashboard() {
                     accuracyAchieved: `${(Math.random() * (99 - 85) + 85).toFixed(2)}%`,
                 };
                 setDetectionResult(mockResult);
-            }, 4000); // Update every 4 seconds
+            }, 10000);
         }
     } else {
         setTrafficCountData([]); // Clear data when stopped
         setAnomalies([]);
+        setBackendStats(null);
     }
 
     return () => {
       if (simulationInterval) clearInterval(simulationInterval);
-      if (dataGenerationInterval) clearInterval(dataGenerationInterval);
+      if (backendInterval) clearInterval(backendInterval);
       if (anomalyInterval) clearInterval(anomalyInterval);
     };
   }, [isAnalyzing, activeVideo]);
@@ -227,20 +255,37 @@ export function TrafficDashboard() {
       setDetectionResult(null);
       setAnalysisInputUri(null);
 
-      // If it's a URL, start the simulation loop
+      // Connect to Backend
       if (activeVideo.source.type === 'url') {
-        setStatus('ANALYZING');
-        toast({
-          title: 'Analisis Simulasi Dimulai',
-          description: `Memulai pemantauan real-time dari stream URL.`,
-        });
+          setStatus('ANALYZING');
+          try {
+              await fetch(`${BACKEND_URL}/process-url`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ url: activeVideo.source.url })
+              });
+              toast({
+                  title: 'Analisis Backend Dimulai',
+                  description: `Memulai pemantauan real-time dari stream URL.`,
+              });
+          } catch (e) {
+              toast({ title: 'Gagal Terhubung ke Backend', variant: 'destructive' });
+          }
         return;
       }
 
-      // If it's a file, proceed with the actual analysis
+      // If it's a file
       if (activeVideo.source.type === 'file' && activeVideo.source.file) {
         setStatus('ANALYZING');
         try {
+          const formData = new FormData();
+          formData.append('video', activeVideo.source.file);
+
+          fetch(`${BACKEND_URL}/upload-video`, {
+              method: 'POST',
+              body: formData
+          });
+
           const videoUri = await toBase64(activeVideo.source.file);
           setAnalysisInputUri(videoUri);
           
@@ -254,21 +299,15 @@ export function TrafficDashboard() {
               description: error,
               variant: 'destructive',
             });
-            setStatus('STOPPED');
+            // We don't stop here because the backend might still be processing the video for traffic
           } else if (result) {
-            toast({
-              title: 'Deteksi Berhasil',
-              description: `Plat nomor terdeteksi: ${result.licensePlate}`,
-            });
             setDetectionResult(result);
-            setStatus('STARTED'); // Analysis complete for file
           }
+          setStatus('STARTED');
         } catch (error: any) {
           toast({
             title: 'Gagal Memproses Video',
-            description:
-              error.message ||
-              'File video tidak ditemukan atau rusak. Silakan unggah kembali di halaman Riwayat.',
+            description: 'Terjadi kesalahan saat memulai analisis backend.',
             variant: 'destructive',
           });
           setStatus('STOPPED');
@@ -278,6 +317,7 @@ export function TrafficDashboard() {
       setStatus('STOPPED');
       setDetectionResult(null);
       setAnalysisInputUri(null);
+      fetch(`${BACKEND_URL}/stop`, { method: 'POST' });
     }
   };
 
@@ -300,6 +340,16 @@ export function TrafficDashboard() {
                     </p>
                 </div>
             </div>
+        );
+    }
+
+    if (isAnalyzing) {
+        return (
+            <img
+                src={`${BACKEND_URL}/stream?t=${new Date().getTime()}`}
+                className="w-full h-full object-contain bg-black"
+                alt="Traffic Stream"
+            />
         );
     }
 
@@ -355,7 +405,7 @@ export function TrafficDashboard() {
                   </CardContent>
                 </Card>
                 <TrafficCountingChart ref={trafficCountingChartRef} isAnalyzing={isAnalyzing} chartData={trafficCountData} />
-                <MovingAverageChart ref={movingAverageChartRef} isAnalyzing={isAnalyzing} />
+                <MovingAverageChart ref={movingAverageChartRef} isAnalyzing={isAnalyzing} backendStats={backendStats} />
                 <VehicleComparisonChart ref={vehicleComparisonChartRef} isAnalyzing={isAnalyzing} />
                 <CumulativeVolumeChart isAnalyzing={isAnalyzing} />
               </div>
@@ -377,6 +427,7 @@ export function TrafficDashboard() {
                 <VehicleVolume
                   isAnalyzing={isAnalyzing}
                   coefficients={pcuCoefficients}
+                  backendStats={backendStats}
                 />
                 <PcuCoefficient
                   coefficients={pcuCoefficients}

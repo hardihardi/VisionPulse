@@ -9,6 +9,7 @@ import type { VehicleStats, PcuCoefficients } from '@/lib/types';
 interface VehicleVolumeProps {
     isAnalyzing: boolean;
     coefficients: PcuCoefficients;
+    backendStats: any;
 }
 
 const initialStats: Record<keyof PcuCoefficients, VehicleStats> = {
@@ -22,61 +23,58 @@ const initialStats: Record<keyof PcuCoefficients, VehicleStats> = {
 const vehicleOrder: (keyof PcuCoefficients)[] = ['mobil', 'bus', 'truk', 'sepedaMotor', 'trailer'];
 
 
-export function VehicleVolume({ isAnalyzing, coefficients }: VehicleVolumeProps) {
+export function VehicleVolume({ isAnalyzing, coefficients, backendStats }: VehicleVolumeProps) {
     const [stats, setStats] = useState(initialStats);
     const [totals, setTotals] = useState({ totalKendaraan: 0, totalPcu: 0.0 });
     const [processingTime, setProcessingTime] = useState(0);
 
     useEffect(() => {
-        let statsInterval: NodeJS.Timeout | undefined;
         let timerInterval: NodeJS.Timeout | undefined;
 
         if (isAnalyzing) {
-            setProcessingTime(0);
-            setStats(initialStats);
-            setTotals({ totalKendaraan: 0, totalPcu: 0.0 });
-
-
             timerInterval = setInterval(() => {
                 setProcessingTime(prev => prev + 1);
             }, 1000);
-
-            statsInterval = setInterval(() => {
-                setStats(prevStats => {
-                    const newStats = { ...prevStats };
-                    
-                    vehicleOrder.forEach(key => {
-                        newStats[key] = {
-                            ...newStats[key],
-                            count: newStats[key].count + Math.floor(Math.random() * 3),
-                        };
-                    });
-                    
-                    return newStats;
-                });
-            }, 2500);
         } else {
             setProcessingTime(0);
             setStats(initialStats);
-             setTotals({ totalKendaraan: 0, totalPcu: 0.0 });
+            setTotals({ totalKendaraan: 0, totalPcu: 0.0 });
         }
 
         return () => {
-            if (statsInterval) clearInterval(statsInterval);
             if (timerInterval) clearInterval(timerInterval);
         };
     }, [isAnalyzing]);
 
 
     useEffect(() => {
-        const newStats = { ...stats };
+        if (!backendStats) return;
+
+        const newStats = { ...initialStats };
         let totalKendaraan = 0;
         let totalPcu = 0.0;
 
+        const mapping: any = {
+            mobil: 'car',
+            bus: 'bus',
+            truk: 'truck',
+            sepedaMotor: 'motorcycle',
+            trailer: 'trailer'
+        };
+
         vehicleOrder.forEach(key => {
-            const pcuValue = newStats[key].count * coefficients[key];
-            newStats[key].pcu = pcuValue;
-            totalKendaraan += newStats[key].count;
+            const backendKey = mapping[key];
+            const mCount = backendStats.counts.Mendekat[backendKey] || 0;
+            const jCount = backendStats.counts.Menjauh[backendKey] || 0;
+            const count = mCount + jCount;
+
+            const pcuValue = count * coefficients[key];
+            newStats[key] = {
+                ...initialStats[key],
+                count: count,
+                pcu: pcuValue
+            };
+            totalKendaraan += count;
             totalPcu += pcuValue;
         });
 
@@ -86,7 +84,7 @@ export function VehicleVolume({ isAnalyzing, coefficients }: VehicleVolumeProps)
         
         setStats(newStats);
         setTotals({ totalKendaraan, totalPcu });
-    }, [stats.mobil.count, coefficients]); // Depend on a changing stat and coefficients
+    }, [backendStats, coefficients]);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
