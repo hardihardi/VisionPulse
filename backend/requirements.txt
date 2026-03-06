@@ -1,7 +1,9 @@
-flask
+Flask
 flask-cors
 opencv-python-headless
 ultralytics
+pandas
+openpyxl
 yt-dlp
-werkzeug
 requests
+pillow
