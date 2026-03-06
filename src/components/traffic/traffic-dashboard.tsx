@@ -406,8 +406,8 @@ export function TrafficDashboard() {
                 </Card>
                 <TrafficCountingChart ref={trafficCountingChartRef} isAnalyzing={isAnalyzing} chartData={trafficCountData} />
                 <MovingAverageChart ref={movingAverageChartRef} isAnalyzing={isAnalyzing} backendStats={backendStats} />
-                <VehicleComparisonChart ref={vehicleComparisonChartRef} isAnalyzing={isAnalyzing} />
-                <CumulativeVolumeChart isAnalyzing={isAnalyzing} />
+                <VehicleComparisonChart ref={vehicleComparisonChartRef} isAnalyzing={isAnalyzing} backendStats={backendStats} />
+                <CumulativeVolumeChart isAnalyzing={isAnalyzing} backendStats={backendStats} />
               </div>
 
               <div className="lg:col-span-1 flex flex-col gap-6">
@@ -422,7 +422,7 @@ export function TrafficDashboard() {
                   analysisInputUri={analysisInputUri} 
                   sourceType={activeVideo?.source.type ?? null}
                 />
-                <RealtimeDetectionStats isAnalyzing={isAnalyzing} />
+                <RealtimeDetectionStats isAnalyzing={isAnalyzing} backendStats={backendStats} />
                 <AnomalyDetectionCard anomalies={anomalies} isAnalyzing={isAnalyzing} />
                 <VehicleVolume
                   isAnalyzing={isAnalyzing}

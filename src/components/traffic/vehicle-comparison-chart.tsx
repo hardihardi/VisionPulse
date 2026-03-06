@@ -14,11 +14,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const initialChartData = [
-    { name: '08-09' }, { name: '09-10' }, { name: '10-11' },
-    { name: '11-12' }, { name: '12-13' }, { name: '13-14' },
-];
-
 const vehicleTypes = {
   'SepedaMotor': 'Sepeda Motor',
   'Mobil': 'Mobil',
@@ -27,71 +22,64 @@ const vehicleTypes = {
   'Trailer': 'Trailer'
 };
 
-type VehicleTypeKey = keyof typeof vehicleTypes | 'Semua';
-
-const generateRandomData = () => {
-    return initialChartData.map(item => {
-        const normalData: { [key: string]: number } = { 'Semua': 0 };
-        const oppositeData: { [key: string]: number } = { 'Semua': 0 };
-        
-        let normalTotal = 0;
-        let oppositeTotal = 0;
-
-        Object.keys(vehicleTypes).forEach(key => {
-            const normalVal = Math.floor(Math.random() * 200) + 20;
-            const oppositeVal = Math.floor(Math.random() * 200) + 20;
-            normalData[key] = normalVal;
-            oppositeData[key] = oppositeVal;
-            normalTotal += normalVal;
-            oppositeTotal += oppositeVal;
-        });
-
-        normalData['Semua'] = normalTotal;
-        oppositeData['Semua'] = oppositeTotal;
-        
-        return {
-            ...item,
-            Normal: normalData,
-            Opposite: oppositeData,
-        };
-    });
+const mapping: any = {
+    'SepedaMotor': 'motorcycle',
+    'Mobil': 'car',
+    'Bus': 'bus',
+    'Truk': 'truck',
+    'Trailer': 'trailer'
 };
+
+type VehicleTypeKey = keyof typeof vehicleTypes | 'Semua';
 
 type DirectionFilterType = 'Semua' | 'Normal' | 'Opposite';
 
 interface VehicleComparisonChartProps {
   isAnalyzing: boolean;
+  backendStats?: any;
 }
 
 export const VehicleComparisonChart = forwardRef<HTMLDivElement, VehicleComparisonChartProps>(
-  ({ isAnalyzing }, ref) => {
-    const [rawData, setRawData] = useState(generateRandomData());
+  ({ isAnalyzing, backendStats }, ref) => {
+    const [chartData, setChartData] = useState<any[]>([]);
     const [directionFilter, setDirectionFilter] = useState<DirectionFilterType>('Semua');
     const [vehicleFilter, setVehicleFilter] = useState<VehicleTypeKey>('Semua');
 
     useEffect(() => {
-      let interval: NodeJS.Timeout | undefined;
-      if (isAnalyzing) {
-        interval = setInterval(() => {
-          setRawData(generateRandomData());
-        }, 5000); 
-      } else {
-        setRawData([]);
-      }
+        if (!isAnalyzing) {
+            setChartData([]);
+            return;
+        }
 
-      return () => {
-        if (interval) clearInterval(interval);
-      };
-    }, [isAnalyzing]);
+        if (backendStats && backendStats.counts) {
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-    const chartData = useMemo(() => {
-      if (!isAnalyzing) return [];
-      return rawData.map(item => ({
-        name: item.name,
-        Normal: item.Normal[vehicleFilter],
-        Opposite: item.Opposite[vehicleFilter],
-      }));
-    }, [rawData, vehicleFilter, isAnalyzing]);
+            const getVal = (direction: 'Mendekat' | 'Menjauh', vKey: VehicleTypeKey) => {
+                if (vKey === 'Semua') {
+                    return Object.values(backendStats.counts[direction]).reduce((a: any, b: any) => a + b, 0) as number;
+                }
+                return backendStats.counts[direction][mapping[vKey]] || 0;
+            };
+
+            const newEntry = {
+                name: timeStr,
+                Normal: getVal('Mendekat', vehicleFilter),
+                Opposite: getVal('Menjauh', vehicleFilter),
+            };
+
+            setChartData(prev => {
+                if (prev.length === 0) return [newEntry];
+                const last = prev[prev.length - 1];
+                if (last.name === timeStr) {
+                    const updated = [...prev];
+                    updated[updated.length - 1] = newEntry;
+                    return updated;
+                }
+                return [...prev.slice(-5), newEntry];
+            });
+        }
+    }, [isAnalyzing, backendStats, vehicleFilter]);
     
     const vehicleTypeLabel = vehicleFilter === 'Semua' ? 'Semua Kendaraan' : vehicleTypes[vehicleFilter as keyof typeof vehicleTypes];
 
@@ -99,10 +87,10 @@ export const VehicleComparisonChart = forwardRef<HTMLDivElement, VehicleComparis
       <Card ref={ref}>
         <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <CardTitle>Perbandingan Volume Kendaraan (kend./jam)</CardTitle>
+            <CardTitle>Perbandingan Volume Kendaraan (Kumulatif)</CardTitle>
             <CardDescription>
               {isAnalyzing
-                ? `Perbandingan volume lalu lintas untuk: ${vehicleTypeLabel}`
+                ? `Perbandingan volume kumulatif untuk: ${vehicleTypeLabel}`
                 : "Mulai analisis untuk melihat data."
               }
             </CardDescription>
@@ -144,14 +132,14 @@ export const VehicleComparisonChart = forwardRef<HTMLDivElement, VehicleComparis
                   fontSize={12} 
                   tickLine={false} 
                   axisLine={false} 
-                  label={{ value: 'Jam', position: 'insideBottom', offset: -5, fill: 'hsl(var(--muted-foreground))' }}
+                  label={{ value: 'Waktu', position: 'insideBottom', offset: -5, fill: 'hsl(var(--muted-foreground))' }}
               />
               <YAxis 
                   stroke="hsl(var(--muted-foreground))" 
                   fontSize={12} 
                   tickLine={false} 
                   axisLine={false} 
-                  label={{ value: 'Volume (kend./jam)', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }}
+                  label={{ value: 'Volume (kend.)', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }}
               />
               <Tooltip
                 contentStyle={{
@@ -162,10 +150,10 @@ export const VehicleComparisonChart = forwardRef<HTMLDivElement, VehicleComparis
               />
               <Legend />
               {(directionFilter === 'Semua' || directionFilter === 'Normal') && (
-                  <Bar dataKey="Normal" name="Arah Normal" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Normal" name="Mendekat" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} isAnimationActive={false} />
               )}
               {(directionFilter === 'Semua' || directionFilter === 'Opposite') && (
-                  <Bar dataKey="Opposite" name="Arah Opposite" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Opposite" name="Menjauh" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} isAnimationActive={false} />
               )}
             </BarChart>
           </ResponsiveContainer>
