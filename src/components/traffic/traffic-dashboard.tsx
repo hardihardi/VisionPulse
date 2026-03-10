@@ -337,7 +337,7 @@ export function TrafficDashboard() {
         <SidebarInset>
           <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
             <DashboardHeader
-              title="Dasbor Lalu Lintas"
+              title="Dashboard"
               description="Pemantauan dan kontrol sistem lalu lintas real-time."
             />
             <main className="grid gap-6 grid-cols-1 lg:grid-cols-4">
