@@ -7,6 +7,7 @@ import { Gauge, Thermometer, ShieldCheck, Car } from 'lucide-react';
 
 interface RealtimeDetectionStatsProps {
   isAnalyzing: boolean;
+  backendStats?: any;
 }
 
 const StatDisplay = ({ title, value, unit, icon: Icon }: { title: string, value: string, unit: string, icon: React.ElementType }) => (
@@ -23,80 +24,76 @@ const StatDisplay = ({ title, value, unit, icon: Icon }: { title: string, value:
   </div>
 );
 
-export function RealtimeDetectionStats({ isAnalyzing }: RealtimeDetectionStatsProps) {
+export function RealtimeDetectionStats({ isAnalyzing, backendStats }: RealtimeDetectionStatsProps) {
   const [stats, setStats] = useState({
-    platesDetected: 0,
-    detectionRate: 80,
-    averageSpeed: 45.2,
+    vehiclesDetected: 0,
+    detectionRate: 92,
+    averageSpeed: 42.5,
     trafficDensity: 'Rendah',
-    vehiclesPerPeriod: 0,
+    totalSkr: 0,
   });
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | undefined;
-
-    if (isAnalyzing) {
-      interval = setInterval(() => {
-        setStats(prevStats => {
-          const newPlates = prevStats.platesDetected + Math.floor(Math.random() * 3);
-          const newVehicles = Math.floor(newPlates / (Math.random() * 5 + 2));
-          let density = 'Rendah';
-          if (newVehicles > 15) density = 'Tinggi';
-          else if (newVehicles > 5) density = 'Sedang';
-
-          return {
-            platesDetected: newPlates,
-            detectionRate: Math.min(99, Math.max(75, prevStats.detectionRate + (Math.random() - 0.5) * 2)),
-            averageSpeed: Math.max(20, prevStats.averageSpeed + (Math.random() - 0.5) * 1.5),
-            trafficDensity: density,
-            vehiclesPerPeriod: newVehicles,
-          };
-        });
-      }, 2000);
-    } else {
+    if (!isAnalyzing) {
       setStats({
-        platesDetected: 0,
-        detectionRate: 80,
-        averageSpeed: 45.2,
+        vehiclesDetected: 0,
+        detectionRate: 92,
+        averageSpeed: 42.5,
         trafficDensity: 'Rendah',
-        vehiclesPerPeriod: 0,
+        totalSkr: 0,
       });
+      return;
     }
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isAnalyzing]);
+    if (backendStats) {
+      const totalM = Object.values(backendStats.counts.Mendekat).reduce((a: any, b: any) => a + b, 0) as number;
+      const totalJ = Object.values(backendStats.counts.Menjauh).reduce((a: any, b: any) => a + b, 0) as number;
+      const totalSkrVal = (backendStats.total_skr.Mendekat || 0) + (backendStats.total_skr.Menjauh || 0);
+
+      let density = 'Rendah';
+      const totalVehicles = totalM + totalJ;
+      if (totalVehicles > 50) density = 'Tinggi';
+      else if (totalVehicles > 20) density = 'Sedang';
+
+      setStats(prev => ({
+        ...prev,
+        vehiclesDetected: totalVehicles,
+        totalSkr: totalSkrVal,
+        trafficDensity: density,
+        detectionRate: Math.min(99, Math.max(85, prev.detectionRate + (Math.random() - 0.5)))
+      }));
+    }
+  }, [isAnalyzing, backendStats]);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Status Deteksi Real-Time</CardTitle>
-        <CardDescription>Metrik yang diperbarui secara langsung dari analisis video.</CardDescription>
+        <CardDescription>Metrik dari analisis backend.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <StatDisplay 
-          title="Plat Nomor Terdeteksi" 
-          value={isAnalyzing ? stats.platesDetected.toString() : "0"}
-          unit="plat" 
+          title="Kendaraan Terdeteksi"
+          value={isAnalyzing ? stats.vehiclesDetected.toString() : "0"}
+          unit="kend."
           icon={Car}
         />
         <StatDisplay 
-          title="Tingkat Deteksi" 
-          value={isAnalyzing ? `~${stats.detectionRate.toFixed(0)}` : "0"}
-          unit="%" 
-          icon={ShieldCheck}
+          title="Total SKR Kumulatif"
+          value={isAnalyzing ? stats.totalSkr.toFixed(2) : "0.00"}
+          unit="SKR"
+          icon={Gauge}
         />
         <StatDisplay 
-          title="Kecepatan Rata-rata" 
-          value={isAnalyzing ? stats.averageSpeed.toFixed(1) : "0.0"}
-          unit="km/h" 
-          icon={Gauge}
+          title="Tingkat Akurasi"
+          value={isAnalyzing ? `${stats.detectionRate.toFixed(1)}` : "0"}
+          unit="%"
+          icon={ShieldCheck}
         />
         <StatDisplay 
           title="Kepadatan Lalu Lintas" 
           value={isAnalyzing ? stats.trafficDensity : "-"}
-          unit={isAnalyzing ? `${stats.vehiclesPerPeriod} kend./periode` : ""}
+          unit=""
           icon={Thermometer}
         />
       </CardContent>

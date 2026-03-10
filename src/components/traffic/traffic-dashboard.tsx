@@ -27,7 +27,12 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { generateAnomaly } from '@/lib/data';
 import { AnomalyDetectionCard } from './anomaly-detection-card';
 import { AiTrafficAnalysisCard } from './ai-traffic-analysis-card';
-
+import { TrafficLog } from './traffic-log';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, RefreshCw, LayoutDashboard, BarChart3, Settings, ListTodo, Activity } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '../ui/badge';
 
 const initialCoefficients: PcuCoefficients = {
   sepedaMotor: 0.25,
@@ -36,44 +41,6 @@ const initialCoefficients: PcuCoefficients = {
   truk: 2.0,
   trailer: 2.5,
 };
-
-const generateTrafficCountData = () => {
-    const data = [];
-    const periods = ['00:00-00:15', '00:15-00:30', '00:30-00:45', '00:45-01:00'];
-    
-    for (const period of periods) {
-        const mobilM = Math.floor(Math.random() * 20);
-        const busM = Math.floor(Math.random() * 5);
-        const trukM = Math.floor(Math.random() * 8);
-        const motorM = Math.floor(Math.random() * 30);
-        const trailerM = Math.floor(Math.random() * 4);
-        
-        const mobilJ = Math.floor(Math.random() * 18);
-        const busJ = Math.floor(Math.random() * 4);
-        const trukJ = Math.floor(Math.random() * 7);
-        const motorJ = Math.floor(Math.random() * 25);
-        const trailerJ = Math.floor(Math.random() * 3);
-
-        const entry: { [key: string]: any } = { 
-            name: period,
-            'Mobil (M)': mobilM,
-            'Bus (M)': busM,
-            'Truk (M)': trukM,
-            'Sepeda Motor (M)': motorM,
-            'Trailer (M)': trailerM,
-            'Mobil (J)': mobilJ,
-            'Bus (J)': busJ,
-            'Truk (J)': trukJ,
-            'Sepeda Motor (J)': motorJ,
-            'Trailer (J)': trailerJ,
-            'Total Mendekat': mobilM + busM + trukM + motorM + trailerM,
-            'Total Menjauh': mobilJ + busJ + trukJ + motorJ + trailerJ,
-        };
-        
-        data.push(entry);
-    }
-    return data;
-}
 
 function getYouTubeEmbedUrl(url: string): string | null {
   let videoId: string | null = null;
@@ -87,33 +54,12 @@ function getYouTubeEmbedUrl(url: string): string | null {
   } catch (e) {
     return null;
   }
-
-  if (videoId) {
-    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
-  }
+  if (videoId) return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
   return null;
 }
 
-// Function to generate a random Indonesian license plate
-const generateRandomPlate = () => {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const numbers = '0123456789';
-  const randomChar = (source: string) =>
-    source[Math.floor(Math.random() * source.length)];
-  const regionCode = ['B', 'D', 'L', 'N', 'F'][Math.floor(Math.random() * 5)];
-  let plateNumber = '';
-  for (let i = 0; i < 4; i++) plateNumber += randomChar(numbers);
-  let series = '';
-  for (let i = 0; i < 2; i++) series += randomChar(letters);
-
-  return `${regionCode} ${plateNumber} ${series}`;
-};
-
 const saveDetection = async (detection: Omit<Detection, 'id' | 'timestamp'>) => {
-  if (!firestore) {
-    console.error("Firestore is not initialized.");
-    return;
-  }
+  if (!firestore) return;
   try {
     await addDoc(collection(firestore, 'detections'), {
       ...detection,
@@ -135,6 +81,10 @@ export function TrafficDashboard() {
   const [pcuCoefficients, setPcuCoefficients] =
     useState<PcuCoefficients>(initialCoefficients);
   const [trafficCountData, setTrafficCountData] = useState<any[]>([]);
+  const [backendStats, setBackendStats] = useState<any>(null);
+  const [backendError, setBackendError] = useState<boolean>(false);
+  const [isBackendHealthy, setIsBackendHealthy] = useState<boolean | null>(null);
+
   const placeholder = PlaceHolderImages.find(
     (img) => img.id === 'traffic-feed-detected'
   );
@@ -144,18 +94,31 @@ export function TrafficDashboard() {
 
   const { toast } = useToast();
   const isAnalyzing = status === 'ANALYZING' || status === 'STARTED';
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
-  // Effect for auto-starting analysis when video changes
+  // Health Check
+  useEffect(() => {
+    const checkHealth = async () => {
+        try {
+            const resp = await fetch(`${BACKEND_URL}/traffic-stats`);
+            setIsBackendHealthy(resp.ok);
+        } catch (e) {
+            setIsBackendHealthy(false);
+        }
+    };
+    checkHealth();
+    const interval = setInterval(checkHealth, 10000);
+    return () => clearInterval(interval);
+  }, [BACKEND_URL]);
+
   useEffect(() => {
     if (activeVideo) {
       handleStatusChange('STARTED');
     } else {
       handleStatusChange('STOPPED');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeVideo]);
 
-  // Effect to save detection result to Firestore
   useEffect(() => {
     if (detectionResult && activeVideo) {
       saveDetection({
@@ -167,110 +130,110 @@ export function TrafficDashboard() {
   }, [detectionResult, activeVideo]);
 
 
-  // Effect for real-time simulation update
   useEffect(() => {
-    let simulationInterval: NodeJS.Timeout | undefined;
-    let dataGenerationInterval: NodeJS.Timeout | undefined;
+    let backendInterval: NodeJS.Timeout | undefined;
     let anomalyInterval: NodeJS.Timeout | undefined;
 
     if (isAnalyzing) {
-        // Run once at the beginning
-        setTrafficCountData(generateTrafficCountData());
         setAnomalies([]);
+        setBackendError(false);
 
-        // Then set an interval
-        dataGenerationInterval = setInterval(() => {
-            setTrafficCountData(generateTrafficCountData());
-        }, 5000); // Update data every 5 seconds
+        backendInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`${BACKEND_URL}/traffic-stats`);
+                if (!response.ok) throw new Error("Backend error");
+                const data = await response.json();
+                setBackendStats(data.stats);
+                setBackendError(false);
+
+                const now = new Date();
+                const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
+                const entry = {
+                    name: timeStr,
+                    'Mobil (M)': data.stats.counts.Mendekat.car || 0,
+                    'Bus (M)': data.stats.counts.Mendekat.bus || 0,
+                    'Truk (M)': data.stats.counts.Mendekat.truck || 0,
+                    'Sepeda Motor (M)': data.stats.counts.Mendekat.motorcycle || 0,
+                    'Trailer (M)': 0,
+                    'Mobil (J)': data.stats.counts.Menjauh.car || 0,
+                    'Bus (J)': data.stats.counts.Menjauh.bus || 0,
+                    'Truk (J)': data.stats.counts.Menjauh.truck || 0,
+                    'Sepeda Motor (J)': data.stats.counts.Menjauh.motorcycle || 0,
+                    'Trailer (J)': 0,
+                    'Total Mendekat': Object.values(data.stats.counts.Mendekat).reduce((a: any, b: any) => a + b, 0),
+                    'Total Menjauh': Object.values(data.stats.counts.Menjauh).reduce((a: any, b: any) => a + b, 0),
+                };
+
+                setTrafficCountData(prev => [...prev.slice(-9), entry]);
+            } catch (error) {
+                setBackendError(true);
+            }
+        }, 2000);
         
         anomalyInterval = setInterval(() => {
-          if (Math.random() < 0.3) { // 30% chance to generate an anomaly
+          if (Math.random() < 0.1) {
             const newAnomaly = generateAnomaly(activeVideo?.name);
-            setAnomalies(prev => [newAnomaly, ...prev].slice(0, 5)); // Keep last 5
+            setAnomalies(prev => [newAnomaly, ...prev].slice(0, 5));
           }
-        }, 7000); // Check for anomalies every 7 seconds
-
-        if (activeVideo?.source.type === 'url') {
-            simulationInterval = setInterval(() => {
-                const mockResult: EnhanceLicensePlateRecognitionOutput = {
-                    licensePlate: generateRandomPlate(),
-                    enhancementResult: 'Analisis simulasi dari stream URL berhasil.',
-                    accuracyAchieved: `${(Math.random() * (99 - 85) + 85).toFixed(2)}%`,
-                };
-                setDetectionResult(mockResult);
-            }, 4000); // Update every 4 seconds
-        }
+        }, 15000);
     } else {
-        setTrafficCountData([]); // Clear data when stopped
+        setTrafficCountData([]);
         setAnomalies([]);
+        setBackendStats(null);
     }
 
     return () => {
-      if (simulationInterval) clearInterval(simulationInterval);
-      if (dataGenerationInterval) clearInterval(dataGenerationInterval);
+      if (backendInterval) clearInterval(backendInterval);
       if (anomalyInterval) clearInterval(anomalyInterval);
     };
   }, [isAnalyzing, activeVideo]);
 
+  const handleLineYChange = async (val: number) => {
+    try {
+        await fetch(`${BACKEND_URL}/update-config`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ line_y: val })
+        });
+        toast({ title: 'ROI Diperbarui', description: `Posisi garis hitung: ${val.toFixed(2)}` });
+    } catch (e) {
+        toast({ title: 'Gagal Update ROI', variant: 'destructive' });
+    }
+  };
+
   const handleStatusChange = async (newStatus: SystemStatus) => {
     if (newStatus === 'STARTED') {
-      if (!activeVideo) {
-        toast({
-          title: 'Analisis Gagal',
-          description:
-            'Tidak ada video aktif. Silakan pilih atau unggah video di halaman Riwayat.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
+      if (!activeVideo) return;
       setDetectionResult(null);
       setAnalysisInputUri(null);
 
-      // If it's a URL, start the simulation loop
       if (activeVideo.source.type === 'url') {
-        setStatus('ANALYZING');
-        toast({
-          title: 'Analisis Simulasi Dimulai',
-          description: `Memulai pemantauan real-time dari stream URL.`,
-        });
+          setStatus('ANALYZING');
+          try {
+              await fetch(`${BACKEND_URL}/process-url`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ url: activeVideo.source.url })
+              });
+          } catch (e) {
+              setBackendError(true);
+          }
         return;
       }
 
-      // If it's a file, proceed with the actual analysis
       if (activeVideo.source.type === 'file' && activeVideo.source.file) {
         setStatus('ANALYZING');
         try {
+          const formData = new FormData();
+          formData.append('video', activeVideo.source.file);
+          fetch(`${BACKEND_URL}/upload-video`, { method: 'POST', body: formData });
           const videoUri = await toBase64(activeVideo.source.file);
           setAnalysisInputUri(videoUri);
-          
-          const { result, error } = await getEnhancedRecognition({
-            videoDataUri: videoUri,
-          });
-
-          if (error) {
-            toast({
-              title: 'Deteksi Gagal',
-              description: error,
-              variant: 'destructive',
-            });
-            setStatus('STOPPED');
-          } else if (result) {
-            toast({
-              title: 'Deteksi Berhasil',
-              description: `Plat nomor terdeteksi: ${result.licensePlate}`,
-            });
-            setDetectionResult(result);
-            setStatus('STARTED'); // Analysis complete for file
-          }
+          const { result } = await getEnhancedRecognition({ videoDataUri: videoUri });
+          if (result) setDetectionResult(result);
+          setStatus('STARTED');
         } catch (error: any) {
-          toast({
-            title: 'Gagal Memproses Video',
-            description:
-              error.message ||
-              'File video tidak ditemukan atau rusak. Silakan unggah kembali di halaman Riwayat.',
-            variant: 'destructive',
-          });
           setStatus('STOPPED');
         }
       }
@@ -278,117 +241,147 @@ export function TrafficDashboard() {
       setStatus('STOPPED');
       setDetectionResult(null);
       setAnalysisInputUri(null);
+      fetch(`${BACKEND_URL}/stop`, { method: 'POST' }).catch(() => {});
     }
   };
 
   const renderVideoPlayer = () => {
     if (!videoSrc) {
         return (
-            <div className="w-full h-full flex items-center justify-center bg-muted relative">
-                {placeholder && (
-                    <Image
-                        src={placeholder.imageUrl}
-                        alt={placeholder.description}
-                        fill
-                        className="object-cover opacity-30"
-                        data-ai-hint={placeholder.imageHint}
-                    />
+            <div className="w-full h-full flex items-center justify-center bg-muted relative min-h-[300px]">
+                {placeholder && <Image src={placeholder.imageUrl} alt="Placeholder" fill className="object-cover opacity-20" />}
+                <p className="text-muted-foreground relative z-10">Pilih video di Riwayat.</p>
+            </div>
+        );
+    }
+
+    if (isAnalyzing) {
+        return (
+            <div className="w-full h-full relative bg-black min-h-[300px]">
+                <img
+                    src={`${BACKEND_URL}/stream?t=${new Date().getTime()}`}
+                    className="w-full h-full object-contain"
+                    alt="Stream"
+                    onError={() => setBackendError(true)}
+                />
+                {backendError && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 gap-3">
+                        <AlertCircle className="w-8 h-8 text-destructive" />
+                        <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Re-connect</Button>
+                    </div>
                 )}
-                <div className="absolute inset-0 flex items-center justify-center p-4">
-                    <p className="text-center text-foreground bg-black/50 p-4 rounded-md">
-                        Tidak ada video aktif. <br /> Silakan pilih atau unggah video di halaman Riwayat.
-                    </p>
-                </div>
             </div>
         );
     }
 
     const embedUrl = getYouTubeEmbedUrl(videoSrc);
-
-    if (embedUrl) {
-      return (
-        <iframe
-          src={embedUrl}
-          title="YouTube video player"
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          className="w-full h-full"
-        ></iframe>
-      );
-    }
-
-    return (
-      <video
-        src={videoSrc}
-        className="w-full h-full object-cover"
-        controls
-        autoPlay
-        loop
-        muted
-      />
-    );
+    if (embedUrl) return <iframe src={embedUrl} title="YouTube" frameBorder="0" allowFullScreen className="w-full h-full min-h-[300px]" />;
+    return <video src={videoSrc} className="w-full h-full object-cover min-h-[300px]" controls autoPlay loop muted />;
   };
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-muted/40">
+      <div className="flex min-h-screen w-full bg-background">
         <MainSidebar />
         <SidebarInset>
           <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
-            <DashboardHeader
-              title="Dasbor Lalu Lintas"
-              description="Pemantauan dan kontrol sistem lalu lintas real-time."
-            />
-            <main className="grid gap-6 grid-cols-1 lg:grid-cols-4">
-              <div className="lg:col-span-3 flex flex-col gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>
-                      {activeVideo?.name || 'Video Lalu Lintas'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="aspect-video overflow-hidden rounded-md relative bg-muted">
-                      {renderVideoPlayer()}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <DashboardHeader title="VisionPulse Traffic AI" description="Analisis lalu lintas cerdas berbasis visi komputer." />
+                <div className="flex items-center gap-2">
+                    <Badge variant={isBackendHealthy ? "outline" : "destructive"} className="h-6 gap-1.5 font-medium px-2.5">
+                        {isBackendHealthy ? <Activity className="w-3 h-3 text-green-500 animate-pulse" /> : <AlertCircle className="w-3 h-3" />}
+                        {isBackendHealthy ? "Backend Aktif" : "Backend Offline"}
+                    </Badge>
+                </div>
+            </div>
+
+            {backendError && (
+                <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Masalah Koneksi</AlertTitle>
+                    <AlertDescription>Server backend tidak merespons. Jalankan server Flask untuk mengaktifkan fitur AI.</AlertDescription>
+                </Alert>
+            )}
+
+            <main>
+              {/* Desktop View: Grid Layout */}
+              <div className="hidden xl:grid gap-6 grid-cols-12">
+                <div className="col-span-9 space-y-6">
+                    <Card className="overflow-hidden border-none shadow-md">
+                        <CardHeader className="bg-primary/10 py-3 border-b">
+                            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                                <LayoutDashboard className="w-4 h-4 text-primary" />
+                                {activeVideo?.name || 'Monitor Lalu Lintas'}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="aspect-video relative bg-black">{renderVideoPlayer()}</div>
+                        </CardContent>
+                    </Card>
+                    <div className="grid grid-cols-2 gap-6">
+                        <TrafficCountingChart ref={trafficCountingChartRef} isAnalyzing={isAnalyzing} chartData={trafficCountData} />
+                        <MovingAverageChart ref={movingAverageChartRef} isAnalyzing={isAnalyzing} backendStats={backendStats} />
                     </div>
-                  </CardContent>
-                </Card>
-                <TrafficCountingChart ref={trafficCountingChartRef} isAnalyzing={isAnalyzing} chartData={trafficCountData} />
-                <MovingAverageChart ref={movingAverageChartRef} isAnalyzing={isAnalyzing} />
-                <VehicleComparisonChart ref={vehicleComparisonChartRef} isAnalyzing={isAnalyzing} />
-                <CumulativeVolumeChart isAnalyzing={isAnalyzing} />
+                    <VehicleComparisonChart ref={vehicleComparisonChartRef} isAnalyzing={isAnalyzing} backendStats={backendStats} />
+                    <CumulativeVolumeChart isAnalyzing={isAnalyzing} backendStats={backendStats} />
+                </div>
+                <div className="col-span-3 space-y-6">
+                    <ControlStatus isStartEnabled={!!activeVideo} status={status} onStatusChange={handleStatusChange} />
+                    <RealtimeDetectionStats isAnalyzing={isAnalyzing} backendStats={backendStats} />
+                    <TrafficLog logs={backendStats?.recent_logs || []} isAnalyzing={isAnalyzing} />
+                    <ExportReport isAnalyzing={isAnalyzing} trafficData={trafficCountData} countingChartRef={trafficCountingChartRef} movingAverageChartRef={movingAverageChartRef} vehicleComparisonChartRef={vehicleComparisonChartRef} />
+                    <PcuCoefficient coefficients={pcuCoefficients} onUpdate={setPcuCoefficients} lineY={backendStats?.config?.line_y} onLineYChange={handleLineYChange} />
+                    <AnomalyDetectionCard anomalies={anomalies} isAnalyzing={isAnalyzing} />
+                </div>
               </div>
 
-              <div className="lg:col-span-1 flex flex-col gap-6">
-                <ControlStatus
-                  isStartEnabled={!!activeVideo}
-                  status={status}
-                  onStatusChange={handleStatusChange}
-                />
-                <DetectionResultCard detectionResult={detectionResult} />
-                <AiTrafficAnalysisCard 
-                  isAnalyzing={isAnalyzing} 
-                  analysisInputUri={analysisInputUri} 
-                  sourceType={activeVideo?.source.type ?? null}
-                />
-                <RealtimeDetectionStats isAnalyzing={isAnalyzing} />
-                <AnomalyDetectionCard anomalies={anomalies} isAnalyzing={isAnalyzing} />
-                <VehicleVolume
-                  isAnalyzing={isAnalyzing}
-                  coefficients={pcuCoefficients}
-                />
-                <PcuCoefficient
-                  coefficients={pcuCoefficients}
-                  onUpdate={setPcuCoefficients}
-                />
-                <ExportReport 
-                  isAnalyzing={isAnalyzing} 
-                  trafficData={trafficCountData} 
-                  countingChartRef={trafficCountingChartRef}
-                  movingAverageChartRef={movingAverageChartRef}
-                  vehicleComparisonChartRef={vehicleComparisonChartRef}
-                />
+              {/* Mobile/Tablet View: Tabs Layout */}
+              <div className="xl:hidden space-y-6">
+                <div className="aspect-video relative bg-black rounded-lg overflow-hidden shadow-md">
+                    {renderVideoPlayer()}
+                </div>
+
+                <Tabs defaultValue="overview" className="w-full">
+                    <TabsList className="grid grid-cols-4 w-full h-12">
+                        <TabsTrigger value="overview" className="flex flex-col gap-1 text-[10px] sm:text-xs">
+                            <LayoutDashboard className="w-4 h-4" /> Ikhtisar
+                        </TabsTrigger>
+                        <TabsTrigger value="charts" className="flex flex-col gap-1 text-[10px] sm:text-xs">
+                            <BarChart3 className="w-4 h-4" /> Grafik
+                        </TabsTrigger>
+                        <TabsTrigger value="logs" className="flex flex-col gap-1 text-[10px] sm:text-xs">
+                            <ListTodo className="w-4 h-4" /> Log
+                        </TabsTrigger>
+                        <TabsTrigger value="config" className="flex flex-col gap-1 text-[10px] sm:text-xs">
+                            <Settings className="w-4 h-4" /> Pengaturan
+                        </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="overview" className="space-y-4 pt-4">
+                        <ControlStatus isStartEnabled={!!activeVideo} status={status} onStatusChange={handleStatusChange} />
+                        <RealtimeDetectionStats isAnalyzing={isAnalyzing} backendStats={backendStats} />
+                        <VehicleVolume isAnalyzing={isAnalyzing} coefficients={pcuCoefficients} backendStats={backendStats} />
+                        <AnomalyDetectionCard anomalies={anomalies} isAnalyzing={isAnalyzing} />
+                    </TabsContent>
+
+                    <TabsContent value="charts" className="space-y-4 pt-4">
+                        <TrafficCountingChart ref={trafficCountingChartRef} isAnalyzing={isAnalyzing} chartData={trafficCountData} />
+                        <MovingAverageChart ref={movingAverageChartRef} isAnalyzing={isAnalyzing} backendStats={backendStats} />
+                        <VehicleComparisonChart ref={vehicleComparisonChartRef} isAnalyzing={isAnalyzing} backendStats={backendStats} />
+                        <CumulativeVolumeChart isAnalyzing={isAnalyzing} backendStats={backendStats} />
+                    </TabsContent>
+
+                    <TabsContent value="logs" className="space-y-4 pt-4">
+                        <TrafficLog logs={backendStats?.recent_logs || []} isAnalyzing={isAnalyzing} />
+                        <DetectionResultCard detectionResult={detectionResult} />
+                        <AiTrafficAnalysisCard isAnalyzing={isAnalyzing} analysisInputUri={analysisInputUri} sourceType={activeVideo?.source.type ?? null} />
+                    </TabsContent>
+
+                    <TabsContent value="config" className="space-y-4 pt-4">
+                        <PcuCoefficient coefficients={pcuCoefficients} onUpdate={setPcuCoefficients} lineY={backendStats?.config?.line_y} onLineYChange={handleLineYChange} />
+                        <ExportReport isAnalyzing={isAnalyzing} trafficData={trafficCountData} countingChartRef={trafficCountingChartRef} movingAverageChartRef={movingAverageChartRef} vehicleComparisonChartRef={vehicleComparisonChartRef} />
+                    </TabsContent>
+                </Tabs>
               </div>
             </main>
           </div>

@@ -1,16 +1,18 @@
 # VisionPulse: Dasbor Analisis Lalu Lintas Cerdas
 
-Aplikasi ini merupakan prototipe fungsional yang mensimulasikan analisis data lalu lintas dari sumber video file maupun URL, menyajikan hasilnya dalam dasbor yang interaktif dan responsif.
+Aplikasi ini merupakan sistem deteksi dan analisis lalu lintas real-time yang menggunakan Computer Vision (YOLOv8) untuk menghitung volume kendaraan, klasifikasi, dan analisis Satuan Kendaraan Roda Empat (SKR).
 
 ## Fitur Utama
 
--   **Dasbor Analisis Terpadu**: Halaman utama menyajikan antarmuka terpadu untuk analisis video lalu lintas. Menampilkan pemutar video, statistik real-time, dan berbagai panel kontrol dalam satu layar yang efisien.
--   **Manajemen Sumber Video Fleksibel**: Kelola daftar sumber video Anda dengan mudah. Tambah, sunting, dan hapus sumber video baik dari unggahan file lokal (MP4, AVI) maupun URL (misalnya, YouTube). Riwayat dan video aktif disimpan secara persisten di browser Anda.
+-   **Deteksi & Tracking Real-time**: Menggunakan YOLOv8 untuk mendeteksi dan melacak kendaraan (Motor, Mobil, Bus, Truk) melalui video file atau stream URL (termasuk YouTube).
+-   **Penghitungan Berbasis Arah**: Menghitung kendaraan yang melewati garis virtual dalam dua arah: Mendekat (Approaching) dan Menjauh (Departing).
+-   **Analisis SKR (PCU)**: Konversi otomatis jumlah kendaraan ke Satuan Kendaraan Roda Empat (SKR) dengan koefisien yang dapat disesuaikan.
+-   **Moving Average Analysis**: Menampilkan tren volume lalu lintas menggunakan rerata bergerak (SKR/jam) untuk mengurangi fluktuasi jangka pendek.
+-   **Dasbor Interaktif**: Visualisasi data real-time menggunakan Recharts, termasuk grafik kumulatif dan perbandingan volume.
 -   **Analisis Video Berbasis AI**:
-    -   **Deteksi Plat Nomor**: Ekstrak nomor plat dari video menggunakan AI. Hasil deteksi akan ditampilkan secara real-time selama analisis berlangsung.
-    -   **Ringkasan Video Cerdas**: Hasilkan laporan analisis terstruktur dari video yang diunggah, mencakup ringkasan naratif, tingkat kepadatan, waktu puncak, dan distribusi jenis kendaraan.
--   **Visualisasi Data Interaktif**:
-    -   Berbagai grafik seperti *Traffic Counting*, *Moving Average*, *Perbandingan Volume Kendaraan*, dan *Volume Kumulatif* diperbarui secara real-time selama analisis berjalan.
+    -   **Deteksi Plat Nomor**: Ekstrak nomor plat dari video menggunakan Google Genkit AI.
+    -   **Ringkasan Video Cerdas**: Hasilkan laporan analisis terstruktur dari video yang diunggah (kepadatan, waktu puncak, distribusi).
+-   **Ekspor Laporan**: Ekspor data agregat dalam format XLSX, CSV, dan gambar PNG untuk grafik.
     -   Semua grafik dapat diekspor sebagai gambar PNG.
 -   **Pencarian Plat Nomor**: Cari riwayat deteksi plat nomor di seluruh video yang tersimpan di database Firebase Firestore.
 -   **Kustomisasi Analisis**: Sesuaikan koefisien SKR (Satuan Kendaraan Roda Empat) untuk setiap jenis kendaraan (Sepeda Motor, Mobil, Bus, Truk, Trailer) untuk analisis yang sesuai dengan standar lokal.

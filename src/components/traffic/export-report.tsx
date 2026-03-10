@@ -4,9 +4,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import * as XLSX from 'xlsx';
 import { toPng } from 'html-to-image';
 import type { RefObject } from 'react';
+import { Download, FileSpreadsheet, FileText, Image as ImageIcon } from 'lucide-react';
 
 interface ExportReportProps {
   isAnalyzing: boolean;
@@ -18,46 +18,35 @@ interface ExportReportProps {
 
 export function ExportReport({ isAnalyzing, trafficData, countingChartRef, movingAverageChartRef, vehicleComparisonChartRef }: ExportReportProps) {
   const { toast } = useToast();
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
-  const convertToCSV = (data: any[]) => {
-    if (!data || data.length === 0) {
-      return "";
+  const downloadFromBackend = async (fmt: 'csv' | 'xlsx') => {
+    try {
+        const response = await fetch(`${BACKEND_URL}/export/${fmt}`);
+        if (!response.ok) throw new Error('Export failed');
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `laporan_traffic_${new Date().toISOString()}.${fmt}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        toast({
+            title: "Ekspor Berhasil",
+            description: `Laporan ${fmt.toUpperCase()} telah diunduh.`,
+        });
+    } catch (error) {
+        toast({
+            title: "Ekspor Gagal",
+            description: "Tidak dapat mengunduh laporan dari server.",
+            variant: "destructive"
+        });
     }
-    const headers = Object.keys(data[0]);
-    const csvRows = [headers.join(',')];
-
-    for (const row of data) {
-      const values = headers.map(header => {
-        const escaped = ('' + row[header]).replace(/"/g, '\\"');
-        return `"${escaped}"`;
-      });
-      csvRows.push(values.join(','));
-    }
-
-    return csvRows.join('\n');
-  }
-
-  const downloadCSV = (data: any[]) => {
-    const csvString = convertToCSV(data);
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `laporan_traffic_counting_${new Date().toISOString()}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  }
-
-  const downloadXLSX = (data: any[]) => {
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "TrafficData");
-    XLSX.writeFile(workbook, `laporan_traffic_counting_${new Date().toISOString()}.xlsx`);
-  }
+  };
 
   const downloadChartImage = (chartRef: RefObject<HTMLDivElement>, chartName: string) => {
     if (!chartRef.current) {
@@ -91,77 +80,61 @@ export function ExportReport({ isAnalyzing, trafficData, countingChartRef, movin
   };
 
   const handleExport = (type: string) => {
-    const exportDataAvailable = isAnalyzing && trafficData.length > 0;
-    
-    if (['CSV (Raw)', 'XLSX'].includes(type) && !exportDataAvailable) {
+    if (['XLSX', 'CSV'].includes(type) && !isAnalyzing && trafficData.length === 0) {
        toast({
           title: "Ekspor Gagal",
-          description: `Tidak ada data untuk diekspor. Mulai analisis untuk mengumpulkan data.`,
-          variant: "destructive"
-        });
-        return;
-    }
-     if (['Grafik Traffic Counting', 'Grafik Moving Average', 'Grafik Volume Kendaraan'].includes(type) && !isAnalyzing) {
-       toast({
-          title: "Ekspor Gagal",
-          description: `Mulai analisis untuk mengaktifkan ekspor grafik.`,
+          description: `Tidak ada data untuk diekspor.`,
           variant: "destructive"
         });
         return;
     }
 
-
-    if (type === 'CSV (Raw)') {
-      downloadCSV(trafficData);
-      toast({
-        title: "Ekspor Laporan Dimulai",
-        description: `Laporan ${type} Anda sedang diunduh...`,
-      });
+    if (type === 'CSV') {
+      downloadFromBackend('csv');
     } else if (type === 'XLSX') {
-      downloadXLSX(trafficData);
-       toast({
-        title: "Ekspor Laporan Dimulai",
-        description: `Laporan ${type} Anda sedang diunduh...`,
-      });
-    } else if (type === 'Grafik Traffic Counting') {
+      downloadFromBackend('xlsx');
+    } else if (type === 'Grafik Counting') {
         downloadChartImage(countingChartRef, 'Traffic Counting');
     } else if (type === 'Grafik Moving Average') {
         downloadChartImage(movingAverageChartRef, 'Moving Average');
-    } else if (type === 'Grafik Volume Kendaraan') {
+    } else if (type === 'Grafik Volume') {
         downloadChartImage(vehicleComparisonChartRef, 'Volume Kendaraan');
-    } else {
-      toast({
-        title: "Fitur Belum Tersedia",
-        description: `Ekspor untuk laporan ${type} akan segera hadir.`,
-      });
     }
   };
-
-  const buttons = [
-    { type: 'XLSX', label: 'Ekspor XLSX', enabled: true },
-    { type: 'CSV (Raw)', label: 'Ekspor CSV', enabled: true },
-    { type: 'Grafik Traffic Counting', label: 'Grafik Counting', enabled: true },
-    { type: 'Grafik Moving Average', label: 'Grafik Moving Avg', enabled: true },
-    { type: 'Grafik Volume Kendaraan', label: 'Grafik Volume', enabled: true },
-  ];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Ekspor Laporan</CardTitle>
+        <CardTitle className="text-sm font-bold flex items-center gap-2">
+            <Download className="w-4 h-4" />
+            Ekspor Laporan
+        </CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {buttons.map((btn) => (
-          <Button
-            key={btn.type}
-            variant={btn.enabled ? 'default' : 'outline'}
-            onClick={() => handleExport(btn.type)}
-            disabled={!isAnalyzing && btn.enabled}
-            title={!isAnalyzing && btn.enabled ? "Mulai analisis untuk mengaktifkan ekspor" : ""}
-          >
-            {btn.label}
-          </Button>
-        ))}
+      <CardContent className="grid grid-cols-1 gap-2">
+        <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" size="sm" onClick={() => handleExport('XLSX')} disabled={!isAnalyzing && trafficData.length === 0}>
+                <FileSpreadsheet className="w-3 h-3 mr-2" />
+                XLSX
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => handleExport('CSV')} disabled={!isAnalyzing && trafficData.length === 0}>
+                <FileText className="w-3 h-3 mr-2" />
+                CSV
+            </Button>
+        </div>
+        <div className="space-y-2 pt-2 border-t">
+            <Button variant="ghost" size="xs" className="w-full justify-start text-[10px]" onClick={() => handleExport('Grafik Counting')} disabled={!isAnalyzing}>
+                <ImageIcon className="w-3 h-3 mr-2" />
+                Unduh Grafik Counting
+            </Button>
+            <Button variant="ghost" size="xs" className="w-full justify-start text-[10px]" onClick={() => handleExport('Grafik Moving Average')} disabled={!isAnalyzing}>
+                <ImageIcon className="w-3 h-3 mr-2" />
+                Unduh Grafik Moving Avg
+            </Button>
+            <Button variant="ghost" size="xs" className="w-full justify-start text-[10px]" onClick={() => handleExport('Grafik Volume')} disabled={!isAnalyzing}>
+                <ImageIcon className="w-3 h-3 mr-2" />
+                Unduh Grafik Volume
+            </Button>
+        </div>
       </CardContent>
     </Card>
   );
