@@ -137,7 +137,7 @@ export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { 
         <SidebarInset>
           <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
             <DashboardHeader 
-              title="Dasbor Utama" 
+              title="Dashboard Utama" 
               description={`Analisis lalu lintas dan ringkasan data untuk ${locationName}.`} 
             />
             <main className="grid flex-1 items-start gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
