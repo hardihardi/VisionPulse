@@ -15,7 +15,7 @@ export default function DeprecatedTrafficPage() {
         Fungsionalitas dasbor lalu lintas sekarang berada di halaman utama.
       </p>
       <Link href="/" className="text-primary hover:underline">
-        Kembali ke Dasbor Utama
+        Kembali ke Dashboard Utama
       </Link>
     </div>
   );
