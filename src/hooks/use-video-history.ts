@@ -62,10 +62,10 @@ export function useVideoHistory() {
                  // If no videos, add the default demo video
                 const defaultVideo: VideoHistoryItem = {
                     id: 'default-youtube-video',
-                    name: 'Live Demo - Lalu Lintas Cikarang',
+                    name: 'Live Demo - Jl. Cibiru Bandung',
                     source: {
                         type: 'url',
-                        url: 'https://youtu.be/xrX2IqMyb-8'
+                        url: 'https://youtu.be/YLy7ntKXw-w'
                     }
                 };
                 loadedVideos.push(defaultVideo);
