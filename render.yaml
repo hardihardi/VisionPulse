@@ -1,0 +1,27 @@
+services:
+  # Backend API (Flask + YOLO)
+  - type: web
+    name: visionpulse-backend
+    env: python
+    region: singapore
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn --chdir backend app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.12
+
+  # Frontend (Next.js)
+  - type: web
+    name: visionpulse-frontend
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_BACKEND_URL
+        fromService:
+          name: visionpulse-backend
+          type: web
+          property: host

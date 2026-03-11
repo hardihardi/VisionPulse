@@ -7,3 +7,4 @@ openpyxl
 yt-dlp
 requests
 pillow
+gunicorn
