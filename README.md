@@ -8,14 +8,11 @@ Sistem ini terdiri dari dua komponen utama:
 1.  **Frontend (Next.js)**: Antarmuka pengguna untuk visualisasi data, kontrol sistem, dan manajemen riwayat video.
 2.  **Backend (Python Flask)**: Mesin pemrosesan video yang menggunakan YOLOv8 untuk deteksi objek dan tracking secara real-time.
 
-## Fitur Utama
+## Mode Operasional
 
--   **Deteksi & Tracking Real-time**: Menggunakan YOLOv8 untuk mendeteksi dan melacak kendaraan (Motor, Mobil, Bus, Truk) melalui video file atau stream URL (termasuk YouTube).
--   **Penghitungan Berbasis Arah**: Menghitung kendaraan yang melewati garis virtual dalam dua arah: Mendekat (Approaching) dan Menjauh (Departing).
--   **Analisis SKR (PCU)**: Konversi otomatis jumlah kendaraan ke Satuan Kendaraan Roda Empat (SKR) dengan koefisien yang dapat disesuaikan.
--   **Moving Average Analysis**: Menampilkan tren volume lalu lintas menggunakan rerata bergerak (SKR/jam) untuk mengurangi fluktuasi jangka pendek.
--   **Dasbor Interaktif**: Visualisasi data real-time menggunakan Recharts, termasuk grafik kumulatif dan perbandingan volume.
--   **Ekspor Laporan**: Ekspor data agregat dalam format XLSX dan CSV untuk pengolahan data lebih lanjut.
+Untuk fleksibilitas riset, aplikasi mendukung dua mode:
+-   **Mode LIVE**: Menghubungkan frontend ke server Flask AI untuk pemrosesan video real-time dari kamera atau YouTube.
+-   **Mode SIMULATION**: Mode riset mandiri yang menggunakan algoritma simulasi data untuk menghasilkan tren lalu lintas tanpa memerlukan server AI aktif. Berguna untuk demonstrasi UI dan riset strategis.
 
 ## Deployment ke Render (Satu-Klik)
 
@@ -53,20 +50,6 @@ cp .env.example .env
 npm run dev
 ```
 Frontend akan berjalan di `http://localhost:9002`.
-
-## Struktur Proyek Utama
-
-- `/src`: Kode sumber frontend (Next.js, Components, Hooks).
-- `/backend`: Kode sumber pemrosesan AI (Flask, YOLO logic, Traffic Counter).
-- `render.yaml`: Konfigurasi deployment otomatis.
-- `apphosting.yaml`: Konfigurasi Firebase App Hosting.
-
-## Tumpukan Teknologi
-
-- **Frontend**: Next.js 15, TypeScript, Tailwind CSS, ShadCN UI, Recharts.
-- **Backend**: Python 3.12, Flask, OpenCV, YOLOv8 (Ultralytics), Pandas.
-- **AI**: Google Genkit & Gemini API (untuk analisis tambahan).
-- **Database**: Firebase Firestore.
 
 ---
 Dokumentasi ini memberikan panduan lengkap untuk memahami, menjalankan, dan mengembangkan aplikasi VisionPulse lebih lanjut.
