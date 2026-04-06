@@ -402,9 +402,9 @@ export function TrafficDashboard() {
             {backendError && mode === 'LIVE' && (
                 <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-2 border-l-4">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Masalah Koneksi Server</AlertTitle>
+                    <AlertTitle>Masalah Koneksi</AlertTitle>
                     <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-2">
-                        <span>Server backend AI di <code>{BACKEND_URL}</code> tidak merespons.</span>
+                        <span>Server backend tidak merespons. Jalankan server Flask untuk mengaktifkan fitur AI.</span>
                         <div className="flex gap-2">
                             <Button variant="outline" size="xs" onClick={() => window.location.reload()}>Coba Lagi</Button>
                             <Button variant="secondary" size="xs" onClick={() => setMode('SIMULATION')}>Aktifkan Simulasi</Button>
