@@ -165,12 +165,12 @@ export function TrafficDashboard() {
                         'Bus (M)': data.stats.counts.Mendekat.bus || 0,
                         'Truk (M)': data.stats.counts.Mendekat.truck || 0,
                         'Sepeda Motor (M)': data.stats.counts.Mendekat.motorcycle || 0,
-                        'Trailer (M)': simCounts.Mendekat.trailer || 0,
+                        'Trailer (M)': data.stats.counts.Mendekat.trailer || 0,
                         'Mobil (J)': data.stats.counts.Menjauh.car || 0,
                         'Bus (J)': data.stats.counts.Menjauh.bus || 0,
                         'Truk (J)': data.stats.counts.Menjauh.truck || 0,
                         'Sepeda Motor (J)': data.stats.counts.Menjauh.motorcycle || 0,
-                        'Trailer (J)': simCounts.Menjauh.trailer || 0,
+                        'Trailer (J)': data.stats.counts.Menjauh.trailer || 0,
                         'Total Mendekat': Object.values(data.stats.counts.Mendekat).reduce((a: any, b: any) => a + b, 0),
                         'Total Menjauh': Object.values(data.stats.counts.Menjauh).reduce((a: any, b: any) => a + b, 0),
                     };
@@ -409,8 +409,8 @@ export function TrafficDashboard() {
                     <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-2">
                         <span>Server backend AI di <code>{BACKEND_URL}</code> tidak merespons.</span>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="xs" onClick={() => window.location.reload()}>Coba Lagi</Button>
-                            <Button variant="secondary" size="xs" onClick={() => setMode('SIMULATION')}>Aktifkan Simulasi</Button>
+                            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Coba Lagi</Button>
+                            <Button variant="secondary" size="sm" onClick={() => setMode('SIMULATION')}>Aktifkan Simulasi</Button>
                         </div>
                     </AlertDescription>
                 </Alert>
