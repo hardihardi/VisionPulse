@@ -24,6 +24,7 @@ const getVehicleIcon = (type: string) => {
         case 'motorcycle': return <Bike className="w-3 h-3" />;
         case 'bus': return <Bus className="w-3 h-3" />;
         case 'truck': return <Truck className="w-3 h-3" />;
+        case "trailer": return <Box className="w-3 h-3" />;
         default: return <Box className="w-3 h-3" />;
     }
 }

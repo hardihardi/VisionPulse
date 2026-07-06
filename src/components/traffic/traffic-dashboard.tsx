@@ -105,11 +105,13 @@ export function TrafficDashboard() {
         try {
             const resp = await fetch(`${BACKEND_URL}/traffic-stats`);
             setIsBackendHealthy(resp.ok);
+            setBackendError(!resp.ok);
             if (resp.ok && mode === 'SIMULATION') {
                // setMode('LIVE'); // Optional auto-switch back
             }
         } catch (e) {
             setIsBackendHealthy(false);
+            setBackendError(true);
         }
     };
     checkHealth();
@@ -163,12 +165,12 @@ export function TrafficDashboard() {
                         'Bus (M)': data.stats.counts.Mendekat.bus || 0,
                         'Truk (M)': data.stats.counts.Mendekat.truck || 0,
                         'Sepeda Motor (M)': data.stats.counts.Mendekat.motorcycle || 0,
-                        'Trailer (M)': 0,
+                        'Trailer (M)': simCounts.Mendekat.trailer || 0,
                         'Mobil (J)': data.stats.counts.Menjauh.car || 0,
                         'Bus (J)': data.stats.counts.Menjauh.bus || 0,
                         'Truk (J)': data.stats.counts.Menjauh.truck || 0,
                         'Sepeda Motor (J)': data.stats.counts.Menjauh.motorcycle || 0,
-                        'Trailer (J)': 0,
+                        'Trailer (J)': simCounts.Menjauh.trailer || 0,
                         'Total Mendekat': Object.values(data.stats.counts.Mendekat).reduce((a: any, b: any) => a + b, 0),
                         'Total Menjauh': Object.values(data.stats.counts.Menjauh).reduce((a: any, b: any) => a + b, 0),
                     };
@@ -182,7 +184,7 @@ export function TrafficDashboard() {
             }, 2000);
         } else {
             // SIMULATION MODE logic
-            let simCounts = { Mendekat: { car: 10, bus: 2, truck: 1, motorcycle: 20 }, Menjauh: { car: 12, bus: 1, truck: 0, motorcycle: 18 } };
+            let simCounts = { Mendekat: { car: 10, bus: 2, truck: 1, motorcycle: 20, trailer: 0 }, Menjauh: { car: 12, bus: 1, truck: 0, motorcycle: 18, trailer: 0 } };
 
             simulationInterval = setInterval(() => {
                 const now = new Date();
@@ -196,6 +198,7 @@ export function TrafficDashboard() {
                     types.forEach(t => {
                         if (Math.random() > 0.7) simCounts[d][t] += Math.floor(Math.random() * 3);
                     });
+                    if (Math.random() > 0.95) (simCounts[d] as any).trailer += 1;
                 });
 
                 const totalM = Object.values(simCounts.Mendekat).reduce((a, b) => a + b, 0);
@@ -204,8 +207,8 @@ export function TrafficDashboard() {
                 const mockStats = {
                     counts: simCounts,
                     total_skr: {
-                        Mendekat: simCounts.Mendekat.car * 1.0 + simCounts.Mendekat.bus * 1.5 + simCounts.Mendekat.truck * 2.0 + simCounts.Mendekat.motorcycle * 0.25,
-                        Menjauh: simCounts.Menjauh.car * 1.0 + simCounts.Menjauh.bus * 1.5 + simCounts.Menjauh.truck * 2.0 + simCounts.Menjauh.motorcycle * 0.25,
+                        Mendekat: simCounts.Mendekat.car * 1.0 + simCounts.Mendekat.bus * 1.5 + simCounts.Mendekat.truck * 2.0 + simCounts.Mendekat.motorcycle * 0.25 + (simCounts.Mendekat.trailer || 0) * 2.5,
+                        Menjauh: simCounts.Menjauh.car * 1.0 + simCounts.Menjauh.bus * 1.5 + simCounts.Menjauh.truck * 2.0 + simCounts.Menjauh.motorcycle * 0.25 + (simCounts.Menjauh.trailer || 0) * 2.5,
                     },
                     moving_average_skr: {
                         Mendekat: (totalM / 5) * 4, // Simulated trend
@@ -226,12 +229,12 @@ export function TrafficDashboard() {
                     'Bus (M)': simCounts.Mendekat.bus,
                     'Truk (M)': simCounts.Mendekat.truck,
                     'Sepeda Motor (M)': simCounts.Mendekat.motorcycle,
-                    'Trailer (M)': 0,
+                    'Trailer (M)': simCounts.Mendekat.trailer || 0,
                     'Mobil (J)': simCounts.Menjauh.car,
                     'Bus (J)': simCounts.Menjauh.bus,
                     'Truk (J)': simCounts.Menjauh.truck,
                     'Sepeda Motor (J)': simCounts.Menjauh.motorcycle,
-                    'Trailer (J)': 0,
+                    'Trailer (J)': simCounts.Menjauh.trailer || 0,
                     'Total Mendekat': totalM,
                     'Total Menjauh': totalJ,
                 };
@@ -425,7 +428,7 @@ export function TrafficDashboard() {
 
             <main>
               {/* Desktop View: Grid Layout */}
-              <div className="hidden xl:grid gap-6 grid-cols-12">
+              <div className="hidden lg:grid gap-6 grid-cols-12">
                 <div className="col-span-9 space-y-6">
                     <Card className="overflow-hidden border-none shadow-md">
                         <CardHeader className="bg-primary/10 py-3 border-b flex flex-row items-center justify-between">
@@ -457,7 +460,7 @@ export function TrafficDashboard() {
               </div>
 
               {/* Mobile/Tablet View: Tabs Layout */}
-              <div className="xl:hidden space-y-6">
+              <div className="lg:hidden space-y-6">
                 <div className="aspect-video relative bg-black rounded-lg overflow-hidden shadow-md">
                     {renderVideoPlayer()}
                 </div>

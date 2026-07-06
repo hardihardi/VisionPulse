@@ -1,0 +1,56 @@
+Creating new Ultralytics Settings v0.0.6 file ✅
+View Ultralytics Settings with 'yolo settings' or at '/home/jules/.config/Ultralytics/settings.json'
+Update Settings with 'yolo settings key=value', i.e. 'yolo settings runs_dir=path/to/dir'. For help see https://docs.ultralytics.com/quickstart/#ultralytics-settings.
+[KDownloading https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8n.pt to 'yolov8n.pt': 93% ━━━━━━━━━━━─ 5.9/6.2MB 58.5MB/s 0.1s<0.0s[KDownloading https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8n.pt to 'yolov8n.pt': 100% ━━━━━━━━━━━━ 6.2MB 59.1MB/s 0.1s
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.2:5000
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [06/Jul/2026 19:12:26] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:36:29] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:48:18] "GET /traffic-stats HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:48:18] "POST /stop HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:48:18] "OPTIONS /process-url HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:48:18] "POST /process-url HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:48:20] "GET /traffic-stats HTTP/1.1" 200 -
+ERROR: [youtube] xrX2IqMyb-8: This live stream recording is not available.
+127.0.0.1 - - [06/Jul/2026 20:48:22] "GET /stream?t=1783370899193 HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:48:22] "GET /stream?t=1783370899639 HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:48:22] "GET /stream?t=1783370899638 HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:48:22] "GET /stream?t=1783370899191 HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:48:22] "GET /traffic-stats HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:48:23] "[33mGET /stream?t=1783370902843 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [06/Jul/2026 20:48:23] "[33mGET /stream?t=1783370902842 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [06/Jul/2026 20:48:23] "[33mGET /stream?t=1783370903025 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [06/Jul/2026 20:48:23] "[33mGET /stream?t=1783370903026 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [06/Jul/2026 20:48:24] "GET /traffic-stats HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:48:25] "GET /traffic-stats HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:38] "GET /traffic-stats HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:38] "POST /stop HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:38] "OPTIONS /process-url HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:38] "POST /process-url HTTP/1.1" 200 -
+ERROR: [youtube] xrX2IqMyb-8: This live stream recording is not available.
+127.0.0.1 - - [06/Jul/2026 20:51:40] "GET /traffic-stats HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:41] "GET /stream?t=1783371098771 HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:41] "GET /stream?t=1783371099013 HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:41] "GET /stream?t=1783371099014 HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:41] "GET /stream?t=1783371098770 HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:41] "GET /traffic-stats HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:41] "[33mGET /stream?t=1783371101719 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [06/Jul/2026 20:51:41] "[33mGET /stream?t=1783371101720 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [06/Jul/2026 20:51:42] "[33mGET /stream?t=1783371101903 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [06/Jul/2026 20:51:42] "[33mGET /stream?t=1783371101902 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [06/Jul/2026 20:51:44] "GET /traffic-stats HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:44] "POST /stop HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:44] "GET /traffic-stats HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:44] "POST /stop HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:44] "OPTIONS /process-url HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:44] "POST /process-url HTTP/1.1" 200 -
+ERROR: [youtube] xrX2IqMyb-8: This live stream recording is not available.
+127.0.0.1 - - [06/Jul/2026 20:51:46] "GET /stream?t=1783371104857 HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:46] "GET /stream?t=1783371104940 HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:46] "GET /traffic-stats HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 20:51:47] "GET /traffic-stats HTTP/1.1" 200 -

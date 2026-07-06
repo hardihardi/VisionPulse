@@ -16,7 +16,8 @@ class TrafficCounter:
             'motorcycle': 0.25,
             'car': 1.0,
             'bus': 1.5,
-            'truck': 2.0
+            'truck': 2.0,
+            'trailer': 2.5
         }
         self.track_history = defaultdict(lambda: deque(maxlen=30))
         self.counted_ids = set()
