@@ -78,7 +78,7 @@ class TrafficCounter:
                                 'id': track_id,
                                 'type': cls_name,
                                 'direction': direction,
-                                'time': time.strftime('%H:%M:%S', time.localtime(timestamp))
+                                'skr': skr_val, 'time': time.strftime('%H:%M:%S', time.localtime(timestamp))
                             })
 
         cv2.line(frame, (0, line_y), (width, line_y), (0, 0, 255), 2)

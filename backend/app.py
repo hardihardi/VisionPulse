@@ -49,11 +49,23 @@ def process_video():
         return
 
     if video_source == 'test_url':
+        import random
         while is_processing:
-            time.sleep(1)
-            counter.counts['Mendekat']['car'] += 1
-            counter.history_data.append((time.time(), 'Mendekat', 'car', 1.0, 99))
-            counter.detection_log.append({'id': 99, 'type': 'car', 'direction': 'Mendekat', 'time': 'now'})
+            time.sleep(random.uniform(0.5, 2.0))
+            v_type = random.choice(['car', 'motorcycle', 'bus', 'truck', 'trailer'])
+            dir_type = random.choice(['Mendekat', 'Menjauh'])
+            skr = counter.get_skr(v_type)
+            track_id = random.randint(100, 999)
+            counter.counts[dir_type][v_type] += 1
+            timestamp = time.time()
+            counter.history_data.append((timestamp, dir_type, v_type, skr, track_id))
+            counter.detection_log.append({
+                'id': track_id,
+                'type': v_type,
+                'direction': dir_type,
+                'skr': skr,
+                'time': time.strftime('%H:%M:%S', time.localtime(timestamp))
+            })
         return
 
     stream_url = get_stream_url(video_source)

@@ -20,6 +20,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { useVideoHistory } from '@/hooks/use-video-history';
 import { RealtimeDetectionStats } from './realtimedetection-stats';
+import { StatsCard } from '../dashboard/stats-card';
 import { DetectionResultCard } from '../dashboard/detection-result-card';
 import { VehicleComparisonChart } from './vehicle-comparison-chart';
 import { firestore } from '@/lib/firebase';
@@ -29,7 +30,7 @@ import { AnomalyDetectionCard } from './anomaly-detection-card';
 import { AiTrafficAnalysisCard } from './ai-traffic-analysis-card';
 import { TrafficLog } from './traffic-log';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, RefreshCw, LayoutDashboard, BarChart3, Settings, ListTodo, Activity, MonitorPlay, Zap } from 'lucide-react';
+import { AlertCircle, RefreshCw, LayoutDashboard, BarChart3, Settings, ListTodo, Activity, MonitorPlay, Zap, Users, Car, Truck } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '../ui/badge';
@@ -215,7 +216,7 @@ export function TrafficDashboard() {
                         Menjauh: (totalJ / 5) * 4,
                     },
                     recent_logs: [
-                        { id: Math.random(), type: 'car', direction: 'Mendekat', time: timeStr },
+                        { id: Math.floor(Math.random() * 1000), type: ['car', 'motorcycle', 'bus', 'truck', 'trailer'][Math.floor(Math.random() * 5)], direction: Math.random() > 0.5 ? 'Mendekat' : 'Menjauh', skr: Math.random() * 2, time: timeStr },
                         ... (backendStats?.recent_logs || []).slice(0, 5)
                     ],
                     config: { line_y: 0.5 }
@@ -401,6 +402,33 @@ export function TrafficDashboard() {
                     </Badge>
                 </div>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatsCard
+                    title="Total Kendaraan"
+                    value={((backendStats?.counts?.Mendekat?.car || 0) + (backendStats?.counts?.Mendekat?.bus || 0) + (backendStats?.counts?.Mendekat?.truck || 0) + (backendStats?.counts?.Mendekat?.motorcycle || 0) + (backendStats?.counts?.Mendekat?.trailer || 0) + (backendStats?.counts?.Menjauh?.car || 0) + (backendStats?.counts?.Menjauh?.bus || 0) + (backendStats?.counts?.Menjauh?.truck || 0) + (backendStats?.counts?.Menjauh?.motorcycle || 0) + (backendStats?.counts?.Menjauh?.trailer || 0)).toString()}
+                    icon={<Car className="w-4 h-4" />}
+                    change="Jumlah kumulatif"
+                />
+                <StatsCard
+                    title="Total SKR"
+                    value={((backendStats?.total_skr?.Mendekat || 0) + (backendStats?.total_skr?.Menjauh || 0)).toFixed(2)}
+                    icon={<Users className="w-4 h-4" />}
+                    change="SKR kumulatif"
+                />
+                <StatsCard
+                    title="Rerata Kecepatan"
+                    value="42.5 km/h"
+                    icon={<Truck className="w-4 h-4" />}
+                    change="Estimasi sistem"
+                />
+                <StatsCard
+                    title="Anomali Terdeteksi"
+                    value={anomalies.length.toString()}
+                    icon={<Zap className="w-4 h-4" />}
+                    change="Sesi aktif"
+                    variant={anomalies.length > 0 ? "destructive" : "default"}
+                />
+            </div>
 
             {backendError && mode === 'LIVE' && (
                 <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-2 border-l-4">
@@ -452,7 +480,10 @@ export function TrafficDashboard() {
                 <div className="col-span-3 space-y-6">
                     <ControlStatus isStartEnabled={!!activeVideo} status={status} onStatusChange={handleStatusChange} />
                     <RealtimeDetectionStats isAnalyzing={isAnalyzing} backendStats={backendStats} />
+                    <VehicleVolume isAnalyzing={isAnalyzing} coefficients={pcuCoefficients} backendStats={backendStats} />
                     <TrafficLog logs={backendStats?.recent_logs || []} isAnalyzing={isAnalyzing} />
+                    <DetectionResultCard detectionResult={detectionResult} />
+                    <AiTrafficAnalysisCard isAnalyzing={isAnalyzing} analysisInputUri={analysisInputUri} sourceType={activeVideo?.source.type ?? null} />
                     <ExportReport isAnalyzing={isAnalyzing} trafficData={trafficCountData} countingChartRef={trafficCountingChartRef} movingAverageChartRef={movingAverageChartRef} vehicleComparisonChartRef={vehicleComparisonChartRef} />
                     <PcuCoefficient coefficients={pcuCoefficients} onUpdate={setPcuCoefficients} lineY={backendStats?.config?.line_y} onLineYChange={handleLineYChange} />
                     <AnomalyDetectionCard anomalies={anomalies} isAnalyzing={isAnalyzing} />

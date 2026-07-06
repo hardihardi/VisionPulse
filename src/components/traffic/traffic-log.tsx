@@ -10,6 +10,7 @@ interface DetectionLog {
   id: number;
   type: string;
   direction: string;
+  skr?: number;
   time: string;
 }
 
@@ -64,6 +65,7 @@ export function TrafficLog({ logs, isAnalyzing }: TrafficLogProps) {
                   <div className="flex flex-col">
                     <span className="font-bold">ID: {log.id}</span>
                     <span className="capitalize text-muted-foreground">{log.type}</span>
+                    {log.skr !== undefined && <span className="text-[9px] text-primary">SKR: {log.skr.toFixed(2)}</span>}
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
