@@ -1,4 +1,4 @@
-# VisionPulse Backend API
+# VisionPulse Backend API - Optimized for Vercel Serverless
 import os
 import cv2
 import threading
@@ -15,7 +15,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configuration
-UPLOAD_FOLDER = 'videos'
+UPLOAD_FOLDER = '/tmp/videos' # Vercel only allows writing to /tmp
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -50,24 +50,26 @@ def process_video():
         return
 
     if video_source == 'test_url':
-        while is_processing:
+        # Simulate processing for a short time (Serverless limits)
+        for _ in range(5):
+            if not is_processing: break
             time.sleep(1)
             counter.counts['Mendekat']['car'] += 1
             counter.history_data.append((time.time(), 'Mendekat', 'car', 1.0, 99))
             counter.detection_log.append({'id': 99, 'type': 'car', 'direction': 'Mendekat', 'time': 'now'})
+        is_processing = False
         return
 
     stream_url = get_stream_url(video_source)
     cap = cv2.VideoCapture(stream_url)
 
-    while is_processing:
+    # Note: On Vercel, this thread will likely be killed when the request finishes.
+    # We limit processing to avoid hanging.
+    start_time = time.time()
+    while is_processing and (time.time() - start_time < 10):
         ret, frame = cap.read()
         if not ret:
-            if isinstance(video_source, str) and not video_source.startswith(('http', 'rtsp')):
-                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                continue
-            else:
-                break
+            break
 
         processed_frame = counter.process_frame(frame)
         with frame_lock:
@@ -92,10 +94,9 @@ def upload_video():
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(file_path)
 
-    # Stop existing processing
     is_processing = False
     if processing_thread:
-        processing_thread.join()
+        processing_thread.join(timeout=1)
 
     counter.reset()
     video_source = file_path
@@ -103,7 +104,7 @@ def upload_video():
     processing_thread = threading.Thread(target=process_video)
     processing_thread.start()
 
-    return jsonify({'message': 'Video uploaded and processing started', 'file_path': file_path})
+    return jsonify({'message': 'Video uploaded. Note: Serverless processing is limited.', 'file_path': file_path})
 
 @app.route('/process-url', methods=['POST'])
 def process_url():
@@ -114,10 +115,9 @@ def process_url():
     if not url:
         return jsonify({'error': 'No URL provided'}), 400
 
-    # Stop existing processing
     is_processing = False
     if processing_thread:
-        processing_thread.join()
+        processing_thread.join(timeout=1)
 
     counter.reset()
     video_source = url
@@ -125,7 +125,7 @@ def process_url():
     processing_thread = threading.Thread(target=process_video)
     processing_thread.start()
 
-    return jsonify({'message': 'URL received and processing started', 'url': url})
+    return jsonify({'message': 'URL received. Note: Serverless processing is limited.', 'url': url})
 
 @app.route('/update-config', methods=['POST'])
 def update_config():
@@ -140,12 +140,13 @@ def update_config():
 def get_traffic_stats():
     return jsonify({
         'status': 'STARTED' if is_processing else 'STOPPED',
-        'stats': counter.get_stats()
+        'stats': counter.get_stats(),
+        'environment': 'vercel'
     })
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify({'status': 'healthy', 'uptime': time.time()})
+    return jsonify({'status': 'healthy', 'environment': 'vercel', 'uptime': time.time()})
 
 @app.route('/export/<fmt>', methods=['GET'])
 def export_data(fmt):
@@ -195,7 +196,6 @@ def generate_frames():
     while is_processing:
         if current_frame is not None:
             with frame_lock:
-                # Use lower quality for MJPEG to save bandwidth/CPU
                 ret, buffer = cv2.imencode('.jpg', current_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
                 if not ret:
                     continue
@@ -203,7 +203,7 @@ def generate_frames():
 
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-        time.sleep(0.04)
+        time.sleep(0.1) # Higher sleep for serverless
 
 @app.route('/stream')
 def stream_video():

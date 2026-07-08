@@ -1,3 +1,5 @@
-backend/venv
 node_modules
 .next
+backend/venv
+videos
+.git
