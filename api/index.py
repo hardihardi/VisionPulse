@@ -7,7 +7,7 @@ import pandas as pd
 from flask import Flask, request, jsonify, Response, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-from api.traffic_counter import TrafficCounter
+from .traffic_counter import TrafficCounter
 import yt_dlp
 import io
 

@@ -1,5 +1,11 @@
 node_modules
 .next
-backend/venv
-videos
 .git
+.idx
+backend
+docs
+public
+videos
+yolov8n.pt
+*.log
+verify_sim.py
