@@ -1,0 +1,30 @@
+
+> nextn@0.1.0 dev
+> next dev --turbopack -p 9002
+
+   ▲ Next.js 15.3.8 (Turbopack)
+   - Local:        http://localhost:9002
+   - Network:      http://192.168.0.2:9002
+
+ ✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+ ✓ Ready in 1369ms
+ ○ Compiling / ...
+ ✓ Compiled / in 18.2s
+ HEAD / 200 in 20953ms
+ GET / 200 in 437ms
+ ⨯ upstream image response failed for https://storage.googleapis.com/aifire.dev-dependencies.appspot.com/templates/vision-pulse-traffic-image.png 404
+ GET / 200 in 377ms
+ ⨯ upstream image response failed for https://storage.googleapis.com/aifire.dev-dependencies.appspot.com/templates/vision-pulse-traffic-image.png 404
+ ○ Compiling /history ...
+ ✓ Compiled /history in 3.1s
+ GET /history 200 in 3204ms
+ GET / 200 in 72ms
+ GET / 200 in 1431ms
+ ⨯ upstream image response failed for https://storage.googleapis.com/aifire.dev-dependencies.appspot.com/templates/vision-pulse-traffic-image.png 404
+ GET /history 200 in 97ms
+ GET / 200 in 72ms

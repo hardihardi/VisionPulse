@@ -76,7 +76,7 @@ export const VideoUploadForm = forwardRef<VideoUploadFormHandles, VideoUploadFor
         };
 
         if (activeTab === 'upload' && values.video) {
-            newVideoItem.source = { type: 'file', file: values.video };
+            newVideoItem.source = { type: 'file', file: values.video, fileName: values.video.name, fileType: values.video.type };
             onVideoSelect(newVideoItem as VideoHistoryItem);
             toast({
                 title: "Video Ditambahkan",

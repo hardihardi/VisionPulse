@@ -16,6 +16,7 @@ import { getEnhancedRecognition } from '@/app/(actions)/enhance-recognition';
 import { useToast } from '@/hooks/use-toast';
 import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
 import Image from 'next/image';
+import { UniversalVideoPlayer } from '../dashboard/universal-video-player';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { useVideoHistory } from '@/hooks/use-video-history';
@@ -337,10 +338,10 @@ export function TrafficDashboard() {
     }
 
     if (isAnalyzing) {
-        if (mode === 'SIMULATION') {
+        if (mode === "SIMULATION") {
             return (
                 <div className="w-full h-full relative bg-black min-h-[300px] flex items-center justify-center">
-                    <video src={videoSrc} className="w-full h-full object-contain opacity-60" controls autoPlay loop muted />
+                    <UniversalVideoPlayer src={videoSrc} isAnalyzing={true} className="w-full h-full object-contain opacity-60" />
                     <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
                     <div className="absolute top-4 left-4">
                         <Badge variant="secondary" className="bg-blue-600 text-white animate-pulse">SIMULATING AI OVERLAY</Badge>
@@ -361,7 +362,7 @@ export function TrafficDashboard() {
                         <AlertCircle className="w-8 h-8 text-destructive" />
                         <div className="text-center px-4">
                             <p className="text-white font-medium mb-2">Backend Offline</p>
-                            <Button variant="default" size="sm" onClick={() => setMode('SIMULATION')}>Gunakan Mode Simulasi</Button>
+                            <Button variant="default" size="sm" onClick={() => setMode("SIMULATION")}>Gunakan Mode Simulasi</Button>
                         </div>
                     </div>
                 )}
@@ -369,9 +370,7 @@ export function TrafficDashboard() {
         );
     }
 
-    const embedUrl = getYouTubeEmbedUrl(videoSrc);
-    if (embedUrl) return <iframe src={embedUrl} title="YouTube" frameBorder="0" allowFullScreen className="w-full h-full min-h-[300px]" />;
-    return <video src={videoSrc} className="w-full h-full object-cover min-h-[300px]" controls autoPlay loop muted />;
+    return <UniversalVideoPlayer src={videoSrc} className="w-full h-full" />;
   };
 
   return (
@@ -406,8 +405,8 @@ export function TrafficDashboard() {
                     <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-2">
                         <span>Server backend AI di <code>{BACKEND_URL}</code> tidak merespons.</span>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="xs" onClick={() => window.location.reload()}>Coba Lagi</Button>
-                            <Button variant="secondary" size="xs" onClick={() => setMode('SIMULATION')}>Aktifkan Simulasi</Button>
+                            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Coba Lagi</Button>
+                            <Button variant="secondary" size="sm" onClick={() => setMode('SIMULATION')}>Aktifkan Simulasi</Button>
                         </div>
                     </AlertDescription>
                 </Alert>
@@ -431,7 +430,7 @@ export function TrafficDashboard() {
                         <CardHeader className="bg-primary/10 py-3 border-b flex flex-row items-center justify-between">
                             <CardTitle className="text-sm font-semibold flex items-center gap-2">
                                 <LayoutDashboard className="w-4 h-4 text-primary" />
-                                {activeVideo?.name || 'Monitor Lalu Lintas'}
+                                {activeVideo?.name || 'Monitor Lalu Lintas'} <Badge variant="outline" className="ml-2 text-[10px] py-0 h-5">{activeVideo?.source.type === "url" ? (videoSrc?.includes(".m3u8") ? "HLS STREAM" : "WEB VIDEO") : "FILE LOCAL"}</Badge>
                             </CardTitle>
                             {mode === 'SIMULATION' && <Badge variant="secondary" className="text-[10px] uppercase">Riset Simulasi</Badge>}
                         </CardHeader>
