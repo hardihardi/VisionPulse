@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
 import type { PcuCoefficients, Detection, Anomaly } from '@/lib/types';
@@ -414,8 +414,8 @@ export function TrafficDashboard() {
 
             <main>
               {/* Desktop View: Grid Layout */}
-              <div className="hidden xl:grid gap-6 grid-cols-12">
-                <div className="col-span-9 space-y-6">
+              <div className="hidden lg:grid gap-6 grid-cols-12">
+                <div className="lg:col-span-8 xl:col-span-9 space-y-6">
                     <Card className="overflow-hidden border-none shadow-md">
                         <CardHeader className="bg-primary/10 py-3 border-b flex flex-row items-center justify-between">
                             <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -435,7 +435,7 @@ export function TrafficDashboard() {
                     <VehicleComparisonChart ref={vehicleComparisonChartRef} isAnalyzing={isAnalyzing} backendStats={backendStats} />
                     <CumulativeVolumeChart isAnalyzing={isAnalyzing} backendStats={backendStats} />
                 </div>
-                <div className="col-span-3 space-y-6">
+                <div className="lg:col-span-4 xl:col-span-3 space-y-6">
                     <ControlStatus isStartEnabled={!!activeVideo} status={status} onStatusChange={handleStatusChange} />
                     <RealtimeDetectionStats isAnalyzing={isAnalyzing} backendStats={backendStats} />
                     <TrafficLog logs={backendStats?.recent_logs || []} isAnalyzing={isAnalyzing} />
@@ -446,7 +446,7 @@ export function TrafficDashboard() {
               </div>
 
               {/* Mobile/Tablet View: Tabs Layout */}
-              <div className="xl:hidden space-y-6">
+              <div className="lg:hidden space-y-6">
                 <div className="aspect-video relative bg-black rounded-lg overflow-hidden shadow-md">
                     {renderVideoPlayer()}
                 </div>

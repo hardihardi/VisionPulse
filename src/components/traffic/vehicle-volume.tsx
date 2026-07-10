@@ -1,10 +1,10 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import type { VehicleStats, PcuCoefficients } from '@/lib/types';
+import { Clock, Car, Gauge, Activity } from 'lucide-react';
 
 interface VehicleVolumeProps {
     isAnalyzing: boolean;
@@ -93,50 +93,67 @@ export function VehicleVolume({ isAnalyzing, coefficients, backendStats }: Vehic
     }
     
     const getStatusText = () => {
-        if (isAnalyzing) return 'MENGANALISIS';
-        return 'DIHENTIKAN';
+        if (isAnalyzing) return 'AKTIF';
+        return 'STOP';
     }
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Statistik Real-time</CardTitle>
+        <Card className="border-none shadow-sm overflow-hidden">
+            <CardHeader className="pb-4">
+                <CardTitle className="text-base font-bold">Ringkasan Statistik</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4 text-center">
-                    <div className="p-2 bg-muted rounded-md">
-                        <CardDescription>Status</CardDescription>
-                        <p className={`font-bold text-lg ${isAnalyzing ? 'text-green-500' : 'text-destructive'}`}>{getStatusText()}</p>
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col items-center justify-center p-2 bg-muted/30 rounded-lg border border-muted-foreground/5">
+                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Status</span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                            <Activity className={`w-3 h-3 \${isAnalyzing ? 'text-green-500 animate-pulse' : 'text-red-500'}`} />
+                            <p className={`font-black text-sm \${isAnalyzing ? 'text-green-500' : 'text-red-500'}`}>{getStatusText()}</p>
+                        </div>
                     </div>
-                    <div className="p-2 bg-muted rounded-md">
-                        <CardDescription>Total Kendaraan</CardDescription>
-                        <p className="font-bold text-lg">{totals.totalKendaraan}</p>
+                    <div className="flex flex-col items-center justify-center p-2 bg-muted/30 rounded-lg border border-muted-foreground/5">
+                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Waktu</span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                            <Clock className="w-3 h-3 text-primary" />
+                            <p className="font-black text-sm">{formatTime(processingTime)}</p>
+                        </div>
                     </div>
-                    <div className="p-2 bg-muted rounded-md">
-                        <CardDescription>Total SKR</CardDescription>
-                        <p className="font-bold text-lg">{totals.totalPcu.toFixed(2)}</p>
+                    <div className="flex flex-col items-center justify-center p-2 bg-muted/30 rounded-lg border border-muted-foreground/5">
+                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Total Unit</span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                            <Car className="w-3 h-3 text-orange-500" />
+                            <p className="font-black text-sm">{totals.totalKendaraan}</p>
+                        </div>
                     </div>
-                     <div className="p-2 bg-muted rounded-md">
-                        <CardDescription>Waktu Proses</CardDescription>
-                        <p className="font-bold text-lg">{formatTime(processingTime)}</p>
+                    <div className="flex flex-col items-center justify-center p-2 bg-muted/30 rounded-lg border border-muted-foreground/5">
+                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">SKR Total</span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                            <Gauge className="w-3 h-3 text-blue-500" />
+                            <p className="font-black text-sm">{totals.totalPcu.toFixed(1)}</p>
+                        </div>
                     </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 pt-2">
                     {vehicleOrder.map(key => {
                         const vehicle = stats[key];
+                        if (!isAnalyzing && vehicle.count === 0) return null;
                         return (
-                            <div key={key}>
-                                <div className="flex justify-between items-center mb-1">
-                                    <h4 className="text-sm font-medium">{vehicle.name}</h4>
-                                    <span className="text-xs text-muted-foreground">SKR: {coefficients[key].toFixed(2)}</span>
+                            <div key={key} className="group">
+                                <div className="flex justify-between items-end mb-1.5">
+                                    <div>
+                                        <h4 className="text-xs font-bold leading-none">{vehicle.name}</h4>
+                                        <p className="text-[9px] text-muted-foreground mt-1 uppercase tracking-widest font-medium">SKR: {coefficients[key].toFixed(2)}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs font-black leading-none">{vehicle.count} <span className="text-[9px] font-normal text-muted-foreground ml-0.5">unit</span></p>
+                                        <p className="text-[9px] text-primary font-bold mt-1">{vehicle.pcu.toFixed(1)} SKR</p>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between items-center text-xs text-muted-foreground mb-1">
-                                    <span>{vehicle.count} Kendaraan</span>
-                                    <span>{vehicle.pcu.toFixed(2)} SKR</span>
+                                <div className="relative h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                    <Progress value={vehicle.progress} className="h-full transition-all duration-1000" />
                                 </div>
-                                <Progress value={vehicle.progress} />
-                                <p className="text-right text-xs mt-1 text-muted-foreground">{vehicle.progress.toFixed(1)}%</p>
+                                <p className="text-[9px] text-right mt-1 font-mono text-muted-foreground">{vehicle.progress.toFixed(1)}% dari total</p>
                             </div>
                         );
                     })}

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,14 +10,14 @@ interface RealtimeDetectionStatsProps {
 }
 
 const StatDisplay = ({ title, value, unit, icon: Icon }: { title: string, value: string, unit: string, icon: React.ElementType }) => (
-  <div className="flex items-center gap-4">
-    <div className="p-3 bg-muted rounded-md">
-      <Icon className="w-5 h-5 text-muted-foreground" />
+  <div className="flex items-center gap-3 sm:gap-4">
+    <div className="p-2 sm:p-3 bg-muted rounded-md shrink-0">
+      <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
     </div>
-    <div>
-      <p className="text-sm text-muted-foreground">{title}</p>
-      <p className="text-xl font-bold">
-        {value} <span className="text-sm font-normal text-muted-foreground">{unit}</span>
+    <div className="min-w-0">
+      <p className="text-[10px] sm:text-sm text-muted-foreground truncate">{title}</p>
+      <p className="text-base sm:text-xl font-bold truncate">
+        {value} <span className="text-[10px] sm:text-sm font-normal text-muted-foreground">{unit}</span>
       </p>
     </div>
   </div>
@@ -66,32 +65,32 @@ export function RealtimeDetectionStats({ isAnalyzing, backendStats }: RealtimeDe
   }, [isAnalyzing, backendStats]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Status Deteksi Real-Time</CardTitle>
-        <CardDescription>Metrik dari analisis backend.</CardDescription>
+    <Card className="border-none shadow-sm">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm sm:text-base">Status Deteksi Real-Time</CardTitle>
+        <CardDescription className="text-[10px] sm:text-xs">Metrik dari analisis backend.</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4">
         <StatDisplay 
-          title="Kendaraan Terdeteksi"
+          title="Kendaraan"
           value={isAnalyzing ? stats.vehiclesDetected.toString() : "0"}
           unit="kend."
           icon={Car}
         />
         <StatDisplay 
-          title="Total SKR Kumulatif"
+          title="Total SKR"
           value={isAnalyzing ? stats.totalSkr.toFixed(2) : "0.00"}
           unit="SKR"
           icon={Gauge}
         />
         <StatDisplay 
-          title="Tingkat Akurasi"
+          title="Akurasi"
           value={isAnalyzing ? `${stats.detectionRate.toFixed(1)}` : "0"}
           unit="%"
           icon={ShieldCheck}
         />
         <StatDisplay 
-          title="Kepadatan Lalu Lintas" 
+          title="Kepadatan"
           value={isAnalyzing ? stats.trafficDensity : "-"}
           unit=""
           icon={Thermometer}

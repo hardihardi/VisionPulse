@@ -2,235 +2,213 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
-import { AlertCircle, Loader2, ExternalLink, RefreshCw, Activity } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { AlertCircle, ExternalLink, Play, Info } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface UniversalVideoPlayerProps {
-  src: string;
+  url: string;
+  title?: string;
   className?: string;
+  poster?: string;
   autoPlay?: boolean;
   muted?: boolean;
-  controls?: boolean;
-  loop?: boolean;
-  isAnalyzing?: boolean;
 }
 
-function getYouTubeEmbedUrl(url: string): string | null {
-  let videoId: string | null = null;
-  try {
-    const urlObj = new URL(url);
-    if (urlObj.hostname === 'youtu.be') {
-      videoId = urlObj.pathname.slice(1);
-    } else if (urlObj.hostname.includes('youtube.com')) {
-      videoId = urlObj.searchParams.get('v');
-    }
-  } catch (e) {
-    return null;
-  }
-  if (videoId) return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
-  return null;
-}
-
-export function UniversalVideoPlayer({
-  src,
-  className = "w-full h-full",
+export const UniversalVideoPlayer: React.FC<UniversalVideoPlayerProps> = ({
+  url,
+  title = "Video Player",
+  className = "",
+  poster = "",
   autoPlay = true,
   muted = true,
-  controls = true,
-  loop = true,
-  isAnalyzing = false
-}: UniversalVideoPlayerProps) {
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
-  const [hlsStats, setHlsStats] = useState<{latency: number, bandwidth: number} | null>(null);
-
-  const isHls = src.includes('.m3u8');
-  const youtubeUrl = getYouTubeEmbedUrl(src);
+  const [isHls, setIsHls] = useState(false);
+  const [isYouTube, setIsYouTube] = useState(false);
+  const [isCORSProblem, setIsCORSProblem] = useState(false);
 
   useEffect(() => {
-    if (youtubeUrl || !videoRef.current || !src) {
-        setIsLoading(false);
-        return;
+    // Reset states
+    setError(null);
+    setIsCORSProblem(false);
+
+    // Cleanup previous HLS instance
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
     }
 
-    let hls: Hls | null = null;
-    setIsLoading(true);
-    setError(null);
+    if (!url) return;
 
-    const loadTimeout = setTimeout(() => {
-        if (isLoading && !error) {
-            setError("Waktu tunggu pemuatan stream habis. Kemungkinan masalah koneksi atau CORS.");
-            setIsLoading(false);
-        }
-    }, 20000);
+    // Check if YouTube
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      setIsYouTube(true);
+      setIsHls(false);
+      return;
+    }
 
-    if (isHls) {
+    setIsYouTube(false);
+    const isM3U8 = url.toLowerCase().includes('.m3u8');
+    setIsHls(isM3U8);
+
+    if (isM3U8 && videoRef.current) {
+      const video = videoRef.current;
+
       if (Hls.isSupported()) {
-        hls = new Hls({
-            enableWorker: true,
-            lowLatencyMode: true,
-            backBufferLength: 60,
-            maxBufferLength: 15,
-            manifestLoadingMaxRetry: 3,
-            manifestLoadingRetryDelay: 1000,
-            xhrSetup: (xhr) => {
-              xhr.withCredentials = false;
-            }
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          backBufferLength: 90
         });
+        hlsRef.current = hls;
 
-        hls.loadSource(src);
-        hls.attachMedia(videoRef.current);
+        hls.loadSource(url);
+        hls.attachMedia(video);
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          clearTimeout(loadTimeout);
-          setIsLoading(false);
           if (autoPlay) {
-            videoRef.current?.play().catch(() => {
-                if (videoRef.current) {
-                    videoRef.current.muted = true;
-                    videoRef.current.play().catch(pErr => console.error("Autoplay failed", pErr));
-                }
-            });
+            video.play().catch(e => console.log("Autoplay blocked:", e));
           }
         });
 
-        hls.on(Hls.Events.FRAG_LOADED, (event: any, data: any) => {
-           setHlsStats({
-               latency: data.stats.tfirst - data.stats.trequest,
-               bandwidth: Math.round(data.stats.bw / 1024)
-           });
-        });
-
-        hls.on(Hls.Events.ERROR, (event: any, data: any) => {
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          console.error("HLS Error:", data);
           if (data.fatal) {
-             console.error("HLS Fatal Error:", data);
-             clearTimeout(loadTimeout);
-             switch (data.type) {
-               case Hls.ErrorTypes.NETWORK_ERROR:
-                 setError("Masalah jaringan atau CORS terdeteksi. Stream ini mungkin memblokir akses browser langsung.");
-                 break;
-               case Hls.ErrorTypes.MEDIA_ERROR:
-                 setError("Gagal memproses data media. Mencoba memulihkan...");
-                 hls?.recoverMediaError();
-                 break;
-               default:
-                 setError("Kesalahan fatal saat memuat stream HLS.");
-                 break;
-             }
-             setIsLoading(false);
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                setError("Network error encountered.");
+                if (data.response && data.response.code === 0) {
+                  setIsCORSProblem(true);
+                }
+                hls.startLoad();
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                setError("Media error encountered.");
+                hls.recoverMediaError();
+                break;
+              default:
+                setError("Fatal error encountered. Cannot play video.");
+                hls.destroy();
+                break;
+            }
           }
         });
-      } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-        videoRef.current.src = src;
-        videoRef.current.addEventListener('loadedmetadata', () => {
-          clearTimeout(loadTimeout);
-          setIsLoading(false);
-          if (autoPlay) videoRef.current?.play();
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native HLS (Safari)
+        video.src = url;
+        video.addEventListener('loadedmetadata', () => {
+          if (autoPlay) {
+            video.play().catch(e => console.log("Autoplay blocked:", e));
+          }
+        });
+        video.addEventListener('error', (e) => {
+          console.error("Native HLS Error:", e);
+          setError("Failed to load stream in browser.");
         });
       } else {
-        setError("Browser tidak mendukung HLS.");
-        setIsLoading(false);
+        setError("Your browser does not support HLS playback.");
       }
-    } else {
-      videoRef.current.src = src;
-      videoRef.current.onloadeddata = () => {
-          clearTimeout(loadTimeout);
-          setIsLoading(false);
-      };
-      videoRef.current.onerror = () => {
-        setError("Gagal memuat file video.");
-        setIsLoading(false);
-      };
     }
 
+    // Final cleanup
     return () => {
-      clearTimeout(loadTimeout);
-      if (hls) {
-        hls.destroy();
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
       }
     };
-  }, [src, isHls, youtubeUrl, autoPlay, retryCount]);
+  }, [url, autoPlay]);
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center p-6 bg-muted rounded-md h-full min-h-[300px]">
-        <Alert variant="destructive" className="max-w-md border-destructive/50 bg-destructive/10">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle className="text-sm font-bold">Kesalahan Stream</AlertTitle>
-          <AlertDescription className="space-y-4">
-            <p className="text-[11px] leading-relaxed">{error}</p>
-            <div className="flex flex-col gap-2 pt-2">
-                <p className="text-[10px] opacity-80 italic bg-black/5 p-2 rounded">
-                    Info: CCTV Bekasi (eofficev2) seringkali memblokir akses langsung browser (CORS).
-                    Pilih tab <strong>LIVE</strong> untuk melihat hasil analisis dari Backend AI kami.
-                </p>
-                <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setRetryCount(c => c+1)} className="h-8 text-[10px] flex-1 bg-background">
-                        <RefreshCw className="w-3 h-3 mr-1" /> Coba Lagi
-                    </Button>
-                    <Button size="sm" variant="secondary" asChild className="h-8 text-[10px] flex-1">
-                        <a href={src} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="w-3 h-3 mr-1" /> Buka Tab Baru
-                        </a>
-                    </Button>
-                </div>
-            </div>
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+  const getYouTubeEmbedUrl = (originalUrl: string) => {
+    let videoId = '';
+    if (originalUrl.includes('v=')) {
+      videoId = originalUrl.split('v=')[1].split('&')[0];
+    } else if (originalUrl.includes('youtu.be/')) {
+      videoId = originalUrl.split('youtu.be/')[1].split('?')[0];
+    } else if (originalUrl.includes('embed/')) {
+      videoId = originalUrl.split('embed/')[1].split('?')[0];
+    }
+    return `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? 1 : 0}&mute=${muted ? 1 : 0}`;
+  };
 
-  if (youtubeUrl && !isAnalyzing) {
+  if (isYouTube) {
     return (
-      <div className="relative w-full h-full min-h-[300px] bg-black">
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center z-10">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        )}
+      <div className={`relative aspect-video w-full bg-black rounded-lg overflow-hidden ${className}`}>
         <iframe
-          src={youtubeUrl}
-          title="YouTube"
-          frameBorder="0"
-          allow="autoplay; encrypted-media"
+          src={getYouTubeEmbedUrl(url)}
+          className="absolute inset-0 w-full h-full border-0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
-          className={className}
-          onLoad={() => setIsLoading(false)}
+          title={title}
+          referrerPolicy="strict-origin-when-cross-origin"
         />
       </div>
     );
   }
 
   return (
-    <div className="relative w-full h-full min-h-[300px] bg-black group">
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center z-10">
-          <Loader2 className="w-8 h-8 animate-spin text-white/50" />
+    <div className={`relative aspect-video w-full bg-slate-950 rounded-lg overflow-hidden group ${className}`}>
+      {isHls ? (
+        <>
+          <video
+            ref={videoRef}
+            className="w-full h-full"
+            poster={poster}
+            muted={muted}
+            controls
+            playsInline
+          />
+
+          {error && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/60 p-4 z-10">
+              <Alert variant="destructive" className="max-w-md bg-slate-900 border-red-900/50">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Playback Error</AlertTitle>
+                <AlertDescription className="space-y-3">
+                  <p>{isCORSProblem ? "Browser blocked this stream (CORS)." : error}</p>
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    <Button variant="outline" size="sm" asChild className="h-8 border-slate-700 hover:bg-slate-800">
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Direct Link
+                      </a>
+                    </Button>
+                    {isCORSProblem && (
+                      <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 py-1">
+                        <Info className="h-3 w-3 mr-1" />
+                        AI Analysis OK
+                      </Badge>
+                    )}
+                  </div>
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-4">
+          <Play className="h-12 w-12 opacity-20" />
+          <p className="text-sm font-medium">Video feed ready</p>
+          <Badge variant="secondary" className="bg-slate-800 text-slate-300">
+            {url ? "Processing Stream..." : "No Source"}
+          </Badge>
         </div>
       )}
-      <video
-        ref={videoRef}
-        className={`${className} \${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-500`}
-        controls={controls}
-        muted={muted}
-        loop={loop}
-        playsInline
-        crossOrigin="anonymous"
-      />
 
-      {hlsStats && !isLoading && (
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-              <Badge variant="outline" className="bg-black/40 text-[9px] text-white border-white/20 backdrop-blur-sm">
-                  <Activity className="w-2.5 h-2.5 mr-1 text-green-400" />
-                  {hlsStats.bandwidth} KB/s
-              </Badge>
-          </div>
-      )}
+      <div className="absolute top-3 left-3 flex gap-2">
+        <Badge className="bg-red-600 hover:bg-red-600 text-white border-0 shadow-lg px-2 py-0.5">
+          LIVE AI FEED
+        </Badge>
+        {url.includes('SIMULATION') && (
+          <Badge variant="outline" className="bg-amber-500/20 text-amber-500 border-amber-500/30">
+            SIMULATION
+          </Badge>
+        )}
+      </div>
     </div>
   );
-}
+};

@@ -1,28 +1,30 @@
+"use client"
 
-import { SidebarTrigger } from '@/components/ui/sidebar';
-import { ThemeToggle } from '@/components/layout/theme-toggle';
-import { Skeleton } from '../ui/skeleton';
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 interface DashboardHeaderProps {
   title: string;
-  description: string;
+  description?: string;
 }
 
 export function DashboardHeader({ title, description }: DashboardHeaderProps) {
   return (
-    <header className="flex items-start justify-between">
-      <div className="flex items-center gap-4">
-        <SidebarTrigger className="md:hidden" />
-        <div>
-          <h1 className="font-headline text-3xl font-bold tracking-tight">{title}</h1>
-          {description.includes("Mendeteksi lokasi...") ? (
-            <Skeleton className="h-5 w-64 mt-1" />
-          ) : (
-            <p className="text-muted-foreground">{description}</p>
-          )}
+    <div className="flex flex-col gap-1 w-full">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+            <SidebarTrigger className="lg:hidden h-9 w-9" />
+            <h1 className="text-xl font-bold tracking-tight sm:text-2xl lg:text-3xl">{title}</h1>
+        </div>
+        <div className="hidden sm:block">
+            <ThemeToggle />
         </div>
       </div>
-      <ThemeToggle />
-    </header>
+      {description && (
+        <p className="text-xs text-muted-foreground sm:text-sm lg:text-base">
+          {description}
+        </p>
+      )}
+    </div>
   );
 }

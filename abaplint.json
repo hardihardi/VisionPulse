@@ -11,6 +11,7 @@
   },
   "rules": {
     "parser_error": true,
-    "main_file_contents": true
+    "main_file_contents": true,
+    "obsolete_statement": true
   }
 }

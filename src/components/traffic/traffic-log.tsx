@@ -1,78 +1,56 @@
-
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Activity, Car, Bike, Bus, Truck, Box } from 'lucide-react';
-
-interface DetectionLog {
-  id: number;
-  type: string;
-  direction: string;
-  time: string;
-}
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ListTodo, Clock, Car } from "lucide-react";
 
 interface TrafficLogProps {
-  logs: DetectionLog[];
+  logs: any[];
   isAnalyzing: boolean;
-}
-
-const getVehicleIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-        case 'car': return <Car className="w-3 h-3" />;
-        case 'motorcycle': return <Bike className="w-3 h-3" />;
-        case 'bus': return <Bus className="w-3 h-3" />;
-        case 'truck': return <Truck className="w-3 h-3" />;
-        default: return <Box className="w-3 h-3" />;
-    }
 }
 
 export function TrafficLog({ logs, isAnalyzing }: TrafficLogProps) {
   return (
-    <Card className="flex flex-col h-[400px]">
+    <Card className="border-none shadow-sm h-full">
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-bold flex items-center gap-2">
-            <Activity className="w-4 h-4 text-primary" />
-            Log Deteksi Langsung
-          </CardTitle>
-          {isAnalyzing && (
-             <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-          )}
-        </div>
-        <CardDescription className="text-xs">
-          Kendaraan terbaru yang melintasi garis.
-        </CardDescription>
+        <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+            <ListTodo className="w-4 h-4 text-primary" />
+            Log Deteksi
+        </CardTitle>
+        <CardDescription className="text-[10px] sm:text-xs">Aktivitas kendaraan terbaru.</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 p-0 overflow-hidden">
-        <ScrollArea className="h-full p-4 pt-0">
-          <div className="space-y-2">
-            {!isAnalyzing && logs.length === 0 && (
-                <p className="text-center text-xs text-muted-foreground py-10 italic">Mulai analisis untuk melihat log.</p>
-            )}
-            {logs.length === 0 && isAnalyzing && (
-                <p className="text-center text-xs text-muted-foreground py-10 animate-pulse">Menunggu deteksi kendaraan...</p>
-            )}
-            {logs.slice().reverse().map((log, index) => (
-              <div key={`${log.id}-${index}`} className="flex items-center justify-between p-2 rounded-md bg-muted/30 border border-border/50 text-[10px] sm:text-xs hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 bg-primary/10 rounded-full text-primary">
-                    {getVehicleIcon(log.type)}
+      <CardContent className="p-0">
+        <ScrollArea className="h-[250px] lg:h-[320px] px-4">
+          <div className="space-y-3 py-4">
+            {isAnalyzing && logs.length > 0 ? (
+              logs.map((log) => (
+                <div key={log.id} className="flex items-center justify-between gap-3 text-xs border-b border-muted pb-2 last:border-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="p-1.5 bg-primary/10 rounded shrink-0">
+                        <Car className="w-3 h-3 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="font-bold capitalize truncate">{log.type}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{log.direction}</p>
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="font-bold">ID: {log.id}</span>
-                    <span className="capitalize text-muted-foreground">{log.type}</span>
+                  <div className="flex flex-col items-end shrink-0 gap-1">
+                    <Badge variant="outline" className="text-[9px] px-1.5 h-4 font-normal">
+                      <Clock className="w-2 h-2 mr-1" />
+                      {log.time}
+                    </Badge>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <Badge variant={log.direction === 'Mendekat' ? 'default' : 'secondary'} className="text-[9px] px-1 py-0 h-4">
-                    {log.direction}
-                  </Badge>
-                  <span className="text-[9px] text-muted-foreground font-mono">{log.time}</span>
-                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground italic text-xs gap-2">
+                 <div className="w-8 h-8 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+                    <ListTodo className="w-4 h-4 opacity-30" />
+                 </div>
+                 {isAnalyzing ? "Menunggu deteksi..." : "Mulai analisis untuk melihat log."}
               </div>
-            ))}
+            )}
           </div>
         </ScrollArea>
       </CardContent>

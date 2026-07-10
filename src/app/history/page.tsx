@@ -1,334 +1,212 @@
-'use client';
+"use client"
 
-import React, { useState } from 'react';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { MainSidebar } from '@/components/layout/main-sidebar';
-import { DashboardHeader } from '@/components/dashboard/header';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from '@/components/ui/input';
+import { useState } from "react"
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  TableRow
+} from "@/components/ui/table"
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useVideoHistory, VideoHistoryItem } from '@/hooks/use-video-history';
-import { PlusCircle, MoreHorizontal, Link as LinkIcon, Upload, PlayCircle, Edit, Trash2 } from 'lucide-react';
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Calendar as CalendarIcon,
+  Download,
+  Filter,
+  Search,
+  MoreHorizontal,
+  Clock,
+  MapPin,
+  Car,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  List
+} from "lucide-react"
+import { format } from "date-fns"
 
-// Form Schema
-const formSchema = z.object({
-  name: z.string().min(3, { message: "Nama video harus minimal 3 karakter." }),
-  sourceType: z.enum(['file', 'url']),
-  file: z.instanceof(File).optional(),
-  url: z.string().optional(),
-}).superRefine((data, ctx) => {
-    if (data.sourceType === 'url' && (!data.url || !z.string().url().safeParse(data.url).success)) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Harap masukkan URL yang valid.",
-            path: ["url"],
-        });
-    }
-    if (data.sourceType === 'file' && !data.file) {
-         ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Harap unggah sebuah file video.",
-            path: ["file"],
-        });
-    }
-});
+const mockHistory = [
+  { id: 1, plate: "B 1234 KKI", type: "Motorcycle", location: "CCTV - Simpang Bekasi", time: "2024-05-20 10:45:22", speed: "45 km/h", status: "Normal" },
+  { id: 2, plate: "B 8888 ABC", type: "Car", location: "CCTV - Ahmad Yani", time: "2024-05-20 10:44:15", speed: "62 km/h", status: "Speeding" },
+  { id: 3, plate: "D 4321 XYZ", type: "Car", location: "CCTV - Kalimalang", time: "2024-05-20 10:43:58", speed: "38 km/h", status: "Normal" },
+  { id: 4, plate: "B 555 SOS", type: "Bus", location: "CCTV - Simpang Bekasi", time: "2024-05-20 10:42:30", speed: "25 km/h", status: "Normal" },
+  { id: 5, plate: "B 9999 PRO", type: "Truck", location: "CCTV - Depan Pemkot", time: "2024-05-20 10:41:12", speed: "48 km/h", status: "Normal" },
+  { id: 6, plate: "B 2468 TST", type: "Motorcycle", location: "CCTV - Ahmad Yani", time: "2024-05-20 10:40:05", speed: "55 km/h", status: "Normal" },
+  { id: 7, plate: "F 7777 GAN", type: "Car", location: "CCTV - Kalimalang", time: "2024-05-20 10:38:44", speed: "75 km/h", status: "Speeding" },
+]
 
-type VideoSourceFormValues = z.infer<typeof formSchema>;
-
-
-// The Form component itself
-interface VideoSourceFormProps {
-    onFormSubmit: (values: VideoSourceFormValues) => void;
-    initialData?: VideoHistoryItem | null;
-    setOpen: (open: boolean) => void;
-}
-
-function VideoSourceForm({ onFormSubmit, initialData, setOpen }: VideoSourceFormProps) {
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const form = useForm<VideoSourceFormValues>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            name: initialData?.name || "",
-            sourceType: initialData?.source.type || 'url',
-            file: initialData?.source.type === 'file' ? initialData.source.file : undefined,
-            url: initialData?.source.type === 'url' ? initialData.source.url : "",
-        },
-    });
-
-    const sourceType = form.watch("sourceType");
-
-    function onSubmit(values: VideoSourceFormValues) {
-        onFormSubmit(values);
-        setOpen(false);
-    }
-    
-    return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                 <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Nama Lokasi/Video</FormLabel>
-                        <FormControl>
-                            <Input placeholder="Contoh: Lalu Lintas Pagi Hari" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="sourceType"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Tipe Sumber</FormLabel>
-                        <FormControl>
-                            <Tabs value={field.value} onValueChange={(value) => field.onChange(value as 'file' | 'url')} className="w-full">
-                                <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="url">URL</TabsTrigger>
-                                <TabsTrigger value="file">File</TabsTrigger>
-                                </TabsList>
-                            </Tabs>
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                
-                {sourceType === 'url' && (
-                    <FormField
-                        control={form.control}
-                        name="url"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>URL Video (YouTube, dll)</FormLabel>
-                            <FormControl>
-                                <div className="relative">
-                                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input placeholder="https://contoh.com/video.mp4" {...field} className="pl-9" />
-                                </div>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                )}
-
-                {sourceType === 'file' && (
-                     <FormField
-                        control={form.control}
-                        name="file"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>File Video</FormLabel>
-                            <FormControl>
-                            <div>
-                                <Button type="button" size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                <Upload className="mr-2 h-4 w-4" />
-                                Pilih File
-                                </Button>
-                                <input
-                                type="file"
-                                ref={fileInputRef}
-                                className="hidden"
-                                accept="video/*"
-                                onChange={(e) => field.onChange(e.target.files?.[0])}
-                                />
-                                {field.value && <span className="ml-4 text-sm text-muted-foreground truncate">{field.value.name}</span>}
-                            </div>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                )}
-
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button type="button" variant="secondary">Batal</Button>
-                    </DialogClose>
-                    <Button type="submit">{initialData ? 'Simpan Perubahan' : 'Tambah Sumber'}</Button>
-                </DialogFooter>
-            </form>
-        </Form>
-    );
-}
-
-// Main Page Component
 export default function HistoryPage() {
-  const { videos, addVideo, updateVideo, deleteVideo, analyzeVideo, activeVideo } = useVideoHistory();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingVideo, setEditingVideo] = useState<VideoHistoryItem | null>(null);
-
-  const handleFormSubmit = (values: VideoSourceFormValues) => {
-    // This assertion is safe because the form schema validates it
-    const file = values.file!;
-    const url = values.url!;
-
-    const videoData: Omit<VideoHistoryItem, 'id'> = {
-        name: values.name,
-        source: values.sourceType === 'url' 
-            ? { type: 'url', url: url } 
-            : { 
-                type: 'file', 
-                file: file, 
-                fileName: file.name,
-                fileType: file.type,
-              }
-    };
-    
-    if (editingVideo) {
-        updateVideo(editingVideo.id, videoData);
-    } else {
-        addVideo(videoData);
-    }
-  };
-
-  const openEditDialog = (video: VideoHistoryItem) => {
-    setEditingVideo(video);
-    setDialogOpen(true);
-  };
-  
-  const openAddDialog = () => {
-    setEditingVideo(null);
-    setDialogOpen(true);
-  };
+  const [isListView, setIsListView] = useState(true)
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-muted/40">
-        <MainSidebar />
-        <SidebarInset>
-          <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
-            <DashboardHeader 
-              title="Manajemen Sumber Video"
-              description="Kelola, analisis, dan pratinjau semua sumber video lalu lintas Anda." 
-            />
-            <main className="grid gap-6">
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                  <Card>
-                    <CardHeader>
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <CardTitle>Daftar Sumber Video</CardTitle>
-                                <CardDescription>Pilih video untuk dianalisis, atau tambahkan sumber baru.</CardDescription>
-                            </div>
-                            <Button onClick={openAddDialog}>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Tambah Sumber Baru
-                            </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                       <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Nama</TableHead>
-                                <TableHead className="hidden md:table-cell">Tipe</TableHead>
-                                <TableHead className="hidden md:table-cell">Status</TableHead>
-                                <TableHead className="text-right">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {videos.length > 0 ? videos.map(video => (
-                                <TableRow key={video.id} className={video.id === activeVideo?.id ? 'bg-muted/50' : ''}>
-                                    <TableCell className="font-medium">{video.name}</TableCell>
-                                    <TableCell className="hidden md:table-cell">{video.source.type === 'url' ? 'URL' : 'File'}</TableCell>
-                                    <TableCell className="hidden md:table-cell">{video.id === activeVideo?.id ? 'Aktif' : 'Tidak Aktif'}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="ghost" size="sm" onClick={() => analyzeVideo(video.id)} className="mr-2">
-                                            <PlayCircle className="mr-2 h-4 w-4" /> Analisis
-                                        </Button>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                                <span className="sr-only">Buka menu</span>
-                                                <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => openEditDialog(video)}>
-                                                    <Edit className="mr-2 h-4 w-4" /> Sunting
-                                                </DropdownMenuItem>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                            <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Hapus
-                                                        </DropdownMenuItem>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Anda yakin?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                Tindakan ini akan menghapus sumber video "{video.name}" secara permanen.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Batal</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => deleteVideo(video.id)}>Hapus</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            )) : (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">
-                                        Belum ada sumber video. Silakan tambahkan satu.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                       </Table>
-                    </CardContent>
-                  </Card>
-
-                  <DialogContent className="sm:max-w-[425px]">
-                      <DialogHeader>
-                          <DialogTitle>{editingVideo ? 'Sunting Sumber Video' : 'Tambah Sumber Video Baru'}</DialogTitle>
-                          <DialogDescription>
-                              {editingVideo ? `Perbarui detail untuk "${editingVideo.name}".` : 'Masukkan detail untuk sumber video baru Anda.'}
-                          </DialogDescription>
-                      </DialogHeader>
-                      <VideoSourceForm onFormSubmit={handleFormSubmit} initialData={editingVideo} setOpen={setDialogOpen} />
-                  </DialogContent>
-              </Dialog>
-            </main>
-          </div>
-        </SidebarInset>
+    <div className="p-4 sm:p-8 max-w-[1600px] mx-auto space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Detection History</h1>
+          <p className="text-muted-foreground mt-1">Review and filter all vehicle detection logs.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="hidden sm:flex">
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button size="sm">
+            <Filter className="mr-2 h-4 w-4" />
+            Advanced Filter
+          </Button>
+        </div>
       </div>
-    </SidebarProvider>
-  );
+
+      <Card className="border-border/50 shadow-md">
+        <CardHeader className="p-4 sm:p-6 border-b border-border/50">
+          <div className="flex flex-col lg:flex-row gap-4 justify-between lg:items-center">
+            <div className="relative w-full lg:w-96">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search plate, location, or type..." className="pl-10 h-10 bg-accent/20 border-border/50" />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex bg-accent/30 p-1 rounded-lg border border-border/50">
+                <Button
+                  variant={isListView ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setIsListView(true)}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={!isListView ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setIsListView(false)}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button variant="outline" className="h-10 border-border/50">
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                Last 24 Hours
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {/* Desktop View: Table */}
+          <div className="hidden md:block">
+            <Table aria-label="Detection history table">
+              <TableHeader className="bg-accent/30">
+                <TableRow className="border-border/50">
+                  <TableHead scope="col" className="w-[180px] font-bold">License Plate</TableHead>
+                  <TableHead scope="col" className="font-bold">Type</TableHead>
+                  <TableHead scope="col" className="font-bold">Location</TableHead>
+                  <TableHead scope="col" className="font-bold">Timestamp</TableHead>
+                  <TableHead scope="col" className="font-bold">Speed</TableHead>
+                  <TableHead scope="col" className="font-bold text-center">Status</TableHead>
+                  <TableHead scope="col" className="w-[80px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {mockHistory.map((item) => (
+                  <TableRow key={item.id} className="border-border/50 hover:bg-accent/20 transition-colors">
+                    <TableCell className="font-mono font-bold text-primary">{item.plate}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Car className="h-4 w-4 text-muted-foreground" />
+                        {item.type}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                        {item.location}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5" />
+                        {item.time}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{item.speed}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant={item.status === "Speeding" ? "destructive" : "secondary"}>
+                        {item.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile View: Cards */}
+          <div className="md:hidden p-4 space-y-4">
+            {mockHistory.map((item) => (
+              <Card key={item.id} className="border-border/50 shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="font-mono font-bold text-lg text-primary">{item.plate}</div>
+                    <Badge variant={item.status === "Speeding" ? "destructive" : "secondary"}>
+                      {item.status}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Car className="h-3.5 w-3.5" />
+                      <span>{item.type}</span>
+                    </div>
+                    <div className="flex items-center gap-2 font-medium justify-end">
+                      {item.speed}
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground col-span-2">
+                      <MapPin className="h-3.5 w-3.5" />
+                      <span className="truncate">{item.location}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground col-span-2">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span>{item.time}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="p-4 sm:p-6 border-t border-border/50 bg-accent/10">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-sm text-muted-foreground">Showing <span className="font-medium text-foreground">1-7</span> of <span className="font-medium text-foreground">156</span> results</p>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="h-9 w-9 p-0" disabled>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" className="h-9 w-9 p-0">1</Button>
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0">2</Button>
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0">3</Button>
+                </div>
+                <Button variant="outline" size="sm" className="h-9 w-9 p-0">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }

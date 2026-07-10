@@ -87,3 +87,12 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+@layer utilities {
+  .text-responsive-h1 {
+    @apply text-xl font-bold tracking-tight sm:text-2xl lg:text-3xl;
+  }
+  .text-responsive-p {
+    @apply text-xs text-muted-foreground sm:text-sm lg:text-base;
+  }
+}
