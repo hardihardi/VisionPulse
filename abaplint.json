@@ -10,6 +10,7 @@
     "errorNamespace": "."
   },
   "rules": {
-    "parser_error": true
+    "parser_error": true,
+    "main_file_contents": true
   }
 }

@@ -30,7 +30,7 @@ import { AnomalyDetectionCard } from './anomaly-detection-card';
 import { AiTrafficAnalysisCard } from './ai-traffic-analysis-card';
 import { TrafficLog } from './traffic-log';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, RefreshCw, LayoutDashboard, BarChart3, Settings, ListTodo, Activity, MonitorPlay, Zap } from 'lucide-react';
+import { AlertCircle, RefreshCw, LayoutDashboard, BarChart3, Settings, ListTodo, Activity, MonitorPlay, Zap, Radio } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '../ui/badge';
@@ -106,9 +106,6 @@ export function TrafficDashboard() {
         try {
             const resp = await fetch(`${BACKEND_URL}/traffic-stats`);
             setIsBackendHealthy(resp.ok);
-            if (resp.ok && mode === 'SIMULATION') {
-               // setMode('LIVE'); // Optional auto-switch back
-            }
         } catch (e) {
             setIsBackendHealthy(false);
         }
@@ -116,12 +113,11 @@ export function TrafficDashboard() {
     checkHealth();
     const interval = setInterval(checkHealth, 10000);
     return () => clearInterval(interval);
-  }, [BACKEND_URL, mode]);
+  }, [BACKEND_URL]);
 
   useEffect(() => {
     if (activeVideo) {
-      handleStatusChange('STARTED');
-    } else {
+      // Don't auto-start analysis, just set status to STOPPED or READY if we had one
       handleStatusChange('STOPPED');
     }
   }, [activeVideo]);
@@ -189,7 +185,6 @@ export function TrafficDashboard() {
                 const now = new Date();
                 const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
 
-                // Random increments
                 const directions = ['Mendekat', 'Menjauh'] as const;
                 const types = ['car', 'bus', 'truck', 'motorcycle'] as const;
 
@@ -209,7 +204,7 @@ export function TrafficDashboard() {
                         Menjauh: simCounts.Menjauh.car * 1.0 + simCounts.Menjauh.bus * 1.5 + simCounts.Menjauh.truck * 2.0 + simCounts.Menjauh.motorcycle * 0.25,
                     },
                     moving_average_skr: {
-                        Mendekat: (totalM / 5) * 4, // Simulated trend
+                        Mendekat: (totalM / 5) * 4,
                         Menjauh: (totalJ / 5) * 4,
                     },
                     recent_logs: [
@@ -283,14 +278,15 @@ export function TrafficDashboard() {
       setAnalysisInputUri(null);
 
       if (mode === 'LIVE') {
+          setStatus('ANALYZING');
           if (activeVideo.source.type === 'url') {
-              setStatus('ANALYZING');
               try {
-                  await fetch(`${BACKEND_URL}/process-url`, {
+                  const resp = await fetch(`${BACKEND_URL}/process-url`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ url: activeVideo.source.url })
                   });
+                  if (!resp.ok) throw new Error("Backend failed to start URL processing");
               } catch (e) {
                   setBackendError(true);
                   setMode('SIMULATION');
@@ -299,23 +295,21 @@ export function TrafficDashboard() {
           }
 
           if (activeVideo.source.type === 'file' && activeVideo.source.file) {
-            setStatus('ANALYZING');
             try {
               const formData = new FormData();
               formData.append('video', activeVideo.source.file);
-              fetch(`${BACKEND_URL}/upload-video`, { method: 'POST', body: formData });
+              await fetch(`${BACKEND_URL}/upload-video`, { method: 'POST', body: formData });
+
               const videoUri = await toBase64(activeVideo.source.file);
               setAnalysisInputUri(videoUri);
               const { result } = await getEnhancedRecognition({ videoDataUri: videoUri });
               if (result) setDetectionResult(result);
-              setStatus('STARTED');
             } catch (error: any) {
               setBackendError(true);
               setMode('SIMULATION');
             }
           }
       } else {
-          // SIMULATION START
           setStatus('STARTED');
           toast({ title: "Mode Simulasi Aktif", description: "Menjalankan analisis menggunakan data simulasi." });
       }
@@ -337,26 +331,20 @@ export function TrafficDashboard() {
         );
     }
 
-    if (isAnalyzing) {
-        if (mode === "SIMULATION") {
-            return (
-                <div className="w-full h-full relative bg-black min-h-[300px] flex items-center justify-center">
-                    <UniversalVideoPlayer src={videoSrc} isAnalyzing={true} className="w-full h-full object-contain opacity-60" />
-                    <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
-                    <div className="absolute top-4 left-4">
-                        <Badge variant="secondary" className="bg-blue-600 text-white animate-pulse">SIMULATING AI OVERLAY</Badge>
-                    </div>
-                </div>
-            );
-        }
+    if (isAnalyzing && mode === "LIVE") {
         return (
             <div className="w-full h-full relative bg-black min-h-[300px]">
                 <img
                     src={`${BACKEND_URL}/stream?t=${new Date().getTime()}`}
                     className="w-full h-full object-contain"
-                    alt="Stream"
+                    alt="AI Analysis Stream"
                     onError={() => setBackendError(true)}
                 />
+                <div className="absolute top-4 left-4 flex gap-2">
+                    <Badge variant="secondary" className="bg-red-600 text-white animate-pulse gap-1.5">
+                        <Radio className="w-3 h-3" /> LIVE AI FEED
+                    </Badge>
+                </div>
                 {backendError && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 gap-3">
                         <AlertCircle className="w-8 h-8 text-destructive" />
@@ -370,7 +358,19 @@ export function TrafficDashboard() {
         );
     }
 
-    return <UniversalVideoPlayer src={videoSrc} className="w-full h-full" />;
+    return (
+        <div className="w-full h-full relative">
+            <UniversalVideoPlayer src={videoSrc} isAnalyzing={isAnalyzing} className="w-full h-full" />
+            {isAnalyzing && mode === "SIMULATION" && (
+                <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute inset-0 bg-blue-500/10" />
+                    <div className="absolute top-4 left-4">
+                        <Badge variant="secondary" className="bg-blue-600 text-white animate-pulse">SIMULATION OVERLAY</Badge>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
   };
 
   return (
@@ -412,16 +412,6 @@ export function TrafficDashboard() {
                 </Alert>
             )}
 
-            {mode === 'SIMULATION' && (
-                <Alert className="bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-400">
-                    <MonitorPlay className="h-4 w-4" />
-                    <AlertTitle className="font-semibold">Mode Simulasi Aktif</AlertTitle>
-                    <AlertDescription>
-                        Anda sedang melihat data simulasi riset. Fitur deteksi real-time dari kamera fisik dinonaktifkan.
-                    </AlertDescription>
-                </Alert>
-            )}
-
             <main>
               {/* Desktop View: Grid Layout */}
               <div className="hidden xl:grid gap-6 grid-cols-12">
@@ -430,7 +420,7 @@ export function TrafficDashboard() {
                         <CardHeader className="bg-primary/10 py-3 border-b flex flex-row items-center justify-between">
                             <CardTitle className="text-sm font-semibold flex items-center gap-2">
                                 <LayoutDashboard className="w-4 h-4 text-primary" />
-                                {activeVideo?.name || 'Monitor Lalu Lintas'} <Badge variant="outline" className="ml-2 text-[10px] py-0 h-5">{activeVideo?.source.type === "url" ? (videoSrc?.includes(".m3u8") ? "HLS STREAM" : "WEB VIDEO") : "FILE LOCAL"}</Badge>
+                                {activeVideo?.name || 'Monitor Lalu Lintas'} <Badge variant="outline" className="ml-2 text-[10px] py-0 h-5 font-normal">{activeVideo?.source.type === "url" ? (videoSrc?.includes(".m3u8") ? "HLS STREAM" : "WEB VIDEO") : "FILE LOCAL"}</Badge>
                             </CardTitle>
                             {mode === 'SIMULATION' && <Badge variant="secondary" className="text-[10px] uppercase">Riset Simulasi</Badge>}
                         </CardHeader>

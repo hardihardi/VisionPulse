@@ -9,9 +9,15 @@ from werkzeug.utils import secure_filename
 from traffic_counter import TrafficCounter
 import yt_dlp
 import io
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)
+# Enable CORS for all domains on all routes
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configuration
 UPLOAD_FOLDER = 'videos'
@@ -29,6 +35,7 @@ frame_lock = threading.Lock()
 def get_stream_url(url):
     """Extract direct stream URL using yt-dlp if it's a YouTube link."""
     if 'youtube.com' in url or 'youtu.be' in url:
+        logger.info(f"Extracting YouTube stream for: {url}")
         ydl_opts = {
             'format': 'best',
             'quiet': True,
@@ -39,7 +46,7 @@ def get_stream_url(url):
                 info = ydl.extract_info(url, download=False)
                 return info['url']
             except Exception as e:
-                print(f"Error extracting stream: {e}")
+                logger.error(f"Error extracting YouTube stream: {e}")
                 return url
     return url
 
@@ -48,33 +55,44 @@ def process_video():
     if not video_source:
         return
 
-    if video_source == 'test_url':
-        while is_processing:
-            time.sleep(1)
-            counter.counts['Mendekat']['car'] += 1
-            counter.history_data.append((time.time(), 'Mendekat', 'car', 1.0, 99))
-            counter.detection_log.append({'id': 99, 'type': 'car', 'direction': 'Mendekat', 'time': 'now'})
+    logger.info(f"Starting video processing for source: {video_source}")
+    stream_url = get_stream_url(video_source)
+
+    # Try to open with ffmpeg backend explicitly if possible
+    cap = cv2.VideoCapture(stream_url)
+
+    if not cap.isOpened():
+        logger.error(f"Failed to open video source: {stream_url}")
+        is_processing = False
         return
 
-    stream_url = get_stream_url(video_source)
-    cap = cv2.VideoCapture(stream_url)
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    if fps <= 0: fps = 30
+    delay = 1.0 / fps
 
     while is_processing:
         ret, frame = cap.read()
         if not ret:
+            logger.warning("End of stream or read error.")
             if isinstance(video_source, str) and not video_source.startswith(('http', 'rtsp')):
+                logger.info("Looping local file.")
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                 continue
             else:
                 break
 
-        processed_frame = counter.process_frame(frame)
-        with frame_lock:
-            current_frame = processed_frame.copy()
-        time.sleep(0.01)
+        try:
+            processed_frame = counter.process_frame(frame)
+            with frame_lock:
+                current_frame = processed_frame.copy()
+        except Exception as e:
+            logger.error(f"Error processing frame: {e}")
+
+        time.sleep(delay * 0.5) # Process slightly faster than real-time if needed
 
     cap.release()
     is_processing = False
+    logger.info("Video processing stopped.")
 
 @app.route('/upload-video', methods=['POST'])
 def upload_video():
@@ -113,6 +131,8 @@ def process_url():
     if not url:
         return jsonify({'error': 'No URL provided'}), 400
 
+    logger.info(f"Received process-url request: {url}")
+
     # Stop existing processing
     is_processing = False
     if processing_thread:
@@ -144,7 +164,13 @@ def get_traffic_stats():
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify({'status': 'healthy', 'uptime': time.time()})
+    return jsonify({
+        'status': 'healthy',
+        'is_processing': is_processing,
+        'video_source': video_source,
+        'backend': 'opencv',
+        'uptime': time.time()
+    })
 
 @app.route('/export/<fmt>', methods=['GET'])
 def export_data(fmt):
@@ -194,20 +220,19 @@ def generate_frames():
     while is_processing:
         if current_frame is not None:
             with frame_lock:
-                # Use lower quality for MJPEG to save bandwidth/CPU
-                ret, buffer = cv2.imencode('.jpg', current_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                ret, buffer = cv2.imencode('.jpg', current_frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 if not ret:
                     continue
                 frame_bytes = buffer.tobytes()
 
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-        time.sleep(0.04)
+        else:
+            time.sleep(0.1)
+        time.sleep(0.03)
 
 @app.route('/stream')
 def stream_video():
-    if not is_processing:
-        return "Not processing", 404
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':

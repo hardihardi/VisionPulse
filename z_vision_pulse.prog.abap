@@ -1,0 +1,13 @@
+REPORT z_vision_pulse.
+WRITE 'VisionPulse AI'.
+
+CLASS lcl_app DEFINITION.
+  PUBLIC SECTION.
+    METHODS run.
+ENDCLASS.
+
+CLASS lcl_app IMPLEMENTATION.
+  METHOD run.
+    WRITE 'Running'.
+  ENDMETHOD.
+ENDCLASS.
