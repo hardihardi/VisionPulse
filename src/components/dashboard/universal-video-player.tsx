@@ -157,13 +157,14 @@ export function UniversalVideoPlayer({
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       )}
-      <video crossOrigin="anonymous"
+      <video
         ref={videoRef}
         className={className}
         controls={controls}
         muted={muted}
         loop={loop}
         playsInline
+        crossOrigin="anonymous"
       />
     </div>
   );

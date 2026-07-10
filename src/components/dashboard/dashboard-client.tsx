@@ -20,7 +20,6 @@ type TimeFrame = 'live' | '15min' | '1hour' | 'daily';
 
 export function DashboardClient({ initialTrafficData, initialVehicleCounts }: { initialTrafficData: TrafficDataPoint[], initialVehicleCounts: VehicleCount[] }) {
   const [trafficData, setTrafficData] = useState<TrafficDataPoint[]>(initialTrafficData);
-
   const [vehicleCounts, setVehicleCounts] = useState<VehicleCount[]>(initialVehicleCounts);
   const [locationName, setLocationName] = useState<string>("Mendeteksi lokasi...");
   const [trafficProfile, setTrafficProfile] = useState<TrafficProfile>(getTrafficProfile('default'));
