@@ -2,18 +2,16 @@
 
 import * as React from "react"
 import {
-  Activity,
   History,
   LayoutDashboard,
   Search,
   Settings,
   ShieldCheck,
-  Video,
-  Menu,
   ChevronRight,
   LogOut,
   User,
-  Plus
+  Plus,
+  HardDrive
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -26,7 +24,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar
 } from "@/components/ui/sidebar"
 import {
@@ -38,7 +35,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -48,9 +44,9 @@ const navItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Camera Feeds",
-    url: "/camera-feeds",
-    icon: Video,
+    title: "Video Storage",
+    url: "/video-storage",
+    icon: HardDrive,
   },
   {
     title: "Plate Search",
@@ -61,11 +57,6 @@ const navItems = [
     title: "History",
     url: "/history",
     icon: History,
-  },
-  {
-    title: "Analytics",
-    url: "/traffic",
-    icon: Activity,
   },
 ]
 
@@ -127,10 +118,10 @@ export function MainSidebar() {
               <Settings className="h-3.5 w-3.5" />
               <span>Config Manager</span>
             </button>
-            <button className="flex items-center gap-3 w-full px-2 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
+            <Link href="/video-storage" onClick={handleLinkClick} className="flex items-center gap-3 w-full px-2 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
               <Plus className="h-3.5 w-3.5" />
               <span>Add Source</span>
-            </button>
+            </Link>
           </div>
         </div>
       </SidebarContent>

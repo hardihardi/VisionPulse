@@ -1,10 +1,10 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileVideo, Trash, FolderPlus } from 'lucide-react';
+import { FileVideo, Trash, FolderPlus, ChevronRight } from 'lucide-react';
 import type { VideoHistoryItem } from '@/hooks/use-video-history';
+import Link from 'next/link';
 
 interface VideoHistoryCardProps {
   currentVideo: VideoHistoryItem | null;
@@ -14,43 +14,57 @@ interface VideoHistoryCardProps {
 
 export function VideoHistoryCard({ currentVideo, onDeleteCurrentVideo, onAddNew }: VideoHistoryCardProps) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="hover:border-primary/20 transition-colors">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
-            <CardTitle>Penyimpanan Sesi Video</CardTitle>
-            <CardDescription>Video yang aktif untuk dianalisis.</CardDescription>
+            <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Penyimpanan Sesi Video</CardTitle>
+            <CardDescription className="text-[10px]">Video aktif untuk analisis.</CardDescription>
         </div>
-        <Button size="icon" variant="ghost" onClick={onAddNew} aria-label="Tambah video baru">
-            <FolderPlus className="h-5 w-5" />
-            <span className="sr-only">Tambah video baru</span>
+        <Button size="icon" variant="ghost" onClick={onAddNew} className="h-8 w-8" title="Tambah video baru">
+            <FolderPlus className="h-4 w-4" />
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="h-24">
+        <div className="min-h-[60px] flex flex-col justify-center">
           {currentVideo ? (
-            <div className="flex items-center group p-2 rounded-md hover:bg-muted">
-              <div
-                className="w-full justify-start text-left flex-grow truncate flex items-center"
+            <div className="flex items-center group p-2 rounded-lg bg-accent/30 border border-border/50">
+              <Link
+                href="/video-storage"
+                className="flex-grow min-w-0 flex items-center gap-2 group/link"
               >
-                <FileVideo className="mr-2 h-4 w-4 flex-shrink-0" />
-                <span className="truncate font-medium">{currentVideo.name}</span>
-              </div>
+                <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center shrink-0 group-hover/link:bg-primary/20 transition-colors">
+                  <FileVideo className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                    <p className="text-xs font-semibold truncate group-hover/link:text-primary transition-colors">{currentVideo.name}</p>
+                    <p className="text-[9px] text-muted-foreground uppercase">{currentVideo.source.type === 'url' ? 'URL Stream' : 'File Lokal'}</p>
+                </div>
+                <ChevronRight className="h-3 w-3 ml-auto opacity-0 group-hover/link:opacity-100 transition-opacity" />
+              </Link>
               <Button 
                 size="icon" 
                 variant="ghost" 
-                className="h-8 w-8 ml-1"
-                onClick={onDeleteCurrentVideo}
-                aria-label="Hapus video saat ini"
+                className="h-7 w-7 ml-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                onClick={(e) => {
+                    e.preventDefault();
+                    onDeleteCurrentVideo();
+                }}
               >
-                <Trash className="h-4 w-4 text-destructive" />
-                <span className="sr-only">Hapus video</span>
+                <Trash className="h-3.5 w-3.5" />
               </Button>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
-              <span>Belum ada video aktif.</span>
-              <span className="text-xs">Gunakan form di atas untuk memulai.</span>
-            </div>
+            <Button
+                variant="outline"
+                className="w-full border-dashed py-8 h-auto flex flex-col gap-2 bg-accent/10 hover:bg-accent/20"
+                onClick={onAddNew}
+            >
+              <FolderPlus className="h-6 w-6 text-muted-foreground" />
+              <div className="text-center">
+                <p className="text-xs font-medium">Belum ada video aktif</p>
+                <p className="text-[10px] text-muted-foreground">Klik untuk menambahkan</p>
+              </div>
+            </Button>
           )}
         </div>
       </CardContent>

@@ -16,6 +16,8 @@ import { getEnhancedRecognition } from '@/app/(actions)/enhance-recognition';
 import { useToast } from '@/hooks/use-toast';
 import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
 import Image from 'next/image';
+import { VideoHistoryCard } from './video-history-card';
+import { useRouter } from 'next/navigation';
 import { UniversalVideoPlayer } from '../dashboard/universal-video-player';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -75,7 +77,8 @@ const saveDetection = async (detection: Omit<Detection, 'id' | 'timestamp'>) => 
 
 
 export function TrafficDashboard() {
-  const { activeVideo, videoSrc, toBase64 } = useVideoHistory();
+  const { activeVideo, videoSrc, deleteVideo, toBase64 } = useVideoHistory();
+  const router = useRouter();
   const [status, setStatus] = useState<SystemStatus>('STOPPED');
   const [mode, setMode] = useState<'LIVE' | 'SIMULATION'>('LIVE');
   const [detectionResult, setDetectionResult] =
@@ -437,6 +440,7 @@ export function TrafficDashboard() {
                 </div>
                 <div className="lg:col-span-4 xl:col-span-3 space-y-6">
                     <ControlStatus isStartEnabled={!!activeVideo} status={status} onStatusChange={handleStatusChange} />
+                    <VideoHistoryCard currentVideo={activeVideo} onDeleteCurrentVideo={() => activeVideo && deleteVideo(activeVideo.id)} onAddNew={() => router.push('/video-storage')} />
                     <RealtimeDetectionStats isAnalyzing={isAnalyzing} backendStats={backendStats} />
                     <TrafficLog logs={backendStats?.recent_logs || []} isAnalyzing={isAnalyzing} />
                     <ExportReport isAnalyzing={isAnalyzing} trafficData={trafficCountData} countingChartRef={trafficCountingChartRef} movingAverageChartRef={movingAverageChartRef} vehicleComparisonChartRef={vehicleComparisonChartRef} />
@@ -469,6 +473,7 @@ export function TrafficDashboard() {
 
                     <TabsContent value="overview" className="space-y-4 pt-4">
                         <ControlStatus isStartEnabled={!!activeVideo} status={status} onStatusChange={handleStatusChange} />
+                        <VideoHistoryCard currentVideo={activeVideo} onDeleteCurrentVideo={() => activeVideo && deleteVideo(activeVideo.id)} onAddNew={() => router.push('/video-storage')} />
                         <RealtimeDetectionStats isAnalyzing={isAnalyzing} backendStats={backendStats} />
                         <VehicleVolume isAnalyzing={isAnalyzing} coefficients={pcuCoefficients} backendStats={backendStats} />
                         <AnomalyDetectionCard anomalies={anomalies} isAnalyzing={isAnalyzing} />
