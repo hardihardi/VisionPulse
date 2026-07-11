@@ -360,7 +360,7 @@ export function TrafficDashboard() {
 
     return (
         <div className="w-full h-full relative">
-            <UniversalVideoPlayer src={videoSrc} isAnalyzing={isAnalyzing} className="w-full h-full" />
+            <UniversalVideoPlayer url={videoSrc} className="w-full h-full" />
             {isAnalyzing && mode === "SIMULATION" && (
                 <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute inset-0 bg-blue-500/10" />
@@ -420,7 +420,7 @@ export function TrafficDashboard() {
                         <CardHeader className="bg-primary/10 py-3 border-b flex flex-row items-center justify-between">
                             <CardTitle className="text-sm font-semibold flex items-center gap-2">
                                 <LayoutDashboard className="w-4 h-4 text-primary" />
-                                {activeVideo?.name || 'Monitor Lalu Lintas'} <Badge variant="outline" className="ml-2 text-[10px] py-0 h-5 font-normal">{activeVideo?.source.type === "url" ? (videoSrc?.includes(".m3u8") ? "HLS STREAM" : "WEB VIDEO") : "FILE LOCAL"}</Badge>
+                                {activeVideo?.name || 'Monitor Lalu Lintas'} <Badge variant="outline" className="ml-2 text-[10px] py-0 h-5 font-normal">{activeVideo?.source?.type === "url" ? (videoSrc?.includes(".m3u8") ? "HLS STREAM" : "WEB VIDEO") : "FILE LOCAL"}</Badge>
                             </CardTitle>
                             {mode === 'SIMULATION' && <Badge variant="secondary" className="text-[10px] uppercase">Riset Simulasi</Badge>}
                         </CardHeader>
@@ -484,7 +484,7 @@ export function TrafficDashboard() {
                     <TabsContent value="logs" className="space-y-4 pt-4">
                         <TrafficLog logs={backendStats?.recent_logs || []} isAnalyzing={isAnalyzing} />
                         <DetectionResultCard detectionResult={detectionResult} />
-                        <AiTrafficAnalysisCard isAnalyzing={isAnalyzing} analysisInputUri={analysisInputUri} sourceType={activeVideo?.source.type ?? null} />
+                        <AiTrafficAnalysisCard isAnalyzing={isAnalyzing} analysisInputUri={analysisInputUri} sourceType={activeVideo?.source?.type ?? null} />
                     </TabsContent>
 
                     <TabsContent value="config" className="space-y-4 pt-4">
