@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Play, Square, Loader2, Video, VideoOff } from 'lucide-react';
+import { Play, Square, Loader2, Video, VideoOff, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
@@ -58,21 +58,27 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="overflow-hidden border-primary/20">
+      <CardHeader className="pb-3 bg-primary/5 px-4 sm:px-6">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-semibold">Kontrol Sistem</CardTitle>
-          <Badge variant={status === 'STARTED' ? 'default' : status === 'ANALYZING' ? 'secondary' : 'outline'}>
-            {status}
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-primary" />
+            Kontrol Sistem
+          </CardTitle>
+          <Badge
+            variant={status === 'STARTED' ? 'default' : status === 'ANALYZING' ? 'secondary' : 'outline'}
+            className={status === 'STARTED' ? 'bg-green-500 hover:bg-green-600' : ''}
+          >
+            {status === 'STOPPED' ? 'NONAKTIF' : status}
           </Badge>
         </div>
-        <CardDescription>Mulai atau hentikan analisis AI.</CardDescription>
+        <CardDescription className="text-xs">Mulai atau hentikan analisis AI secara real-time.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-3 pt-4 px-4 sm:px-6">
         <div className="grid grid-cols-2 gap-2">
           {status === 'STOPPED' ? (
             <Button
-              className="w-full"
+              className="w-full shadow-sm"
               disabled={!isStartEnabled}
               onClick={() => onStatusChange('STARTED')}
             >
@@ -81,7 +87,7 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
           ) : (
             <Button
               variant="destructive"
-              className="w-full"
+              className="w-full shadow-sm"
               onClick={() => onStatusChange('STOPPED')}
             >
               <Square className="mr-2 h-4 w-4" /> Berhenti
@@ -90,14 +96,14 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
 
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full shadow-sm"
             disabled={status === 'STOPPED' || isUpdatingRecording}
             onClick={toggleRecording}
           >
             {isUpdatingRecording ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : isRecording ? (
-              <><VideoOff className="mr-2 h-4 w-4 text-destructive" /> Stop Rekam</>
+              <><VideoOff className="mr-2 h-4 w-4 text-destructive" /> Stop</>
             ) : (
               <><Video className="mr-2 h-4 w-4 text-primary" /> Rekam</>
             )}
@@ -105,9 +111,9 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
         </div>
 
         {status === 'ANALYZING' && (
-          <div className="flex items-center justify-center text-xs text-muted-foreground animate-pulse mt-2">
-            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-            Menghubungkan ke aliran video...
+          <div className="flex items-center justify-center p-2 rounded bg-muted/50 border border-border/50 text-[10px] text-muted-foreground animate-pulse">
+            <Loader2 className="mr-2 h-3 w-3 animate-spin text-primary" />
+            Menghubungkan ke aliran video m3u8...
           </div>
         )}
       </CardContent>

@@ -11,15 +11,15 @@ interface DetectionResultCardProps {
 export function DetectionResultCard({ detectionResult }: DetectionResultCardProps) {
   return (
     <Card className={detectionResult ? "border-primary/50 bg-primary/5" : ""}>
-      <CardHeader>
-        <CardTitle>{detectionResult ? "Hasil Deteksi Plat Nomor" : "Hasil Deteksi"}</CardTitle>
+      <CardHeader className="px-4 sm:px-6 pb-2">
+        <CardTitle className="text-base font-semibold">{detectionResult ? "Hasil Deteksi Plat Nomor" : "Hasil Deteksi"}</CardTitle>
         {detectionResult ? (
           <CardDescription>{detectionResult.enhancementResult}</CardDescription>
         ) : (
           <CardDescription>Menunggu analisis video untuk deteksi plat nomor.</CardDescription>
         )}
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="px-4 sm:px-6 pb-4 space-y-4">
         {detectionResult ? (
           <>
             <div className="p-4 bg-background rounded-lg border text-center">

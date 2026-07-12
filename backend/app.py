@@ -37,14 +37,17 @@ video_source = None
 processing_thread = None
 current_frame = None
 frame_lock = threading.Lock()
+stats_lock = threading.Lock()
+writer_lock = threading.Lock()
 video_writer = None
 
 def load_persistent_stats():
     if os.path.exists(STATS_FILE):
         try:
-            with open(STATS_FILE, 'r') as f:
-                data = json.load(f)
-                return data.get('history', [])
+            with stats_lock:
+                with open(STATS_FILE, 'r') as f:
+                    data = json.load(f)
+                    return data.get('history', [])
         except Exception as e:
             print(f"Error loading stats: {e}")
     return []
@@ -56,10 +59,17 @@ def save_persistent_stats():
         'history': counter.history_data
     }
     try:
-        with open(STATS_FILE, 'w') as f:
-            json.dump(data, f)
+        with stats_lock:
+            with open(STATS_FILE, 'w') as f:
+                json.dump(data, f)
     except Exception as e:
         print(f"Error saving stats: {e}")
+
+# Pre-load stats on startup
+counter.history_data = load_persistent_stats()
+# Update counts based on history
+for _, direction, v_type, skr, _ in counter.history_data:
+    counter.counts[direction][v_type] += 1
 
 def get_stream_url(url):
     """Extract direct stream URL using yt-dlp if it's a YouTube link."""
@@ -101,29 +111,30 @@ def process_video():
     max_retries = 10
     retry_count = 0
 
-    while is_processing and retry_count < max_retries:
+    while retry_count < max_retries and is_processing:
         cap = cv2.VideoCapture(stream_url)
         if not cap.isOpened():
-            print(f"Failed to open video source, retry {retry_count+1}")
+            print(f"Failed to open stream, retry {retry_count+1}/{max_retries}")
             retry_count += 1
-            time.sleep(3)
+            time.sleep(2)
             continue
 
-        retry_count = 0 # Reset on success
-        print("Video source opened successfully")
+        retry_count = 0 # reset on success
 
-        # Setup VideoWriter if recording is enabled
-        if is_recording and video_writer is None:
-            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            fps = cap.get(cv2.CAP_PROP_FPS) or 20
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"analysis_{timestamp}.mp4"
-            filepath = os.path.join(app.config['RECORDINGS_FOLDER'], filename)
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            video_writer = cv2.VideoWriter(filepath, fourcc, fps, (width, height))
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS) or 30
 
         while is_processing:
+            # Check if we should start recording
+            with writer_lock:
+                if is_recording and video_writer is None:
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    filename = f"analysis_{timestamp}.mp4"
+                    filepath = os.path.join(app.config['RECORDINGS_FOLDER'], filename)
+                    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                    video_writer = cv2.VideoWriter(filepath, fourcc, fps, (width, height))
+
             ret, frame = cap.read()
             if not ret:
                 if isinstance(video_source, str) and not video_source.startswith(('http', 'rtsp')):
@@ -138,16 +149,18 @@ def process_video():
             with frame_lock:
                 current_frame = processed_frame.copy()
 
-            if is_recording and video_writer is not None:
-                video_writer.write(processed_frame)
+            with writer_lock:
+                if is_recording and video_writer is not None:
+                    video_writer.write(processed_frame)
 
             # Control frame rate for HLS to match stream if possible, or just throttle
             time.sleep(0.01)
 
         cap.release()
-        if video_writer:
-            video_writer.release()
-            video_writer = None
+        with writer_lock:
+            if video_writer:
+                video_writer.release()
+                video_writer = None
 
         if not is_processing:
             break
@@ -159,80 +172,77 @@ def process_video():
 
 @app.route('/upload-video', methods=['POST'])
 def upload_video():
-    global video_source, is_processing, processing_thread, counter
-
-    if 'video' not in request.files:
-        return jsonify({'error': 'No video file provided'}), 400
-
-    file = request.files['video']
+    global is_processing, video_source, processing_thread
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
+    if file:
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
 
-    filename = secure_filename(file.filename)
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(file_path)
+        # Stop existing processing
+        is_processing = False
+        if processing_thread:
+            processing_thread.join()
 
-    is_processing = False
-    if processing_thread:
-        processing_thread.join()
+        # Start new processing
+        is_processing = True
+        video_source = file_path
+        processing_thread = threading.Thread(target=process_video)
+        processing_thread.start()
 
-    counter.reset()
-    video_source = file_path
-    is_processing = True
-    processing_thread = threading.Thread(target=process_video)
-    processing_thread.start()
+        return jsonify({'message': 'File uploaded and analysis started', 'filename': filename})
 
-    return jsonify({'message': 'Video uploaded and processing started', 'file_path': file_path})
-
-@app.route('/process-url', methods=['POST'])
-def process_url():
-    global video_source, is_processing, processing_thread, counter
-
+@app.route('/start-url', methods=['POST'])
+def start_url():
+    global is_processing, video_source, processing_thread
     data = request.json
     url = data.get('url')
     if not url:
         return jsonify({'error': 'No URL provided'}), 400
 
+    # Stop existing processing
     is_processing = False
     if processing_thread:
         processing_thread.join()
 
-    counter.reset()
-    video_source = url
+    # Start new processing
     is_processing = True
+    video_source = url
     processing_thread = threading.Thread(target=process_video)
     processing_thread.start()
 
-    return jsonify({'message': 'URL received and processing started', 'url': url})
+    return jsonify({'message': 'Analysis started for URL'})
 
-@app.route('/update-config', methods=['POST'])
-def update_config():
-    data = request.json
-    line_y = data.get('line_y')
-    if line_y is not None:
-        counter.update_config(line_y=float(line_y))
-        return jsonify({'message': 'Configuration updated', 'config': {'line_y': line_y}})
-    return jsonify({'error': 'Invalid config data'}), 400
-
-@app.route('/traffic-stats', methods=['GET'])
-def get_traffic_stats():
+@app.route('/stop', methods=['POST'])
+def stop_analysis():
+    global is_processing, is_recording, video_writer
+    is_processing = False
+    is_recording = False
+    with writer_lock:
+        if video_writer:
+            video_writer.release()
+            video_writer = None
     save_persistent_stats()
-    return jsonify({
-        'status': 'STARTED' if is_processing else 'STOPPED',
-        'recording': is_recording,
-        'stats': counter.get_stats()
-    })
+    return jsonify({'message': 'Analysis stopped'})
 
 @app.route('/recording/start', methods=['POST'])
 def start_recording():
     global is_recording
     is_recording = True
-    return jsonify({'message': 'Recording enabled'})
+    return jsonify({'message': 'Recording started'})
 
 @app.route('/recording/stop', methods=['POST'])
 def stop_recording():
-    global is_recording
+    global is_recording, video_writer
     is_recording = False
+    with writer_lock:
+        if video_writer:
+            video_writer.release()
+            video_writer = None
     return jsonify({'message': 'Recording stopped'})
 
 @app.route('/recordings', methods=['GET'])
@@ -243,27 +253,64 @@ def list_recordings():
     recordings = []
     for f in files:
         path = os.path.join(app.config['RECORDINGS_FOLDER'], f)
-        stats = os.stat(path)
+        stat = os.stat(path)
         recordings.append({
             'filename': f,
-            'size': stats.st_size,
-            'created_at': datetime.fromtimestamp(stats.st_ctime).isoformat()
+            'size': stat.st_size,
+            'created_at': datetime.fromtimestamp(stat.st_ctime).isoformat()
         })
     return jsonify({'recordings': sorted(recordings, key=lambda x: x['created_at'], reverse=True)})
 
-@app.route('/recordings/<filename>')
+@app.route('/recordings/<filename>', methods=['GET'])
 def get_recording(filename):
     return send_from_directory(app.config['RECORDINGS_FOLDER'], filename)
 
-@app.route('/health', methods=['GET'])
-def health_check():
+@app.route('/video_feed')
+def video_feed():
+    def generate():
+        while True:
+            with frame_lock:
+                if current_frame is None:
+                    time.sleep(0.1)
+                    continue
+                ret, buffer = cv2.imencode('.jpg', current_frame)
+                frame_bytes = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+            time.sleep(0.1)
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/traffic-stats', methods=['GET'])
+def traffic_stats():
+    total_m = sum(counter.counts['Mendekat'].values())
+    total_j = sum(counter.counts['Menjauh'].values())
+
+    # Calculate SKR (Satuan Kendaraan Roda Empat)
+    skr_m = sum(counter.counts['Mendekat'][v] * counter.pcu_coefficients[v] for v in counter.counts['Mendekat'])
+    skr_j = sum(counter.counts['Menjauh'][v] * counter.pcu_coefficients[v] for v in counter.counts['Menjauh'])
+
     return jsonify({
-        'status': 'healthy',
-        'uptime': time.time(),
-        'processing': is_processing,
+        'counts': {d: dict(v) for d, v in counter.counts.items()},
+        'total_count': total_m + total_j,
+        'total_skr': skr_m + skr_j,
+        'moving_average_skr': {
+            'Mendekat': skr_m,
+            'Menjauh': skr_j
+        },
+        'uptime': int(time.time() - counter.start_time),
         'recording': is_recording,
-        'source': video_source
+        'config': {
+            'line_y': counter.line_y
+        },
+        'recent_logs': list(counter.detection_log)
     })
+
+@app.route('/update-config', methods=['POST'])
+def update_config():
+    data = request.json
+    if 'line_y' in data:
+        counter.line_y = float(data['line_y'])
+    return jsonify({'message': 'Configuration updated'})
 
 @app.route('/export/<fmt>', methods=['GET'])
 def export_data(fmt):
@@ -299,36 +346,7 @@ def export_data(fmt):
             as_attachment=True,
             download_name="traffic_report.xlsx"
         )
-
-    return jsonify({'error': 'Unsupported format'}), 400
-
-@app.route('/stop', methods=['POST'])
-def stop_processing():
-    global is_processing
-    is_processing = False
-    save_persistent_stats()
-    return jsonify({'message': 'Processing stopped'})
-
-def generate_frames():
-    global is_processing, current_frame
-    while is_processing:
-        if current_frame is not None:
-            with frame_lock:
-                ret, buffer = cv2.imencode('.jpg', current_frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
-                if not ret:
-                    continue
-                frame_bytes = buffer.tobytes()
-
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-        time.sleep(0.03)
-
-@app.route('/stream')
-def stream_video():
-    if not is_processing:
-        return "Not processing", 404
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return jsonify({'error': 'Invalid format'}), 400
 
 if __name__ == '__main__':
-    counter.history_data = load_persistent_stats()
-    app.run(host='0.0.0.0', port=5000, threaded=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

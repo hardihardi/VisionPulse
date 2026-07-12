@@ -53,3 +53,22 @@ Frontend akan berjalan di `http://localhost:9002`.
 
 ---
 Dokumentasi ini memberikan panduan lengkap untuk memahami, menjalankan, dan mengembangkan aplikasi VisionPulse lebih lanjut.
+
+## Detail Teknis Integrasi HLS & Penyimpanan
+
+### Alur Integrasi HLS (Bekasi CCTV)
+Sistem ini dirancang khusus untuk menangani aliran HLS (.m3u8) dari eofficev2.bekasikota.go.id. Karena batasan CORS yang ketat pada browser:
+1.  **Frontend**: Menggunakan komponen `HlsVideoPlayer` dengan fallback `iframe` terenkapsulasi yang merender stream melalui proxy `hlsplayer.net` jika akses langsung gagal.
+2.  **Backend**: Menggunakan OpenCV (`cv2.VideoCapture`) dengan logika `retry` otomatis (10 kali) untuk memastikan koneksi ke server HLS Bekasi tetap stabil meskipun terjadi gangguan jaringan.
+
+### Mekanisme Penyimpanan & Persistensi
+-   **Arsip Video**: Pengguna dapat memicu perekaman sesi analisis secara on-demand. Backend menggunakan thread terpisah dengan `VideoWriter` yang aman secara konkurensi untuk menyimpan output visual ke folder `recordings/`.
+-   **Statistik Lalu Lintas**: Semua data deteksi (timestamp, jenis kendaraan, arah, SKR) disimpan secara real-time ke `data/traffic_stats.json`. Struktur file ini meliputi:
+    -   `counts`: Total akumulasi per arah dan jenis.
+    -   `history`: Log mentah untuk analisis tren historis.
+-   **SKR (Satuan Kendaraan Roda Empat)**: Koefisien perhitungan mengikuti standar perhubungan:
+    -   Motor: 0.25
+    -   Mobil: 1.0
+    -   Bus: 1.5
+    -   Truk: 2.0
+    -   Trailer: 2.5

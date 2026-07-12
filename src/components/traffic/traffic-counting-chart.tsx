@@ -92,8 +92,8 @@ export const TrafficCountingChart = forwardRef<HTMLDivElement, TrafficCountingCh
 
     return (
         <Card ref={ref}>
-            <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-bold">Traffic Counting (Volume / Waktu)</CardTitle>
+            <CardHeader className="px-4 sm:px-6 pb-2">
+                <CardTitle className="text-base font-semibold">Traffic Counting (Volume / Waktu)</CardTitle>
                 <CardDescription className="text-xs">
                     {isAnalyzing
                         ? isMobile
@@ -103,7 +103,7 @@ export const TrafficCountingChart = forwardRef<HTMLDivElement, TrafficCountingCh
                     }
                 </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 sm:px-6">
                 {isMobile ? renderMobileChart() : renderDesktopChart()}
             </CardContent>
         </Card>

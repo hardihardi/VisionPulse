@@ -1,0 +1,16 @@
+
+> nextn@0.1.0 dev
+> next dev --turbopack -p 9002 -p 9010
+
+   ▲ Next.js 15.3.8 (Turbopack)
+   - Local:        http://localhost:9010
+   - Network:      http://192.168.0.2:9010
+
+ ✓ Starting...
+ ✓ Ready in 3.6s
+ ○ Compiling / ...
+ ✓ Compiled / in 23.7s
+ GET / 200 in 27280ms
+ ⨯ upstream image response failed for https://storage.googleapis.com/aifire.dev-dependencies.appspot.com/templates/vision-pulse-traffic-image.png 404
+ GET / 200 in 395ms
+ ⨯ upstream image response failed for https://storage.googleapis.com/aifire.dev-dependencies.appspot.com/templates/vision-pulse-traffic-image.png 404

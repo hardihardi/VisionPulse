@@ -85,9 +85,9 @@ export const VehicleComparisonChart = forwardRef<HTMLDivElement, VehicleComparis
 
     return (
       <Card ref={ref}>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <CardHeader className="px-4 sm:px-6 pb-2 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <CardTitle>Perbandingan Volume Kendaraan (Kumulatif)</CardTitle>
+            <CardTitle className="text-base font-semibold">Perbandingan Volume Kendaraan (Kumulatif)</CardTitle>
             <CardDescription>
               {isAnalyzing
                 ? `Perbandingan volume kumulatif untuk: ${vehicleTypeLabel}`
@@ -122,7 +122,7 @@ export const VehicleComparisonChart = forwardRef<HTMLDivElement, VehicleComparis
               </Select>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
@@ -153,7 +153,7 @@ export const VehicleComparisonChart = forwardRef<HTMLDivElement, VehicleComparis
                   <Bar dataKey="Normal" name="Mendekat" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} isAnimationActive={false} />
               )}
               {(directionFilter === 'Semua' || directionFilter === 'Opposite') && (
-                  <Bar dataKey="Opposite" name="Menjauh" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                  <Bar dataKey="Opposite" name="Menjauh" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} isAnimationActive={false} />
               )}
             </BarChart>
           </ResponsiveContainer>

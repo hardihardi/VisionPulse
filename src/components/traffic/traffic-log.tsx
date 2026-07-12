@@ -31,9 +31,9 @@ const getVehicleIcon = (type: string) => {
 export function TrafficLog({ logs, isAnalyzing }: TrafficLogProps) {
   return (
     <Card className="flex flex-col h-[400px]">
-      <CardHeader className="pb-2">
+      <CardHeader className="px-4 sm:px-6 pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-bold flex items-center gap-2">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Activity className="w-4 h-4 text-primary" />
             Log Deteksi Langsung
           </CardTitle>
@@ -46,7 +46,7 @@ export function TrafficLog({ logs, isAnalyzing }: TrafficLogProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 p-0 overflow-hidden">
-        <ScrollArea className="h-full p-4 pt-0">
+        <ScrollArea className="h-full px-4 sm:px-6 pt-0">
           <div className="space-y-2">
             {!isAnalyzing && logs.length === 0 && (
                 <p className="text-center text-xs text-muted-foreground py-10 italic">Mulai analisis untuk melihat log.</p>

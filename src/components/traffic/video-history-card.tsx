@@ -36,9 +36,9 @@ export function VideoHistoryCard({ currentVideo, onDeleteCurrentVideo, onAddNew 
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="px-4 sm:px-6 pb-3 flex flex-row items-center justify-between">
           <div>
-              <CardTitle>Penyimpanan Sesi Video</CardTitle>
+              <CardTitle className="text-base font-semibold">Penyimpanan Sesi Video</CardTitle>
               <CardDescription>Video yang aktif untuk dianalisis.</CardDescription>
           </div>
           <Button size="icon" variant="ghost" onClick={onAddNew} aria-label="Tambah video baru">
@@ -46,7 +46,7 @@ export function VideoHistoryCard({ currentVideo, onDeleteCurrentVideo, onAddNew 
               <span className="sr-only">Tambah video baru</span>
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6 pb-4">
           <div className="min-h-16">
             {currentVideo ? (
               <div className="flex items-center group p-2 rounded-md hover:bg-muted">
@@ -77,14 +77,14 @@ export function VideoHistoryCard({ currentVideo, onDeleteCurrentVideo, onAddNew 
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="px-4 sm:px-6 pb-3">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-primary" />
-            <CardTitle className="text-sm font-semibold">Hasil Rekaman Analisis</CardTitle>
+            <CardTitle className="text-base font-semibold">Hasil Rekaman Analisis</CardTitle>
           </div>
           <CardDescription className="text-[10px]">Arsip video hasil proses AI backend.</CardDescription>
         </CardHeader>
-        <CardContent className="px-2">
+        <CardContent className="px-4 sm:px-6 pb-4">
           <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1">
             {recordings.length > 0 ? (
               recordings.map((rec) => (

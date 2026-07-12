@@ -391,7 +391,7 @@ export function TrafficDashboard() {
         <SidebarInset>
           <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <DashboardHeader title="VisionPulse Traffic AI" description="Analisis lalu lintas cerdas berbasis visi komputer." />
+                <DashboardHeader title="VisionPulse Traffic AI" description={isAnalyzing ? "Menganalisis aliran video m3u8 dari Bekasi Kota secara real-time." : "Hubungkan kamera atau pilih video untuk memulai analisis lalu lintas cerdas."} />
                 <div className="flex items-center gap-3">
                     <div className="flex items-center space-x-2 bg-muted px-3 py-1.5 rounded-full border">
                         <Zap className={`w-3.5 h-3.5 ${mode === 'SIMULATION' ? 'text-blue-500' : 'text-muted-foreground'}`} />
@@ -439,13 +439,19 @@ export function TrafficDashboard() {
                 <div className="col-span-9 space-y-6">
                     <Card className="overflow-hidden border-none shadow-md">
                         <CardHeader className="bg-primary/10 py-3 border-b flex flex-row items-center justify-between">
-                            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                            <CardTitle className="text-base font-semibold flex items-center gap-2">
                                 <LayoutDashboard className="w-4 h-4 text-primary" />
                                 {activeVideo?.name || 'Monitor Lalu Lintas'}
                             </CardTitle>
                             {mode === 'SIMULATION' && <Badge variant="secondary" className="text-[10px] uppercase">Riset Simulasi</Badge>}
                         </CardHeader>
                         <CardContent className="p-0 bg-black">
+                    {isAnalyzing && (
+                        <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+                            <Badge className="bg-red-500 hover:bg-red-600 animate-pulse border-none text-[10px] px-1.5 h-5">LIVE</Badge>
+                            <span className="text-white text-[10px] font-medium drop-shadow-md bg-black/20 px-2 rounded-full backdrop-blur-sm">CCTV BEKASI KOTA</span>
+                        </div>
+                    )}
                             <div className="relative bg-black rounded-lg overflow-hidden shadow-lg border border-white/5 aspect-[5/2] w-full">{renderVideoPlayer()}</div>
                         </CardContent>
                     </Card>
@@ -470,6 +476,12 @@ export function TrafficDashboard() {
               {/* Mobile/Tablet View: Tabs Layout */}
               <div className="xl:hidden space-y-6">
                 <div className="relative bg-black rounded-lg overflow-hidden shadow-md aspect-video sm:aspect-[5/2] w-full">
+                    {isAnalyzing && (
+                        <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+                            <Badge className="bg-red-500 hover:bg-red-600 animate-pulse border-none text-[10px] px-1.5 h-5">LIVE</Badge>
+                            <span className="text-white text-[10px] font-medium drop-shadow-md bg-black/20 px-2 rounded-full backdrop-blur-sm">CCTV BEKASI KOTA</span>
+                        </div>
+                    )}
                     {renderVideoPlayer()}
                 </div>
 
@@ -512,12 +524,12 @@ export function TrafficDashboard() {
 
                     <TabsContent value="config" className="space-y-4 pt-4">
                         <Card>
-                            <CardHeader className="py-3">
-                                <CardTitle className="text-xs font-bold flex items-center gap-2">
+                            <CardHeader className="px-4 sm:px-6 pb-3">
+                                <CardTitle className="text-base font-semibold flex items-center gap-2">
                                     <Activity className="w-3.5 h-3.5" /> Konfigurasi Endpoint
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-2">
+                            <CardContent className="px-4 sm:px-6 pb-4 space-y-2">
                                 <div className="flex items-center justify-between text-[11px]">
                                     <span className="text-muted-foreground">API Server:</span>
                                     <code className="bg-muted px-1.5 py-0.5 rounded">{BACKEND_URL}</code>

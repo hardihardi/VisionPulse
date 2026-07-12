@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Activity, Car, Bike, Truck, Bus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, Car, Bike, Truck, Bus, Clock, LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface RealtimeDetectionStatsProps {
@@ -14,15 +14,16 @@ export function RealtimeDetectionStats({ isAnalyzing, backendStats }: RealtimeDe
   if (!isAnalyzing || !backendStats) {
     return (
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <Activity className="w-4 h-4 text-muted-foreground" />
+        <CardHeader className="pb-3 px-4 sm:px-6">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Activity className="w-4 h-4 text-primary" />
             Statistik Real-time
           </CardTitle>
-          <CardDescription>Menunggu data analisis...</CardDescription>
+          <CardDescription className="text-xs">Menunggu data analisis...</CardDescription>
         </CardHeader>
-        <CardContent>
-           <div className="h-32 flex items-center justify-center text-xs text-muted-foreground italic">
+        <CardContent className="px-4 sm:px-6">
+           <div className="h-40 flex flex-col items-center justify-center text-xs text-muted-foreground/60 italic border-2 border-dashed rounded-lg">
+              <LayoutDashboard className="w-6 h-6 mb-2 opacity-30" />
               Aktifkan sistem untuk melihat deteksi.
            </div>
         </CardContent>
@@ -30,7 +31,7 @@ export function RealtimeDetectionStats({ isAnalyzing, backendStats }: RealtimeDe
     );
   }
 
-  const { counts, total_skr, moving_average_skr } = backendStats;
+  const { counts, total_skr, moving_average_skr, uptime } = backendStats;
 
   const getDirectionColor = (direction: string) =>
     direction === 'Mendekat' ? 'text-blue-500' : 'text-orange-500';
@@ -51,57 +52,76 @@ export function RealtimeDetectionStats({ isAnalyzing, backendStats }: RealtimeDe
       case 'motorcycle': return 'Motor';
       case 'truck': return 'Truk';
       case 'bus': return 'Bus';
+      case 'trailer': return 'Trailer';
       default: return type;
     }
   };
 
+  const formatUptime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <Card>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-3 px-4 sm:px-6">
         <div className="flex items-center justify-between">
-           <CardTitle className="text-sm font-semibold">Deteksi Kendaraan</CardTitle>
-           <Badge variant="outline" className="text-[10px] bg-green-500/5 text-green-600 border-green-200">LIVE</Badge>
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Activity className="w-4 h-4 text-green-500" />
+            Statistik Real-time
+          </CardTitle>
+          <Badge variant="outline" className="text-[10px] font-mono font-normal">
+            <Clock className="w-3 h-3 mr-1" />
+            {formatUptime(uptime || 0)}
+          </Badge>
         </div>
-        <CardDescription className="text-[10px]">Data akumulasi sesi ini.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {Object.entries(counts).map(([direction, vehicles]: [string, any]) => (
-          <div key={direction} className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                {direction === 'Mendekat' ? <TrendingUp className="w-3.5 h-3.5 text-blue-500" /> : <TrendingDown className="w-3.5 h-3.5 text-orange-500" />}
-                <span className={cn("text-[11px] font-bold uppercase tracking-wider", getDirectionColor(direction))}>
-                  {direction}
-                </span>
-              </div>
-              <span className="text-[11px] font-semibold bg-muted px-1.5 py-0.5 rounded">
-                SKR: {total_skr[direction].toFixed(1)}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(vehicles).map(([type, count]: [string, any]) => (
-                <div key={type} className="flex items-center justify-between bg-muted/30 p-2 rounded-lg border border-muted">
-                  <div className="flex items-center gap-2">
-                    <div className={cn("p-1 rounded-md bg-white shadow-sm border", getDirectionColor(direction))}>
-                      {getVehicleIcon(type)}
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">{getTranslatedType(type)}</span>
-                  </div>
-                  <span className="text-xs font-bold">{count}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center justify-between text-[9px] bg-muted/50 p-1.5 rounded border border-dashed">
-                <span className="text-muted-foreground">Tren (SKR/Jam):</span>
-                <span className="font-bold flex items-center gap-1">
-                   {moving_average_skr[direction].toFixed(0)}
-                   <TrendingUp className="w-2.5 h-2.5" />
-                </span>
-            </div>
+      <CardContent className="px-4 sm:px-6 space-y-4">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-muted/50 p-2.5 rounded-lg border border-border/50">
+            <p className="text-[10px] text-muted-foreground uppercase font-semibold">Status</p>
+            <p className="text-sm font-bold text-green-500 leading-tight mt-0.5">MENGANALISIS</p>
           </div>
-        ))}
+          <div className="bg-muted/50 p-2.5 rounded-lg border border-border/50">
+            <p className="text-[10px] text-muted-foreground uppercase font-semibold">Total Kendaraan</p>
+            <p className="text-sm font-bold leading-tight mt-0.5">{backendStats.total_count || 0}</p>
+          </div>
+          <div className="bg-muted/50 p-2.5 rounded-lg border border-border/50">
+            <p className="text-[10px] text-muted-foreground uppercase font-semibold">Total SKR</p>
+            <p className="text-sm font-bold leading-tight mt-0.5">{total_skr?.toFixed(2) || '0.00'}</p>
+          </div>
+          <div className="bg-muted/50 p-2.5 rounded-lg border border-border/50">
+            <p className="text-[10px] text-muted-foreground uppercase font-semibold">Waktu Proses</p>
+            <p className="text-sm font-bold leading-tight mt-0.5">{formatUptime(uptime || 0)}</p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {Object.entries(counts || {}).map(([direction, vehicles]: [string, any]) => (
+            <div key={direction} className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <p className={cn("text-[11px] font-bold uppercase tracking-wider", getDirectionColor(direction))}>
+                  {direction === 'Mendekat' ? '⬇ MENDUKUNG' : '⬆ MENJAUH'}
+                </p>
+                <Badge variant="secondary" className="text-[9px] h-4">SKR: {moving_average_skr?.[direction]?.toFixed(2) || '0.00'}</Badge>
+              </div>
+              <div className="grid grid-cols-1 gap-1.5">
+                {Object.entries(vehicles).map(([type, count]: [string, any]) => (
+                  count > 0 && (
+                    <div key={type} className="flex items-center justify-between text-xs bg-muted/30 p-1.5 rounded border border-border/20">
+                      <div className="flex items-center gap-2">
+                        {getVehicleIcon(type)}
+                        <span className="font-medium">{getTranslatedType(type)}</span>
+                      </div>
+                      <span className="font-bold">{count}</span>
+                    </div>
+                  )
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

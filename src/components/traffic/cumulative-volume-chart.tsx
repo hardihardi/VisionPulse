@@ -49,8 +49,8 @@ export function CumulativeVolumeChart({ isAnalyzing, backendStats }: CumulativeV
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Volume Kendaraan Kumulatif (Real-Time)</CardTitle>
+      <CardHeader className="px-4 sm:px-6 pb-2">
+        <CardTitle className="text-base font-semibold">Volume Kendaraan Kumulatif (Real-Time)</CardTitle>
         <CardDescription>
             {isAnalyzing 
                 ? "Waktu Berjalan (HH:MM:SS)"
@@ -58,7 +58,7 @@ export function CumulativeVolumeChart({ isAnalyzing, backendStats }: CumulativeV
             }
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 sm:px-6">
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
@@ -73,7 +73,7 @@ export function CumulativeVolumeChart({ isAnalyzing, backendStats }: CumulativeV
             />
             <Legend />
             <Line type="monotone" dataKey="total" name="Total Kumulatif" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey="mendekat" name="Mendekat Kumulatif" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} isAnimationActive={false} />
+            <Line type="monotone" dataKey="mendekat" name="Mendekat Kumulatif" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={false} isAnimationActive={false} />
             <Line type="monotone" dataKey="menjauh" name="Menjauh Kumulatif" stroke="hsl(var(--chart-4))" strokeWidth={2} dot={false} isAnimationActive={false} />
           </LineChart>
         </ResponsiveContainer>

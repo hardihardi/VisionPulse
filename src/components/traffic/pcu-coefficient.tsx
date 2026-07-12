@@ -64,13 +64,13 @@ export function PcuCoefficient({ coefficients, onUpdate, lineY = 0.5, onLineYCha
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="text-sm font-bold flex items-center gap-2">
+            <CardHeader className="px-4 sm:px-6 pb-3">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
                     <Settings2 className="w-4 h-4" />
                     Konfigurasi Sistem
                 </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="px-4 sm:px-6 space-y-6">
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
                         <Label className="text-xs">Posisi Garis Hitung (ROI)</Label>

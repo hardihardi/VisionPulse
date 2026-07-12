@@ -73,11 +73,11 @@ export function AiTrafficAnalysisCard({ isAnalyzing, analysisInputUri, sourceTyp
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Analisis Video AI</CardTitle>
+      <CardHeader className="px-4 sm:px-6 pb-2">
+        <CardTitle className="text-base font-semibold">Analisis Video AI</CardTitle>
         <CardDescription>{getCardDescription()}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="px-4 sm:px-6 space-y-4 pb-4">
         {isLoading && (
           <div className="flex items-center justify-center text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

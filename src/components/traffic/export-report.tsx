@@ -1,12 +1,12 @@
-
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { toPng } from 'html-to-image';
 import type { RefObject } from 'react';
-import { Download, FileSpreadsheet, FileText, Image as ImageIcon } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText, Image as ImageIcon, Share2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ExportReportProps {
   isAnalyzing: boolean;
@@ -104,35 +104,69 @@ export function ExportReport({ isAnalyzing, trafficData, countingChartRef, movin
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-sm font-bold flex items-center gap-2">
-            <Download className="w-4 h-4" />
+      <CardHeader className="pb-3 px-4 sm:px-6">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Download className="w-4 h-4 text-primary" />
             Ekspor Laporan
         </CardTitle>
+        <CardDescription className="text-xs">Simpan data analisis ke perangkat.</CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 gap-2">
+      <CardContent className="px-4 sm:px-6 space-y-4">
         <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" size="sm" onClick={() => handleExport('XLSX')} disabled={!isAnalyzing && trafficData.length === 0}>
-                <FileSpreadsheet className="w-3 h-3 mr-2" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9"
+              onClick={() => handleExport('XLSX')}
+              disabled={!isAnalyzing && trafficData.length === 0}
+            >
+                <FileSpreadsheet className="w-4 h-4 mr-2 text-green-600" />
                 XLSX
             </Button>
-            <Button variant="outline" size="sm" onClick={() => handleExport('CSV')} disabled={!isAnalyzing && trafficData.length === 0}>
-                <FileText className="w-3 h-3 mr-2" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9"
+              onClick={() => handleExport('CSV')}
+              disabled={!isAnalyzing && trafficData.length === 0}
+            >
+                <FileText className="w-4 h-4 mr-2 text-blue-600" />
                 CSV
             </Button>
         </div>
-        <div className="space-y-2 pt-2 border-t">
-            <Button variant="ghost" size="xs" className="w-full justify-start text-[10px]" onClick={() => handleExport('Grafik Counting')} disabled={!isAnalyzing}>
-                <ImageIcon className="w-3 h-3 mr-2" />
-                Unduh Grafik Counting
+        <div className="space-y-1.5 pt-3 border-t">
+            <p className="text-[10px] font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1">
+              <ImageIcon className="w-3 h-3" /> Tangkapan Grafik
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-[11px] h-8 hover:bg-primary/5"
+              onClick={() => handleExport('Grafik Counting')}
+              disabled={!isAnalyzing}
+            >
+                <Download className="w-3 h-3 mr-2 opacity-50" />
+                Grafik Counting (Volume/Waktu)
             </Button>
-            <Button variant="ghost" size="xs" className="w-full justify-start text-[10px]" onClick={() => handleExport('Grafik Moving Average')} disabled={!isAnalyzing}>
-                <ImageIcon className="w-3 h-3 mr-2" />
-                Unduh Grafik Moving Avg
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-[11px] h-8 hover:bg-primary/5"
+              onClick={() => handleExport('Grafik Moving Average')}
+              disabled={!isAnalyzing}
+            >
+                <Download className="w-3 h-3 mr-2 opacity-50" />
+                Grafik Rerata Bergerak (SKR)
             </Button>
-            <Button variant="ghost" size="xs" className="w-full justify-start text-[10px]" onClick={() => handleExport('Grafik Volume')} disabled={!isAnalyzing}>
-                <ImageIcon className="w-3 h-3 mr-2" />
-                Unduh Grafik Volume
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-[11px] h-8 hover:bg-primary/5"
+              onClick={() => handleExport('Grafik Volume')}
+              disabled={!isAnalyzing}
+            >
+                <Download className="w-3 h-3 mr-2 opacity-50" />
+                Grafik Komposisi Kendaraan
             </Button>
         </div>
       </CardContent>

@@ -78,8 +78,8 @@ export const MovingAverageChart = forwardRef<HTMLDivElement, MovingAverageChartP
 
     return (
       <Card ref={ref}>
-        <CardHeader>
-          <CardTitle>Analisis Rerata Bergerak (SKR / Jam Bergulir)</CardTitle>
+        <CardHeader className="px-4 sm:px-6 pb-2">
+          <CardTitle className="text-base font-semibold">Analisis Rerata Bergerak (SKR / Jam Bergulir)</CardTitle>
           <CardDescription>
               {isAnalyzing
               ? "Analisis SKR (Satuan Kendaraan Roda Empat) per jam."
@@ -87,7 +87,7 @@ export const MovingAverageChart = forwardRef<HTMLDivElement, MovingAverageChartP
               }
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={chartData}>
               <CartesianGrid

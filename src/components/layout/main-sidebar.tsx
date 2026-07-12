@@ -1,4 +1,3 @@
-
 "use client"
 
 import {
@@ -10,6 +9,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarGroup,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -17,9 +17,12 @@ import { Logo } from "@/components/logo"
 import { Settings, TrafficCone, History, Search } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export function MainSidebar() {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
+  const isMobile = useIsMobile();
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r border-sidebar-border/60">
@@ -30,7 +33,7 @@ export function MainSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname === '/'} tooltip="Dasbor Utama">
-              <Link href="/">
+              <Link href="/" onClick={() => { if (isMobile) setOpenMobile(false); }}>
                 <TrafficCone />
                 <span>Dasbor Utama</span>
               </Link>
@@ -38,7 +41,7 @@ export function MainSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname === '/history'} tooltip="Penyimpanan Video">
-              <Link href="/history">
+              <Link href="/history" onClick={() => { if (isMobile) setOpenMobile(false); }}>
                 <History />
                 <span>Penyimpanan Video</span>
               </Link>
@@ -46,7 +49,7 @@ export function MainSidebar() {
           </SidebarMenuItem>
            <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname === '/plate-search'} tooltip="Pencarian Plat">
-              <Link href="/plate-search">
+              <Link href="/plate-search" onClick={() => { if (isMobile) setOpenMobile(false); }}>
                 <Search />
                 <span>Pencarian Plat</span>
               </Link>
@@ -60,7 +63,7 @@ export function MainSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Pengaturan">
-                <Link href="#">
+                <Link href="#" onClick={() => { if (isMobile) setOpenMobile(false); }}>
                   <Settings />
                   <span>Pengaturan</span>
                 </Link>
@@ -68,7 +71,7 @@ export function MainSidebar() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link href="#">
+                <Link href="#" onClick={() => { if (isMobile) setOpenMobile(false); }}>
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="https://picsum.photos/seed/user-avatar/100/100" alt="Pengguna" />
                     <AvatarFallback>U</AvatarFallback>
