@@ -38,6 +38,14 @@ import { Label } from '../ui/label';
 import { VideoHistoryCard } from './video-history-card';
 import { HlsVideoPlayer } from '../ui/hls-video-player';
 
+
+function getHlsEmbedUrl(url: string): string | null {
+  if (url.includes('.m3u8')) {
+    return `https://www.hlsplayer.net/embed?type=m3u8&src=${encodeURIComponent(url)}`;
+  }
+  return null;
+}
+
 const initialCoefficients: PcuCoefficients = {
   sepedaMotor: 0.25,
   mobil: 1.0,
@@ -371,8 +379,8 @@ export function TrafficDashboard() {
         );
     }
 
-    const embedUrl = getYouTubeEmbedUrl(videoSrc);
-    if (embedUrl) return <iframe src={embedUrl} title="YouTube" frameBorder="0" allowFullScreen className="w-full h-full" />;
+    const embedUrl = getYouTubeEmbedUrl(videoSrc) || getHlsEmbedUrl(videoSrc);
+    if (embedUrl) return <iframe src={embedUrl} title="Video Player" frameBorder="0" allowFullScreen className="w-full h-full" />;
     return <HlsVideoPlayer src={videoSrc} className="w-full h-full object-cover" controls autoPlay loop muted />;
   };
 
