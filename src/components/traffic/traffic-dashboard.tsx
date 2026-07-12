@@ -105,7 +105,7 @@ export function TrafficDashboard() {
   useEffect(() => {
     const checkHealth = async () => {
         try {
-            const resp = await fetch(`${BACKEND_URL}/traffic-stats`);
+            const resp = await fetch(`${BACKEND_URL}/health`);
             setIsBackendHealthy(resp.ok);
             if (resp.ok && mode === 'SIMULATION') {
                // setMode('LIVE'); // Optional auto-switch back

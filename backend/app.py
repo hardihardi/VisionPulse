@@ -237,6 +237,8 @@ def stop_recording():
 
 @app.route('/recordings', methods=['GET'])
 def list_recordings():
+    if not os.path.exists(app.config['RECORDINGS_FOLDER']):
+        return jsonify({'recordings': []})
     files = [f for f in os.listdir(app.config['RECORDINGS_FOLDER']) if f.endswith(('.mp4', '.avi'))]
     recordings = []
     for f in files:
@@ -255,7 +257,13 @@ def get_recording(filename):
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify({'status': 'healthy', 'uptime': time.time()})
+    return jsonify({
+        'status': 'healthy',
+        'uptime': time.time(),
+        'processing': is_processing,
+        'recording': is_recording,
+        'source': video_source
+    })
 
 @app.route('/export/<fmt>', methods=['GET'])
 def export_data(fmt):
