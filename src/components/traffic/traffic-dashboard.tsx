@@ -36,6 +36,7 @@ import { Badge } from '../ui/badge';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import { VideoHistoryCard } from './video-history-card';
+import { HlsVideoPlayer } from '../ui/hls-video-player';
 
 const initialCoefficients: PcuCoefficients = {
   sepedaMotor: 0.25,
@@ -341,7 +342,7 @@ export function TrafficDashboard() {
         if (mode === 'SIMULATION') {
             return (
                 <div className="w-full h-full relative bg-black min-h-[300px] flex items-center justify-center">
-                    <video src={videoSrc} className="w-full h-full object-contain opacity-60" controls autoPlay loop muted />
+                    <HlsVideoPlayer src={videoSrc} className="w-full h-full object-contain opacity-60" controls autoPlay loop muted />
                     <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
                     <div className="absolute top-4 left-4">
                         <Badge variant="secondary" className="bg-blue-600 text-white animate-pulse">SIMULATING AI OVERLAY</Badge>
@@ -372,7 +373,7 @@ export function TrafficDashboard() {
 
     const embedUrl = getYouTubeEmbedUrl(videoSrc);
     if (embedUrl) return <iframe src={embedUrl} title="YouTube" frameBorder="0" allowFullScreen className="w-full h-full min-h-[300px]" />;
-    return <video src={videoSrc} className="w-full h-full object-cover min-h-[300px]" controls autoPlay loop muted />;
+    return <HlsVideoPlayer src={videoSrc} className="w-full h-full object-cover min-h-[300px]" controls autoPlay loop muted />;
   };
 
   return (

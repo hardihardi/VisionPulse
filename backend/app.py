@@ -13,7 +13,8 @@ import io
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)
+# Enable CORS for all routes and origins
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configuration
 UPLOAD_FOLDER = 'videos'
@@ -43,8 +44,6 @@ def load_persistent_stats():
         try:
             with open(STATS_FILE, 'r') as f:
                 data = json.load(f)
-                # Load historical data but keep current session counts clean if preferred
-                # For this implementation, we'll merge them or just use for history
                 return data.get('history', [])
         except Exception as e:
             print(f"Error loading stats: {e}")
@@ -96,9 +95,10 @@ def process_video():
         return
 
     stream_url = get_stream_url(video_source)
+    print(f"Starting processing for: {stream_url}")
 
     # Retry logic for HLS streams
-    max_retries = 5
+    max_retries = 10
     retry_count = 0
 
     while is_processing and retry_count < max_retries:
@@ -106,12 +106,13 @@ def process_video():
         if not cap.isOpened():
             print(f"Failed to open video source, retry {retry_count+1}")
             retry_count += 1
-            time.sleep(2)
+            time.sleep(3)
             continue
 
         retry_count = 0 # Reset on success
+        print("Video source opened successfully")
 
-        # Setup VideoWriter if recording is enabled at start
+        # Setup VideoWriter if recording is enabled
         if is_recording and video_writer is None:
             width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -119,19 +120,17 @@ def process_video():
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"analysis_{timestamp}.mp4"
             filepath = os.path.join(app.config['RECORDINGS_FOLDER'], filename)
-            # Use MP4V for compatibility
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             video_writer = cv2.VideoWriter(filepath, fourcc, fps, (width, height))
 
         while is_processing:
             ret, frame = cap.read()
             if not ret:
-                # If it's a file, loop it. If it's a stream, it might have ended or broken.
                 if isinstance(video_source, str) and not video_source.startswith(('http', 'rtsp')):
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     continue
                 else:
-                    print("Stream interrupted, attempting to reconnect...")
+                    print("Stream interrupted or ended, attempting to reconnect...")
                     break
 
             processed_frame = counter.process_frame(frame)
@@ -142,8 +141,8 @@ def process_video():
             if is_recording and video_writer is not None:
                 video_writer.write(processed_frame)
 
-            # Throttle processing slightly to avoid 100% CPU on fast sources
-            time.sleep(0.001)
+            # Control frame rate for HLS to match stream if possible, or just throttle
+            time.sleep(0.01)
 
         cap.release()
         if video_writer:
@@ -153,8 +152,9 @@ def process_video():
         if not is_processing:
             break
 
-        time.sleep(1) # Wait before retry
+        time.sleep(2) # Wait before retry
 
+    print("Video processing thread stopped")
     is_processing = False
 
 @app.route('/upload-video', methods=['POST'])
@@ -172,7 +172,6 @@ def upload_video():
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(file_path)
 
-    # Stop existing processing
     is_processing = False
     if processing_thread:
         processing_thread.join()
@@ -194,7 +193,6 @@ def process_url():
     if not url:
         return jsonify({'error': 'No URL provided'}), 400
 
-    # Stop existing processing
     is_processing = False
     if processing_thread:
         processing_thread.join()
@@ -218,7 +216,7 @@ def update_config():
 
 @app.route('/traffic-stats', methods=['GET'])
 def get_traffic_stats():
-    save_persistent_stats() # Auto-save on stats request
+    save_persistent_stats()
     return jsonify({
         'status': 'STARTED' if is_processing else 'STOPPED',
         'recording': is_recording,
@@ -229,16 +227,12 @@ def get_traffic_stats():
 def start_recording():
     global is_recording
     is_recording = True
-    return jsonify({'message': 'Recording enabled. It will start with the next/current video processing session.'})
+    return jsonify({'message': 'Recording enabled'})
 
 @app.route('/recording/stop', methods=['POST'])
 def stop_recording():
-    global is_recording, video_writer
+    global is_recording
     is_recording = False
-    if video_writer:
-        # Note: In current architecture, process_video loop owns the writer.
-        # Setting is_recording to False will make the loop stop writing but release happens at end of loop or manually here.
-        pass
     return jsonify({'message': 'Recording stopped'})
 
 @app.route('/recordings', methods=['GET'])
@@ -312,15 +306,14 @@ def generate_frames():
     while is_processing:
         if current_frame is not None:
             with frame_lock:
-                # Use lower quality for MJPEG to save bandwidth/CPU
-                ret, buffer = cv2.imencode('.jpg', current_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                ret, buffer = cv2.imencode('.jpg', current_frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 if not ret:
                     continue
                 frame_bytes = buffer.tobytes()
 
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-        time.sleep(0.04)
+        time.sleep(0.03)
 
 @app.route('/stream')
 def stream_video():
@@ -329,6 +322,5 @@ def stream_video():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
-    # Initialize history if exists
     counter.history_data = load_persistent_stats()
     app.run(host='0.0.0.0', port=5000, threaded=True)
