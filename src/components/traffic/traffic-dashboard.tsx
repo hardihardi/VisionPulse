@@ -331,7 +331,7 @@ export function TrafficDashboard() {
   const renderVideoPlayer = () => {
     if (!videoSrc) {
         return (
-            <div className="w-full h-full flex items-center justify-center bg-muted relative min-h-[300px]">
+            <div className="w-full h-full flex items-center justify-center bg-muted relative w-full h-full">
                 {placeholder && <Image src={placeholder.imageUrl} alt="Placeholder" fill className="object-cover opacity-20" />}
                 <p className="text-muted-foreground relative z-10">Pilih video di Riwayat.</p>
             </div>
@@ -341,7 +341,7 @@ export function TrafficDashboard() {
     if (isAnalyzing) {
         if (mode === 'SIMULATION') {
             return (
-                <div className="w-full h-full relative bg-black min-h-[300px] flex items-center justify-center">
+                <div className="w-full h-full relative bg-black w-full h-full flex items-center justify-center">
                     <HlsVideoPlayer src={videoSrc} className="w-full h-full object-contain opacity-60" controls autoPlay loop muted />
                     <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
                     <div className="absolute top-4 left-4">
@@ -351,7 +351,7 @@ export function TrafficDashboard() {
             );
         }
         return (
-            <div className="w-full h-full relative bg-black min-h-[300px]">
+            <div className="w-full h-full relative bg-black w-full h-full">
                 <img
                     src={`${BACKEND_URL}/stream?t=${new Date().getTime()}`}
                     className="w-full h-full object-contain"
@@ -372,8 +372,8 @@ export function TrafficDashboard() {
     }
 
     const embedUrl = getYouTubeEmbedUrl(videoSrc);
-    if (embedUrl) return <iframe src={embedUrl} title="YouTube" frameBorder="0" allowFullScreen className="w-full h-full min-h-[300px]" />;
-    return <HlsVideoPlayer src={videoSrc} className="w-full h-full object-cover min-h-[300px]" controls autoPlay loop muted />;
+    if (embedUrl) return <iframe src={embedUrl} title="YouTube" frameBorder="0" allowFullScreen className="w-full h-full w-full h-full" />;
+    return <HlsVideoPlayer src={videoSrc} className="w-full h-full object-cover w-full h-full" controls autoPlay loop muted />;
   };
 
   return (
@@ -437,8 +437,8 @@ export function TrafficDashboard() {
                             </CardTitle>
                             {mode === 'SIMULATION' && <Badge variant="secondary" className="text-[10px] uppercase">Riset Simulasi</Badge>}
                         </CardHeader>
-                        <CardContent className="p-0">
-                            <div className="aspect-video relative bg-black">{renderVideoPlayer()}</div>
+                        <CardContent className="p-0 bg-black">
+                            <div className="relative bg-black rounded-lg overflow-hidden shadow-lg border border-white/5">{renderVideoPlayer()}</div>
                         </CardContent>
                     </Card>
                     <div className="grid grid-cols-2 gap-6">
@@ -461,7 +461,7 @@ export function TrafficDashboard() {
 
               {/* Mobile/Tablet View: Tabs Layout */}
               <div className="xl:hidden space-y-6">
-                <div className="aspect-video relative bg-black rounded-lg overflow-hidden shadow-md">
+                <div className="relative bg-black rounded-lg overflow-hidden shadow-md">
                     {renderVideoPlayer()}
                 </div>
 
