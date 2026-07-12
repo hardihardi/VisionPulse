@@ -62,10 +62,10 @@ export function useVideoHistory() {
                  // If no videos, add the default demo video
                 const defaultVideo: VideoHistoryItem = {
                     id: 'default-youtube-video',
-                    name: 'CCTV Bekasi - Proyek',
+                    name: 'CCTV Bekasi - Depan FTL Fitness',
                     source: {
                         type: 'url',
-                        url: 'https://eofficev2.bekasikota.go.id/backupcctv/m3/proyek_bekasi.m3u8'
+                        url: 'https://eofficev2.bekasikota.go.id/backupcctv/m3/Depan_FTL_Fitness.m3u8'
                     }
                 };
                 loadedVideos.push(defaultVideo);
@@ -84,10 +84,10 @@ export function useVideoHistory() {
             // On error, start with the default demo video
             const defaultVideo: VideoHistoryItem = {
                 id: 'default-youtube-video',
-                name: 'CCTV Bekasi - Proyek',
+                name: 'CCTV Bekasi - Depan FTL Fitness',
                 source: {
                     type: 'url',
-                    url: 'https://eofficev2.bekasikota.go.id/backupcctv/m3/proyek_bekasi.m3u8'
+                    url: 'https://eofficev2.bekasikota.go.id/backupcctv/m3/Depan_FTL_Fitness.m3u8'
                 }
             };
             setVideos([defaultVideo]);
