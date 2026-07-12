@@ -354,7 +354,7 @@ export function TrafficDashboard() {
             <div className="w-full h-full relative bg-black w-full h-full">
                 <img
                     src={`${BACKEND_URL}/stream?t=${new Date().getTime()}`}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-cover"
                     alt="Stream"
                     onError={() => setBackendError(true)}
                 />
@@ -372,8 +372,8 @@ export function TrafficDashboard() {
     }
 
     const embedUrl = getYouTubeEmbedUrl(videoSrc);
-    if (embedUrl) return <iframe src={embedUrl} title="YouTube" frameBorder="0" allowFullScreen className="w-full h-full w-full h-full" />;
-    return <HlsVideoPlayer src={videoSrc} className="w-full h-full object-cover w-full h-full" controls autoPlay loop muted />;
+    if (embedUrl) return <iframe src={embedUrl} title="YouTube" frameBorder="0" allowFullScreen className="w-full h-full" />;
+    return <HlsVideoPlayer src={videoSrc} className="w-full h-full object-cover" controls autoPlay loop muted />;
   };
 
   return (
@@ -438,7 +438,7 @@ export function TrafficDashboard() {
                             {mode === 'SIMULATION' && <Badge variant="secondary" className="text-[10px] uppercase">Riset Simulasi</Badge>}
                         </CardHeader>
                         <CardContent className="p-0 bg-black">
-                            <div className="relative bg-black rounded-lg overflow-hidden shadow-lg border border-white/5">{renderVideoPlayer()}</div>
+                            <div className="relative bg-black rounded-lg overflow-hidden shadow-lg border border-white/5 aspect-[5/2] w-full">{renderVideoPlayer()}</div>
                         </CardContent>
                     </Card>
                     <div className="grid grid-cols-2 gap-6">
@@ -461,7 +461,7 @@ export function TrafficDashboard() {
 
               {/* Mobile/Tablet View: Tabs Layout */}
               <div className="xl:hidden space-y-6">
-                <div className="relative bg-black rounded-lg overflow-hidden shadow-md">
+                <div className="relative bg-black rounded-lg overflow-hidden shadow-md aspect-video sm:aspect-[5/2] w-full">
                     {renderVideoPlayer()}
                 </div>
 

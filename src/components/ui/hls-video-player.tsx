@@ -110,7 +110,7 @@ export function HlsVideoPlayer({ src, ...props }: HlsVideoPlayerProps) {
   }, [src, props.autoPlay, retryCount]);
 
   return (
-    <div className="relative w-full h-full min-h-[220px] bg-black flex items-center justify-center overflow-hidden rounded-md">
+    <div className="relative w-full h-full min-h-0 bg-black flex items-center justify-center overflow-hidden rounded-md">
       {isLoading && !error && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/70 gap-3">
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
@@ -140,8 +140,8 @@ export function HlsVideoPlayer({ src, ...props }: HlsVideoPlayerProps) {
         ref={videoRef}
         {...props}
         playsInline
-        className={`w-full h-full transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
-        style={{ objectFit: 'contain' }}
+        className={`w-full h-full object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+
       />
 
       {!isLoading && !error && (
