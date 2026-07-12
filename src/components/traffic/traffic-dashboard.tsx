@@ -35,6 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '../ui/badge';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
+import { VideoHistoryCard } from './video-history-card';
 
 const initialCoefficients: PcuCoefficients = {
   sepedaMotor: 0.25,
@@ -74,7 +75,7 @@ const saveDetection = async (detection: Omit<Detection, 'id' | 'timestamp'>) => 
 
 
 export function TrafficDashboard() {
-  const { activeVideo, videoSrc, toBase64 } = useVideoHistory();
+  const { activeVideo, videoSrc, deleteVideo, toBase64 } = useVideoHistory();
   const [status, setStatus] = useState<SystemStatus>('STOPPED');
   const [mode, setMode] = useState<'LIVE' | 'SIMULATION'>('LIVE');
   const [detectionResult, setDetectionResult] =
@@ -449,6 +450,7 @@ export function TrafficDashboard() {
                 <div className="col-span-3 space-y-6">
                     <ControlStatus isStartEnabled={!!activeVideo} status={status} onStatusChange={handleStatusChange} />
                     <RealtimeDetectionStats isAnalyzing={isAnalyzing} backendStats={backendStats} />
+                    <VideoHistoryCard currentVideo={activeVideo} onDeleteCurrentVideo={() => deleteVideo(activeVideo?.id || "")} onAddNew={() => {}} />
                     <TrafficLog logs={backendStats?.recent_logs || []} isAnalyzing={isAnalyzing} />
                     <ExportReport isAnalyzing={isAnalyzing} trafficData={trafficCountData} countingChartRef={trafficCountingChartRef} movingAverageChartRef={movingAverageChartRef} vehicleComparisonChartRef={vehicleComparisonChartRef} />
                     <PcuCoefficient coefficients={pcuCoefficients} onUpdate={setPcuCoefficients} lineY={backendStats?.config?.line_y} onLineYChange={handleLineYChange} />
@@ -481,6 +483,7 @@ export function TrafficDashboard() {
                     <TabsContent value="overview" className="space-y-4 pt-4">
                         <ControlStatus isStartEnabled={!!activeVideo} status={status} onStatusChange={handleStatusChange} />
                         <RealtimeDetectionStats isAnalyzing={isAnalyzing} backendStats={backendStats} />
+                        <VideoHistoryCard currentVideo={activeVideo} onDeleteCurrentVideo={() => deleteVideo(activeVideo?.id || "")} onAddNew={() => {}} />
                         <VehicleVolume isAnalyzing={isAnalyzing} coefficients={pcuCoefficients} backendStats={backendStats} />
                         <AnomalyDetectionCard anomalies={anomalies} isAnalyzing={isAnalyzing} />
                     </TabsContent>

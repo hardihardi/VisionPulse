@@ -1,101 +1,107 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gauge, Thermometer, ShieldCheck, Car } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, TrendingDown, Activity, Car, Bike, Truck, Bus } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface RealtimeDetectionStatsProps {
   isAnalyzing: boolean;
-  backendStats?: any;
+  backendStats: any;
 }
 
-const StatDisplay = ({ title, value, unit, icon: Icon }: { title: string, value: string, unit: string, icon: React.ElementType }) => (
-  <div className="flex items-center gap-4">
-    <div className="p-3 bg-muted rounded-md">
-      <Icon className="w-5 h-5 text-muted-foreground" />
-    </div>
-    <div>
-      <p className="text-sm text-muted-foreground">{title}</p>
-      <p className="text-xl font-bold">
-        {value} <span className="text-sm font-normal text-muted-foreground">{unit}</span>
-      </p>
-    </div>
-  </div>
-);
-
 export function RealtimeDetectionStats({ isAnalyzing, backendStats }: RealtimeDetectionStatsProps) {
-  const [stats, setStats] = useState({
-    vehiclesDetected: 0,
-    detectionRate: 92,
-    averageSpeed: 42.5,
-    trafficDensity: 'Rendah',
-    totalSkr: 0,
-  });
+  if (!isAnalyzing || !backendStats) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <Activity className="w-4 h-4 text-muted-foreground" />
+            Statistik Real-time
+          </CardTitle>
+          <CardDescription>Menunggu data analisis...</CardDescription>
+        </CardHeader>
+        <CardContent>
+           <div className="h-32 flex items-center justify-center text-xs text-muted-foreground italic">
+              Aktifkan sistem untuk melihat deteksi.
+           </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  useEffect(() => {
-    if (!isAnalyzing) {
-      setStats({
-        vehiclesDetected: 0,
-        detectionRate: 92,
-        averageSpeed: 42.5,
-        trafficDensity: 'Rendah',
-        totalSkr: 0,
-      });
-      return;
+  const { counts, total_skr, moving_average_skr } = backendStats;
+
+  const getDirectionColor = (direction: string) =>
+    direction === 'Mendekat' ? 'text-blue-500' : 'text-orange-500';
+
+  const getVehicleIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'car': return <Car className="w-3.5 h-3.5" />;
+      case 'motorcycle': return <Bike className="w-3.5 h-3.5" />;
+      case 'truck': return <Truck className="w-3.5 h-3.5" />;
+      case 'bus': return <Bus className="w-3.5 h-3.5" />;
+      default: return <Activity className="w-3.5 h-3.5" />;
     }
+  };
 
-    if (backendStats) {
-      const totalM = Object.values(backendStats.counts.Mendekat).reduce((a: any, b: any) => a + b, 0) as number;
-      const totalJ = Object.values(backendStats.counts.Menjauh).reduce((a: any, b: any) => a + b, 0) as number;
-      const totalSkrVal = (backendStats.total_skr.Mendekat || 0) + (backendStats.total_skr.Menjauh || 0);
-
-      let density = 'Rendah';
-      const totalVehicles = totalM + totalJ;
-      if (totalVehicles > 50) density = 'Tinggi';
-      else if (totalVehicles > 20) density = 'Sedang';
-
-      setStats(prev => ({
-        ...prev,
-        vehiclesDetected: totalVehicles,
-        totalSkr: totalSkrVal,
-        trafficDensity: density,
-        detectionRate: Math.min(99, Math.max(85, prev.detectionRate + (Math.random() - 0.5)))
-      }));
+  const getTranslatedType = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'car': return 'Mobil';
+      case 'motorcycle': return 'Motor';
+      case 'truck': return 'Truk';
+      case 'bus': return 'Bus';
+      default: return type;
     }
-  }, [isAnalyzing, backendStats]);
+  };
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Status Deteksi Real-Time</CardTitle>
-        <CardDescription>Metrik dari analisis backend.</CardDescription>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+           <CardTitle className="text-sm font-semibold">Deteksi Kendaraan</CardTitle>
+           <Badge variant="outline" className="text-[10px] bg-green-500/5 text-green-600 border-green-200">LIVE</Badge>
+        </div>
+        <CardDescription className="text-[10px]">Data akumulasi sesi ini.</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
-        <StatDisplay 
-          title="Kendaraan Terdeteksi"
-          value={isAnalyzing ? stats.vehiclesDetected.toString() : "0"}
-          unit="kend."
-          icon={Car}
-        />
-        <StatDisplay 
-          title="Total SKR Kumulatif"
-          value={isAnalyzing ? stats.totalSkr.toFixed(2) : "0.00"}
-          unit="SKR"
-          icon={Gauge}
-        />
-        <StatDisplay 
-          title="Tingkat Akurasi"
-          value={isAnalyzing ? `${stats.detectionRate.toFixed(1)}` : "0"}
-          unit="%"
-          icon={ShieldCheck}
-        />
-        <StatDisplay 
-          title="Kepadatan Lalu Lintas" 
-          value={isAnalyzing ? stats.trafficDensity : "-"}
-          unit=""
-          icon={Thermometer}
-        />
+      <CardContent className="space-y-4">
+        {Object.entries(counts).map(([direction, vehicles]: [string, any]) => (
+          <div key={direction} className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                {direction === 'Mendekat' ? <TrendingUp className="w-3.5 h-3.5 text-blue-500" /> : <TrendingDown className="w-3.5 h-3.5 text-orange-500" />}
+                <span className={cn("text-[11px] font-bold uppercase tracking-wider", getDirectionColor(direction))}>
+                  {direction}
+                </span>
+              </div>
+              <span className="text-[11px] font-semibold bg-muted px-1.5 py-0.5 rounded">
+                SKR: {total_skr[direction].toFixed(1)}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(vehicles).map(([type, count]: [string, any]) => (
+                <div key={type} className="flex items-center justify-between bg-muted/30 p-2 rounded-lg border border-muted">
+                  <div className="flex items-center gap-2">
+                    <div className={cn("p-1 rounded-md bg-white shadow-sm border", getDirectionColor(direction))}>
+                      {getVehicleIcon(type)}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{getTranslatedType(type)}</span>
+                  </div>
+                  <span className="text-xs font-bold">{count}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between text-[9px] bg-muted/50 p-1.5 rounded border border-dashed">
+                <span className="text-muted-foreground">Tren (SKR/Jam):</span>
+                <span className="font-bold flex items-center gap-1">
+                   {moving_average_skr[direction].toFixed(0)}
+                   <TrendingUp className="w-2.5 h-2.5" />
+                </span>
+            </div>
+          </div>
+        ))}
       </CardContent>
     </Card>
   );
