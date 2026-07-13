@@ -22,7 +22,7 @@ export interface VideoHistoryItem {
 const HISTORY_KEY = 'visionpulse-video-history';
 const ACTIVE_VIDEO_ID_KEY = 'visionpulse-active-video-id';
 // This is a session-level cache for File objects, as they can't be stored in localStorage.
-const fileCache = new Map<string, File>();
+const fileCache = new Map<string, any>();
 
 export function useVideoHistory() {
     const [videos, setVideos] = useState<VideoHistoryItem[]>([]);
@@ -33,6 +33,8 @@ export function useVideoHistory() {
     // Load initial data from localStorage on mount
     useEffect(() => {
         try {
+            if (typeof window === 'undefined') return;
+
             const storedVideos = localStorage.getItem(HISTORY_KEY);
             const storedActiveId = localStorage.getItem(ACTIVE_VIDEO_ID_KEY);
 
@@ -98,7 +100,7 @@ export function useVideoHistory() {
     // Memoize active video and its source URL
     const activeVideo = useMemo(() => videos.find(v => v.id === activeVideoId), [videos, activeVideoId]);
     const videoSrc = useMemo(() => {
-        if (!activeVideo) return null;
+        if (!activeVideo || typeof window === 'undefined') return null;
         if (activeVideo.source.type === 'url') return activeVideo.source.url;
         if (activeVideo.source.file?.size > 0) {
             try {
@@ -114,6 +116,7 @@ export function useVideoHistory() {
     // Persist changes to localStorage
     const persistVideos = (updatedVideos: VideoHistoryItem[]) => {
         try {
+            if (typeof window === 'undefined') return;
             // Create a serializable version of the videos array
             const serializableVideos = updatedVideos.map(video => {
                 if (video.source.type === 'file') {
@@ -168,7 +171,9 @@ export function useVideoHistory() {
     };
 
     const setActiveVideoIdAndPersist = (id: string | null) => {
-        localStorage.setItem(ACTIVE_VIDEO_ID_KEY, id || '');
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(ACTIVE_VIDEO_ID_KEY, id || '');
+        }
         setActiveVideoId(id);
     };
     

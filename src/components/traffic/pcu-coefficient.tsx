@@ -74,7 +74,7 @@ export function PcuCoefficient({ coefficients, onUpdate, lineY = 0.5, onLineYCha
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
                         <Label className="text-xs">Posisi Garis Hitung (ROI)</Label>
-                        <span className="text-[10px] font-mono bg-muted px-1 rounded">{localLineY.toFixed(2)}</span>
+                        <span className="text-[10px] font-mono bg-muted px-1 rounded">{(localLineY || 0).toFixed(2)}</span>
                     </div>
                     <Slider
                         value={[localLineY]}

@@ -27,8 +27,8 @@ const calculateMovingAverage = (data: number[], windowSize: number): (number | n
     if (i < windowSize - 1) {
       result[i] = null;
     } else {
-      const window = data.slice(i - windowSize + 1, i + 1);
-      const sum = window.reduce((acc, val) => acc + val, 0);
+      const dataWindow = data.slice(i - windowSize + 1, i + 1);
+      const sum = dataWindow.reduce((acc, val) => acc + val, 0);
       result[i] = Math.round(sum / windowSize);
     }
   }

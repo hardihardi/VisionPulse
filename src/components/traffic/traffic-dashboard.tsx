@@ -15,8 +15,6 @@ import { CumulativeVolumeChart } from './cumulative-volume-chart';
 import { getEnhancedRecognition } from '@/app/(actions)/enhance-recognition';
 import { useToast } from '@/hooks/use-toast';
 import { EnhanceLicensePlateRecognitionOutput } from '@/ai/flows/enhance-license-plate-recognition';
-import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { useVideoHistory } from '@/hooks/use-video-history';
 import { RealtimeDetectionStats } from './realtimedetection-stats';
@@ -24,12 +22,12 @@ import { DetectionResultCard } from '../dashboard/detection-result-card';
 import { VehicleComparisonChart } from './vehicle-comparison-chart';
 import { firestore } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { generateAnomaly, generateLatestVehicleCounts, getTrafficProfile } from '@/lib/data';
+import { generateAnomaly } from '@/lib/data';
 import { AnomalyDetectionCard } from './anomaly-detection-card';
 import { AiTrafficAnalysisCard } from './ai-traffic-analysis-card';
 import { TrafficLog } from './traffic-log';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, RefreshCw, LayoutDashboard, BarChart3, Settings, ListTodo, Activity, MonitorPlay, Zap } from 'lucide-react';
+import { AlertCircle, LayoutDashboard, BarChart3, Settings, ListTodo, Activity, MonitorPlay, Zap } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '../ui/badge';
@@ -37,6 +35,7 @@ import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import { VideoHistoryCard } from './video-history-card';
 import { HlsVideoPlayer } from '../ui/hls-video-player';
+import { cn } from '@/lib/utils';
 
 
 function getHlsEmbedUrl(url: string): string | null {
@@ -53,22 +52,6 @@ const initialCoefficients: PcuCoefficients = {
   truk: 2.0,
   trailer: 2.5,
 };
-
-function getYouTubeEmbedUrl(url: string): string | null {
-  let videoId: string | null = null;
-  try {
-    const urlObj = new URL(url);
-    if (urlObj.hostname === 'youtu.be') {
-      videoId = urlObj.pathname.slice(1);
-    } else if (urlObj.hostname.includes('youtube.com')) {
-      videoId = urlObj.searchParams.get('v');
-    }
-  } catch (e) {
-    return null;
-  }
-  if (videoId) return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
-  return null;
-}
 
 const saveDetection = async (detection: Omit<Detection, 'id' | 'timestamp'>) => {
   if (!firestore) return;
@@ -98,9 +81,6 @@ export function TrafficDashboard() {
   const [backendError, setBackendError] = useState<boolean>(false);
   const [isBackendHealthy, setIsBackendHealthy] = useState<boolean | null>(null);
 
-  const placeholder = PlaceHolderImages.find(
-    (img) => img.id === 'traffic-feed-detected'
-  );
   const trafficCountingChartRef = useRef<HTMLDivElement>(null);
   const movingAverageChartRef = useRef<HTMLDivElement>(null);
   const vehicleComparisonChartRef = useRef<HTMLDivElement>(null);
@@ -115,9 +95,6 @@ export function TrafficDashboard() {
         try {
             const resp = await fetch(`${BACKEND_URL}/health`);
             setIsBackendHealthy(resp.ok);
-            if (resp.ok && mode === 'SIMULATION') {
-               // setMode('LIVE'); // Optional auto-switch back
-            }
         } catch (e) {
             setIsBackendHealthy(false);
         }
@@ -125,7 +102,7 @@ export function TrafficDashboard() {
     checkHealth();
     const interval = setInterval(checkHealth, 10000);
     return () => clearInterval(interval);
-  }, [BACKEND_URL, mode]);
+  }, [BACKEND_URL]);
 
   useEffect(() => {
     if (activeVideo) {
@@ -161,7 +138,10 @@ export function TrafficDashboard() {
                     const response = await fetch(`${BACKEND_URL}/traffic-stats`);
                     if (!response.ok) throw new Error("Backend error");
                     const data = await response.json();
-                    setBackendStats(data.stats);
+
+                    if (!data || !data.counts) return;
+
+                    setBackendStats(data);
                     setBackendError(false);
 
                     const now = new Date();
@@ -169,18 +149,18 @@ export function TrafficDashboard() {
 
                     const entry = {
                         name: timeStr,
-                        'Mobil (M)': data.stats.counts.Mendekat.car || 0,
-                        'Bus (M)': data.stats.counts.Mendekat.bus || 0,
-                        'Truk (M)': data.stats.counts.Mendekat.truck || 0,
-                        'Sepeda Motor (M)': data.stats.counts.Mendekat.motorcycle || 0,
-                        'Trailer (M)': 0,
-                        'Mobil (J)': data.stats.counts.Menjauh.car || 0,
-                        'Bus (J)': data.stats.counts.Menjauh.bus || 0,
-                        'Truk (J)': data.stats.counts.Menjauh.truck || 0,
-                        'Sepeda Motor (J)': data.stats.counts.Menjauh.motorcycle || 0,
-                        'Trailer (J)': 0,
-                        'Total Mendekat': Object.values(data.stats.counts.Mendekat).reduce((a: any, b: any) => a + b, 0),
-                        'Total Menjauh': Object.values(data.stats.counts.Menjauh).reduce((a: any, b: any) => a + b, 0),
+                        'Mobil (M)': data.counts.Mendekat?.car || 0,
+                        'Bus (M)': data.counts.Mendekat?.bus || 0,
+                        'Truk (M)': data.counts.Mendekat?.truck || 0,
+                        'Sepeda Motor (M)': data.counts.Mendekat?.motorcycle || 0,
+                        'Trailer (M)': data.counts.Mendekat?.trailer || 0,
+                        'Mobil (J)': data.counts.Menjauh?.car || 0,
+                        'Bus (J)': data.counts.Menjauh?.bus || 0,
+                        'Truk (J)': data.counts.Menjauh?.truck || 0,
+                        'Sepeda Motor (J)': data.counts.Menjauh?.motorcycle || 0,
+                        'Trailer (J)': data.counts.Menjauh?.trailer || 0,
+                        'Total Mendekat': Object.values(data.counts.Mendekat || {}).reduce((a: any, b: any) => a + b, 0),
+                        'Total Menjauh': Object.values(data.counts.Menjauh || {}).reduce((a: any, b: any) => a + b, 0),
                     };
 
                     setTrafficCountData(prev => [...prev.slice(-9), entry]);
@@ -191,7 +171,7 @@ export function TrafficDashboard() {
                 }
             }, 2000);
         } else {
-            // SIMULATION MODE logic
+            // SIMULATION MODE
             let simCounts = { Mendekat: { car: 10, bus: 2, truck: 1, motorcycle: 20 }, Menjauh: { car: 12, bus: 1, truck: 0, motorcycle: 18 } };
 
             simulationInterval = setInterval(() => {
@@ -199,32 +179,16 @@ export function TrafficDashboard() {
                 const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
 
                 // Random increments
-                const directions = ['Mendekat', 'Menjauh'] as const;
-                const types = ['car', 'bus', 'truck', 'motorcycle'] as const;
-
-                directions.forEach(d => {
-                    types.forEach(t => {
-                        if (Math.random() > 0.7) simCounts[d][t] += Math.floor(Math.random() * 3);
-                    });
-                });
-
-                const totalM = Object.values(simCounts.Mendekat).reduce((a, b) => a + b, 0);
-                const totalJ = Object.values(simCounts.Menjauh).reduce((a, b) => a + b, 0);
+                if (Math.random() > 0.5) simCounts.Mendekat.car += 1;
+                if (Math.random() > 0.8) simCounts.Mendekat.motorcycle += 2;
 
                 const mockStats = {
                     counts: simCounts,
-                    total_skr: {
-                        Mendekat: simCounts.Mendekat.car * 1.0 + simCounts.Mendekat.bus * 1.5 + simCounts.Mendekat.truck * 2.0 + simCounts.Mendekat.motorcycle * 0.25,
-                        Menjauh: simCounts.Menjauh.car * 1.0 + simCounts.Menjauh.bus * 1.5 + simCounts.Menjauh.truck * 2.0 + simCounts.Menjauh.motorcycle * 0.25,
-                    },
-                    moving_average_skr: {
-                        Mendekat: (totalM / 5) * 4, // Simulated trend
-                        Menjauh: (totalJ / 5) * 4,
-                    },
-                    recent_logs: [
-                        { id: Math.random(), type: 'car', direction: 'Mendekat', time: timeStr },
-                        ... (backendStats?.recent_logs || []).slice(0, 5)
-                    ],
+                    total_count: Object.values(simCounts.Mendekat).reduce((a, b) => a + b, 0) + Object.values(simCounts.Menjauh).reduce((a, b) => a + b, 0),
+                    total_skr: 45.5,
+                    moving_average_skr: { Mendekat: 12.5, Menjauh: 14.2 },
+                    uptime: 3600,
+                    recent_logs: [],
                     config: { line_y: 0.5 }
                 };
 
@@ -242,11 +206,11 @@ export function TrafficDashboard() {
                     'Truk (J)': simCounts.Menjauh.truck,
                     'Sepeda Motor (J)': simCounts.Menjauh.motorcycle,
                     'Trailer (J)': 0,
-                    'Total Mendekat': totalM,
-                    'Total Menjauh': totalJ,
+                    'Total Mendekat': Object.values(simCounts.Mendekat).reduce((a, b) => a + b, 0),
+                    'Total Menjauh': Object.values(simCounts.Menjauh).reduce((a, b) => a + b, 0),
                 };
                 setTrafficCountData(prev => [...prev.slice(-9), entry]);
-            }, 3000);
+            }, 2000);
         }
 
         anomalyInterval = setInterval(() => {
@@ -266,7 +230,7 @@ export function TrafficDashboard() {
       if (anomalyInterval) clearInterval(anomalyInterval);
       if (simulationInterval) clearInterval(simulationInterval);
     };
-  }, [isAnalyzing, activeVideo, mode]);
+  }, [isAnalyzing, activeVideo, mode, BACKEND_URL, toast]);
 
   const handleLineYChange = async (val: number) => {
     if (mode === 'SIMULATION') {
@@ -295,7 +259,7 @@ export function TrafficDashboard() {
           if (activeVideo.source.type === 'url') {
               setStatus('ANALYZING');
               try {
-                  await fetch(`${BACKEND_URL}/process-url`, {
+                  await fetch(`${BACKEND_URL}/start-url`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ url: activeVideo.source.url })
@@ -311,82 +275,80 @@ export function TrafficDashboard() {
             setStatus('ANALYZING');
             try {
               const formData = new FormData();
-              formData.append('video', activeVideo.source.file);
+              formData.append('file', activeVideo.source.file);
               fetch(`${BACKEND_URL}/upload-video`, { method: 'POST', body: formData });
               const videoUri = await toBase64(activeVideo.source.file);
               setAnalysisInputUri(videoUri);
               const { result } = await getEnhancedRecognition({ videoDataUri: videoUri });
               if (result) setDetectionResult(result);
               setStatus('STARTED');
-            } catch (error: any) {
-              setBackendError(true);
-              setMode('SIMULATION');
+            } catch (e) {
+               console.error("Error uploading/analyzing file", e);
             }
           }
       } else {
-          // SIMULATION START
           setStatus('STARTED');
           toast({ title: "Mode Simulasi Aktif", description: "Menjalankan analisis menggunakan data simulasi." });
       }
-    } else if (newStatus === 'STOPPED') {
+    } else {
       setStatus('STOPPED');
-      setDetectionResult(null);
-      setAnalysisInputUri(null);
       if (mode === 'LIVE') fetch(`${BACKEND_URL}/stop`, { method: 'POST' }).catch(() => {});
     }
   };
 
   const renderVideoPlayer = () => {
-    if (!videoSrc) {
-        return (
-            <div className="w-full h-full flex items-center justify-center bg-muted relative w-full h-full">
-                {placeholder && <Image src={placeholder.imageUrl} alt="Placeholder" fill className="object-cover opacity-20" />}
-                <p className="text-muted-foreground relative z-10">Pilih video di Riwayat.</p>
+    if (!activeVideo) return (
+        <div className="flex flex-col items-center justify-center h-full bg-muted/20 text-muted-foreground gap-4 border-2 border-dashed rounded-lg m-4">
+            <MonitorPlay className="w-12 h-12 opacity-20" />
+            <div className="text-center">
+                <p className="font-medium">Belum ada video dipilih</p>
+                <p className="text-xs opacity-60">Pilih sumber dari Penyimpanan Sesi untuk memulai.</p>
             </div>
-        );
-    }
+        </div>
+    );
 
-    if (isAnalyzing) {
-        if (mode === 'SIMULATION') {
-            return (
-                <div className="w-full h-full relative bg-black w-full h-full flex items-center justify-center">
-                    <HlsVideoPlayer src={videoSrc} className="w-full h-full object-contain opacity-60" controls autoPlay loop muted />
-                    <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
-                    <div className="absolute top-4 left-4">
-                        <Badge variant="secondary" className="bg-blue-600 text-white animate-pulse">SIMULATING AI OVERLAY</Badge>
-                    </div>
+    if (mode === 'SIMULATION') {
+        return (
+            <div className="relative w-full h-full">
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px] text-white p-6 text-center">
+                    <Zap className="w-12 h-12 text-blue-400 mb-4 animate-pulse" />
+                    <h3 className="text-xl font-bold mb-2">MODE SIMULASI</h3>
+                    <p className="text-sm opacity-80 max-w-md">Kamera fisik dinonaktifkan. Anda melihat data riset simulasi untuk analisis tren strategis.</p>
+                    <Button variant="default" size="sm" onClick={() => setMode('LIVE')} className="mt-6">Gunakan Mode LIVE</Button>
                 </div>
-            );
-        }
-        return (
-            <div className="w-full h-full relative bg-black w-full h-full">
-                <img
-                    src={`${BACKEND_URL}/stream?t=${new Date().getTime()}`}
-                    className="w-full h-full object-cover"
-                    alt="Stream"
-                    onError={() => setBackendError(true)}
-                />
-                {backendError && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 gap-3">
-                        <AlertCircle className="w-8 h-8 text-destructive" />
-                        <div className="text-center px-4">
-                            <p className="text-white font-medium mb-2">Backend Offline</p>
-                            <Button variant="default" size="sm" onClick={() => setMode('SIMULATION')}>Gunakan Mode Simulasi</Button>
-                        </div>
-                    </div>
-                )}
+                <img src="https://images.unsplash.com/photo-1545147418-4f1e62640ef7?q=80&w=2000&auto=format&fit=crop" alt="Traffic Simulation" className="w-full h-full object-cover grayscale opacity-50" />
             </div>
-        );
+        )
     }
 
-    const embedUrl = getYouTubeEmbedUrl(videoSrc) || getHlsEmbedUrl(videoSrc);
-    if (embedUrl) return <iframe src={embedUrl} title="Video Player" frameBorder="0" allowFullScreen className="w-full h-full" />;
-    return <HlsVideoPlayer src={videoSrc} className="w-full h-full object-cover" controls autoPlay loop muted />;
+    if (activeVideo.source.type === 'url') {
+      const hlsEmbed = getHlsEmbedUrl(activeVideo.source.url);
+      if (hlsEmbed) {
+        return (
+            <div className="w-full h-full flex flex-col bg-black">
+                <div className="flex-grow relative">
+                    <HlsVideoPlayer src={activeVideo.source.url} autoPlay muted className="w-full h-full" />
+                </div>
+            </div>
+        );
+      }
+    }
+
+    if (videoSrc) {
+        return <video src={videoSrc} controls autoPlay muted className="w-full h-full object-cover" />;
+    }
+
+    return (
+        <div className="flex flex-col items-center justify-center h-full text-muted-foreground bg-black/10">
+            <RefreshCw className="w-8 h-8 animate-spin mb-2" />
+            <p className="text-sm">Menghubungkan ke aliran video...</p>
+        </div>
+    );
   };
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex min-h-screen w-full bg-background font-sans selection:bg-primary/10">
         <MainSidebar />
         <SidebarInset>
           <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
@@ -394,7 +356,7 @@ export function TrafficDashboard() {
                 <DashboardHeader title="VisionPulse Traffic AI" description={isAnalyzing ? "Menganalisis aliran video m3u8 dari Bekasi Kota secara real-time." : "Hubungkan kamera atau pilih video untuk memulai analisis lalu lintas cerdas."} />
                 <div className="flex items-center gap-3">
                     <div className="flex items-center space-x-2 bg-muted px-3 py-1.5 rounded-full border">
-                        <Zap className={`w-3.5 h-3.5 ${mode === 'SIMULATION' ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                        <Zap className={cn("w-3.5 h-3.5", mode === 'SIMULATION' ? 'text-blue-500' : 'text-muted-foreground')} />
                         <Label htmlFor="mode-switch" className="text-xs font-medium cursor-pointer">Simulasi</Label>
                         <Switch
                             id="mode-switch"

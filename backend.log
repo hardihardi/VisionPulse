@@ -1,28 +1,8 @@
  * Serving Flask app 'backend/app.py'
  * Debug mode: off
 [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
  * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.2:5000
 [33mPress CTRL+C to quit[0m
-127.0.0.1 - - [12/Jul/2026 21:43:48] "GET /recordings HTTP/1.1" 200 -
-127.0.0.1 - - [12/Jul/2026 21:43:48] "[33mGET /health HTTP/1.1[0m" 404 -
-127.0.0.1 - - [12/Jul/2026 21:43:48] "GET /recordings HTTP/1.1" 200 -
-127.0.0.1 - - [12/Jul/2026 21:43:48] "POST /stop HTTP/1.1" 200 -
-127.0.0.1 - - [12/Jul/2026 21:43:49] "[33mOPTIONS /process-url HTTP/1.1[0m" 404 -
-127.0.0.1 - - [12/Jul/2026 21:43:49] "GET /traffic-stats HTTP/1.1" 200 -
-127.0.0.1 - - [12/Jul/2026 21:43:49] "GET /traffic-stats HTTP/1.1" 200 -
-127.0.0.1 - - [12/Jul/2026 21:43:49] "[33mGET /stream?t=1783892629279 HTTP/1.1[0m" 404 -
-127.0.0.1 - - [12/Jul/2026 21:43:49] "[33mGET /stream?t=1783892629280 HTTP/1.1[0m" 404 -
-127.0.0.1 - - [12/Jul/2026 21:43:49] "[33mGET /stream?t=1783892629529 HTTP/1.1[0m" 404 -
-127.0.0.1 - - [12/Jul/2026 21:43:49] "[33mGET /stream?t=1783892629530 HTTP/1.1[0m" 404 -
-127.0.0.1 - - [12/Jul/2026 21:43:49] "[33mGET /health HTTP/1.1[0m" 404 -
-127.0.0.1 - - [12/Jul/2026 21:47:49] "GET /recordings HTTP/1.1" 200 -
-127.0.0.1 - - [12/Jul/2026 21:47:49] "[33mGET /health HTTP/1.1[0m" 404 -
-127.0.0.1 - - [12/Jul/2026 21:47:49] "POST /stop HTTP/1.1" 200 -
-127.0.0.1 - - [12/Jul/2026 21:47:49] "GET /recordings HTTP/1.1" 200 -
-127.0.0.1 - - [12/Jul/2026 21:47:50] "[33mOPTIONS /process-url HTTP/1.1[0m" 404 -
-127.0.0.1 - - [12/Jul/2026 21:47:50] "GET /traffic-stats HTTP/1.1" 200 -
-127.0.0.1 - - [12/Jul/2026 21:47:50] "GET /traffic-stats HTTP/1.1" 200 -
-127.0.0.1 - - [12/Jul/2026 21:47:50] "[33mGET /stream?t=1783892870647 HTTP/1.1[0m" 404 -
-127.0.0.1 - - [12/Jul/2026 21:47:50] "[33mGET /stream?t=1783892870645 HTTP/1.1[0m" 404 -
-127.0.0.1 - - [12/Jul/2026 21:47:50] "[33mGET /stream?t=1783892870745 HTTP/1.1[0m" 404 -
-127.0.0.1 - - [12/Jul/2026 21:47:50] "[33mGET /health HTTP/1.1[0m" 404 -
+127.0.0.1 - - [12/Jul/2026 23:47:10] "GET /health HTTP/1.1" 200 -
