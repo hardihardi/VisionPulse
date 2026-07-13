@@ -55,7 +55,7 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
 
   const getStatusText = () => {
     switch (status) {
-        case 'STARTED': return 'ANALISIS SELESAI';
+        case 'STARTED': return 'ANALISIS AKTIF';
         case 'ANALYZING': return 'MENGANALISIS...';
         case 'STOPPED': return 'DIHENTIKAN';
     }
@@ -63,7 +63,7 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
 
   const getStatusColor = () => {
     switch (status) {
-        case 'STARTED': return 'text-green-500';
+        case 'STARTED': return 'text-green-600';
         case 'ANALYZING': return 'text-yellow-500';
         case 'STOPPED': return 'text-red-500';
     }

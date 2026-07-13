@@ -122,15 +122,15 @@ export function ExportReport({ isAnalyzing, trafficData, countingChartRef, movin
             </Button>
         </div>
         <div className="space-y-2 pt-2 border-t">
-            <Button variant="ghost" size="xs" className="w-full justify-start text-[10px]" onClick={() => handleExport('Grafik Counting')} disabled={!isAnalyzing}>
+            <Button variant="ghost" size="sm" className="w-full justify-start text-[10px]" onClick={() => handleExport('Grafik Counting')} disabled={!isAnalyzing}>
                 <ImageIcon className="w-3 h-3 mr-2" />
                 Unduh Grafik Counting
             </Button>
-            <Button variant="ghost" size="xs" className="w-full justify-start text-[10px]" onClick={() => handleExport('Grafik Moving Average')} disabled={!isAnalyzing}>
+            <Button variant="ghost" size="sm" className="w-full justify-start text-[10px]" onClick={() => handleExport('Grafik Moving Average')} disabled={!isAnalyzing}>
                 <ImageIcon className="w-3 h-3 mr-2" />
                 Unduh Grafik Moving Avg
             </Button>
-            <Button variant="ghost" size="xs" className="w-full justify-start text-[10px]" onClick={() => handleExport('Grafik Volume')} disabled={!isAnalyzing}>
+            <Button variant="ghost" size="sm" className="w-full justify-start text-[10px]" onClick={() => handleExport('Grafik Volume')} disabled={!isAnalyzing}>
                 <ImageIcon className="w-3 h-3 mr-2" />
                 Unduh Grafik Volume
             </Button>

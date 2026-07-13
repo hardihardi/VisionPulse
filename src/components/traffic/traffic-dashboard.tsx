@@ -29,7 +29,7 @@ import { AnomalyDetectionCard } from './anomaly-detection-card';
 import { AiTrafficAnalysisCard } from './ai-traffic-analysis-card';
 import { TrafficLog } from './traffic-log';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, RefreshCw, LayoutDashboard, BarChart3, Settings, ListTodo, Activity, MonitorPlay, Zap } from 'lucide-react';
+import { AlertCircle, RefreshCw, LayoutDashboard, BarChart3, Settings, ListTodo, Activity, MonitorPlay, Zap, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '../ui/badge';
@@ -105,9 +105,6 @@ export function TrafficDashboard() {
         try {
             const resp = await fetch(`${BACKEND_URL}/traffic-stats`);
             setIsBackendHealthy(resp.ok);
-            if (resp.ok && mode === 'SIMULATION') {
-               // setMode('LIVE'); // Optional auto-switch back
-            }
         } catch (e) {
             setIsBackendHealthy(false);
         }
@@ -115,7 +112,7 @@ export function TrafficDashboard() {
     checkHealth();
     const interval = setInterval(checkHealth, 10000);
     return () => clearInterval(interval);
-  }, [BACKEND_URL, mode]);
+  }, [BACKEND_URL]);
 
   useEffect(() => {
     if (activeVideo) {
@@ -256,7 +253,7 @@ export function TrafficDashboard() {
       if (anomalyInterval) clearInterval(anomalyInterval);
       if (simulationInterval) clearInterval(simulationInterval);
     };
-  }, [isAnalyzing, activeVideo, mode]);
+  }, [isAnalyzing, activeVideo, mode, BACKEND_URL]);
 
   const handleLineYChange = async (val: number) => {
     if (mode === 'SIMULATION') {
@@ -290,6 +287,7 @@ export function TrafficDashboard() {
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ url: activeVideo.source.url })
                   });
+                  setStatus('STARTED');
               } catch (e) {
                   setBackendError(true);
                   setMode('SIMULATION');
@@ -302,12 +300,12 @@ export function TrafficDashboard() {
             try {
               const formData = new FormData();
               formData.append('video', activeVideo.source.file);
-              fetch(`${BACKEND_URL}/upload-video`, { method: 'POST', body: formData });
+              await fetch(`${BACKEND_URL}/upload-video`, { method: 'POST', body: formData });
               const videoUri = await toBase64(activeVideo.source.file);
               setAnalysisInputUri(videoUri);
+              setStatus('STARTED');
               const { result } = await getEnhancedRecognition({ videoDataUri: videoUri });
               if (result) setDetectionResult(result);
-              setStatus('STARTED');
             } catch (error: any) {
               setBackendError(true);
               setMode('SIMULATION');
@@ -329,9 +327,12 @@ export function TrafficDashboard() {
   const renderVideoPlayer = () => {
     if (!videoSrc) {
         return (
-            <div className="w-full h-full flex items-center justify-center bg-muted relative min-h-[300px]">
+            <div className="w-full h-full flex flex-col items-center justify-center bg-muted relative min-h-[300px]">
                 {placeholder && <Image src={placeholder.imageUrl} alt="Placeholder" fill className="object-cover opacity-20" />}
-                <p className="text-muted-foreground relative z-10">Pilih video di Riwayat.</p>
+                <p className="text-muted-foreground relative z-10 font-medium">Pilih video di Riwayat untuk memulai analisis.</p>
+                <Button variant="outline" size="sm" className="mt-4 relative z-10" asChild>
+                    <a href="/history">Buka Riwayat</a>
+                </Button>
             </div>
         );
     }
@@ -350,6 +351,12 @@ export function TrafficDashboard() {
         }
         return (
             <div className="w-full h-full relative bg-black min-h-[300px]">
+                {status === 'ANALYZING' && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-20 gap-3">
+                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                        <p className="text-white text-sm">Menghubungkan ke stream analisis...</p>
+                    </div>
+                )}
                 <img
                     src={`${BACKEND_URL}/stream?t=${new Date().getTime()}`}
                     className="w-full h-full object-contain"
@@ -382,9 +389,9 @@ export function TrafficDashboard() {
           <div className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <DashboardHeader title="VisionPulse Traffic AI" description="Analisis lalu lintas cerdas berbasis visi komputer." />
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center space-x-2 bg-muted px-3 py-1.5 rounded-full border">
-                        <Zap className={`w-3.5 h-3.5 ${mode === 'SIMULATION' ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                <div className="flex items-center gap-3 self-end sm:self-auto">
+                    <div className="flex items-center gap-2 mr-2">
+                        <MonitorPlay className={`w-3.5 h-3.5 ${mode === 'SIMULATION' ? 'text-blue-500' : 'text-muted-foreground'}`} />
                         <Label htmlFor="mode-switch" className="text-xs font-medium cursor-pointer">Simulasi</Label>
                         <Switch
                             id="mode-switch"
@@ -406,8 +413,8 @@ export function TrafficDashboard() {
                     <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-2">
                         <span>Server backend AI di <code>{BACKEND_URL}</code> tidak merespons.</span>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="xs" onClick={() => window.location.reload()}>Coba Lagi</Button>
-                            <Button variant="secondary" size="xs" onClick={() => setMode('SIMULATION')}>Aktifkan Simulasi</Button>
+                            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Coba Lagi</Button>
+                            <Button variant="secondary" size="sm" onClick={() => setMode('SIMULATION')}>Aktifkan Simulasi</Button>
                         </div>
                     </AlertDescription>
                 </Alert>
@@ -431,7 +438,18 @@ export function TrafficDashboard() {
                         <CardHeader className="bg-primary/10 py-3 border-b flex flex-row items-center justify-between">
                             <CardTitle className="text-sm font-semibold flex items-center gap-2">
                                 <LayoutDashboard className="w-4 h-4 text-primary" />
-                                {activeVideo?.name || 'Monitor Lalu Lintas'}
+                                <span>{activeVideo?.name || 'Monitor Lalu Lintas'}</span>
+                                {activeVideo?.source.type === 'url' && (
+                                    <a
+                                        href={activeVideo.source.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="ml-2 text-xs text-muted-foreground hover:text-primary flex items-center gap-1 font-normal bg-background/50 px-2 py-0.5 rounded-full border border-border/50"
+                                    >
+                                        <ExternalLink className="w-3 h-3" />
+                                        Buka Sumber
+                                    </a>
+                                )}
                             </CardTitle>
                             {mode === 'SIMULATION' && <Badge variant="secondary" className="text-[10px] uppercase">Riset Simulasi</Badge>}
                         </CardHeader>
