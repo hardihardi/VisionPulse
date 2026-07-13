@@ -65,7 +65,7 @@ export function useVideoHistory() {
                     name: 'Live Demo - Bandung',
                     source: {
                         type: 'url',
-                        url: 'https://youtu.be/S1O-f7lMCx8'
+                        url: 'https://m.youtube.com/watch?v=S1O-f7lMCx8&pp=iggCQAE%3D'
                     }
                 };
                 loadedVideos.push(defaultVideo);
