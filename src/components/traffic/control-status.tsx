@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export type SystemStatus = "STOPPED" | "STARTED" | "ANALYZING";
@@ -41,21 +41,9 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
     onStatusChange("STARTED");
   };
 
-  const formatStartTime = (date: Date | null) => {
-    if (!date) return '-';
-    return date.toLocaleString('id-ID', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-  };
-
   const getStatusText = () => {
     switch (status) {
-        case 'STARTED': return 'ANALISIS SELESAI';
+        case 'STARTED': return 'SELESAI';
         case 'ANALYZING': return 'MENGANALISIS...';
         case 'STOPPED': return 'DIHENTIKAN';
     }
@@ -72,19 +60,30 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
   const isProcessing = status === 'ANALYZING';
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Kontrol & Status Sistem</CardTitle>
-        <CardDescription>Mulai atau hentikan analisis video aktif.</CardDescription>
+    <Card className="overflow-hidden border-none shadow-md bg-gradient-to-br from-card to-muted/20">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-bold flex items-center gap-2">
+          <Settings className="w-4 h-4 text-primary" />
+          Kontrol & Status Sistem
+        </CardTitle>
+        <CardDescription className="text-xs">Mulai atau hentikan analisis video aktif.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="text-sm">
-          <p>Waktu Mulai: {formatStartTime(startTime)}</p>
-          <p>STATUS: <span className={getStatusColor()}>{getStatusText()}</span></p>
+        <div className="grid grid-cols-2 gap-2 text-xs border rounded-lg p-3 bg-background/50">
+          <div>
+            <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Status</span>
+            <span className={`font-bold ${getStatusColor()}`}>{getStatusText()}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Mulai</span>
+            <span className="font-mono text-foreground font-medium block truncate">
+              {startTime ? startTime.toLocaleTimeString('id-ID') : '-'}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col gap-2">
           <Button 
-            className="w-full bg-green-600 hover:bg-green-700" 
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-medium" 
             onClick={handleStartClick}
             disabled={!isStartEnabled || isProcessing || status === 'STARTED'}
           >
@@ -93,7 +92,7 @@ export function ControlStatus({ isStartEnabled, status, onStatusChange }: Contro
           </Button>
           <Button 
             variant="destructive" 
-            className="w-full" 
+            className="w-full font-medium" 
             onClick={() => onStatusChange("STOPPED")}
             disabled={status === 'STOPPED'}
           >

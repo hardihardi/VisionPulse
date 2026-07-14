@@ -34,7 +34,7 @@ class TrafficCounter:
         height, width, _ = frame.shape
         line_y = int(self.line_y_ratio * height)
 
-        results = self.model.track(frame, persist=True, verbose=False)
+        results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", imgsz=320, verbose=False)
 
         if results[0].boxes.id is not None:
             boxes = results[0].boxes.xywh.cpu()
@@ -50,6 +50,7 @@ class TrafficCounter:
 
                 track = self.track_history[track_id]
                 track.append((float(x), float(y)))
+                print(f"[YOLO] Track ID: {track_id}, class: {cls_name}, position: y={y:.1f} (ROI line_y: {line_y})")
 
                 color = (0, 255, 0)
                 cv2.rectangle(frame, (int(x-w/2), int(y-h/2)), (int(x+w/2), int(y+h/2)), color, 2)
@@ -68,6 +69,7 @@ class TrafficCounter:
                             direction = 'Menjauh'
 
                         if direction:
+                            print(f"[YOLO] Crossed line! ID={track_id}, class={cls_name}, direction={direction}")
                             self.counts[direction][cls_name] += 1
                             self.counted_ids.add(track_id)
                             skr_val = self.get_skr(cls_name)

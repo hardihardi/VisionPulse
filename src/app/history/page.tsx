@@ -238,12 +238,12 @@ export default function HistoryPage() {
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <Card>
                     <CardHeader>
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
                             <div>
                                 <CardTitle>Daftar Sumber Video</CardTitle>
                                 <CardDescription>Pilih video untuk dianalisis, atau tambahkan sumber baru.</CardDescription>
                             </div>
-                            <Button onClick={openAddDialog}>
+                            <Button onClick={openAddDialog} className="w-full sm:w-auto">
                                 <PlusCircle className="mr-2 h-4 w-4" />
                                 Tambah Sumber Baru
                             </Button>

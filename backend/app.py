@@ -26,6 +26,69 @@ processing_thread = None
 current_frame = None
 frame_lock = threading.Lock()
 
+class VideoStream:
+    def __init__(self, src):
+        self.src = src
+        self.cap = cv2.VideoCapture(src)
+        self.ret = False
+        self.frame = None
+        self.started = False
+        self.read_lock = threading.Lock()
+
+    def start(self):
+        if self.started:
+            return self
+        self.started = True
+        self.thread = threading.Thread(target=self.update, args=())
+        self.thread.daemon = True
+        self.thread.start()
+        return self
+
+    def update(self):
+        consecutive_failures = 0
+        while self.started:
+            try:
+                ret, frame = self.cap.read()
+                if not ret:
+                    consecutive_failures += 1
+                    if consecutive_failures > 50:
+                        # Reconnect
+                        self.cap.release()
+                        self.cap = cv2.VideoCapture(self.src)
+                        consecutive_failures = 0
+                        time.sleep(1.0)
+                    time.sleep(0.02)
+                    continue
+
+                consecutive_failures = 0
+                with self.read_lock:
+                    self.ret = ret
+                    self.frame = frame
+            except Exception as e:
+                consecutive_failures += 1
+                if consecutive_failures > 50:
+                    try:
+                        self.cap.release()
+                    except:
+                        pass
+                    self.cap = cv2.VideoCapture(self.src)
+                    consecutive_failures = 0
+                time.sleep(0.1)
+            time.sleep(0.001)
+
+    def read(self):
+        with self.read_lock:
+            if self.frame is not None:
+                return self.ret, self.frame.copy()
+            return False, None
+
+    def stop(self):
+        self.started = False
+        try:
+            self.cap.release()
+        except:
+            pass
+
 def get_stream_url(url):
     """Extract direct stream URL using yt-dlp if it's a YouTube link."""
     if 'youtube.com' in url or 'youtu.be' in url:
@@ -57,23 +120,41 @@ def process_video():
         return
 
     stream_url = get_stream_url(video_source)
-    cap = cv2.VideoCapture(stream_url)
+    is_live = isinstance(stream_url, str) and stream_url.startswith(('http', 'rtsp'))
 
-    while is_processing:
-        ret, frame = cap.read()
-        if not ret:
-            if isinstance(video_source, str) and not video_source.startswith(('http', 'rtsp')):
-                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    if is_live:
+        vs = VideoStream(stream_url).start()
+        time.sleep(1.0)  # Wait for first frame
+        while is_processing:
+            ret, frame = vs.read()
+            if not ret:
+                if not vs.started:
+                    break
+                time.sleep(0.1)
                 continue
-            else:
-                break
 
-        processed_frame = counter.process_frame(frame)
-        with frame_lock:
-            current_frame = processed_frame.copy()
-        time.sleep(0.01)
+            processed_frame = counter.process_frame(frame)
+            with frame_lock:
+                current_frame = processed_frame.copy()
+            time.sleep(0.01)
+        vs.stop()
+    else:
+        cap = cv2.VideoCapture(stream_url)
+        while is_processing:
+            ret, frame = cap.read()
+            if not ret:
+                if isinstance(video_source, str) and not video_source.startswith(('http', 'rtsp')):
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    continue
+                else:
+                    break
 
-    cap.release()
+            processed_frame = counter.process_frame(frame)
+            with frame_lock:
+                current_frame = processed_frame.copy()
+            time.sleep(0.01)
+        cap.release()
+
     is_processing = False
 
 @app.route('/upload-video', methods=['POST'])

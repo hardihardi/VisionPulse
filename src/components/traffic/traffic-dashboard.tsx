@@ -154,6 +154,22 @@ export function TrafficDashboard() {
                     setBackendStats(data.stats);
                     setBackendError(false);
 
+                    // Auto-restart stream if backend is STOPPED but frontend expects it to be running
+                    if (data.status === 'STOPPED' && activeVideo) {
+                        if (activeVideo.source.type === 'url') {
+                            fetch(`${BACKEND_URL}/process-url`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ url: activeVideo.source.url })
+                            }).catch(err => console.error("Auto-restart stream failed:", err));
+                        } else if (activeVideo.source.type === 'file' && activeVideo.source.file) {
+                            const formData = new FormData();
+                            formData.append('video', activeVideo.source.file);
+                            fetch(`${BACKEND_URL}/upload-video`, { method: 'POST', body: formData })
+                                .catch(err => console.error("Auto-restart upload failed:", err));
+                        }
+                    }
+
                     const now = new Date();
                     const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
 
@@ -369,9 +385,30 @@ export function TrafficDashboard() {
         );
     }
 
-    const embedUrl = getYouTubeEmbedUrl(videoSrc);
-    if (embedUrl) return <iframe src={embedUrl} title="YouTube" frameBorder="0" allowFullScreen className="w-full h-full min-h-[300px]" />;
-    return <video src={videoSrc} className="w-full h-full object-cover min-h-[300px]" controls autoPlay loop muted />;
+    // BEFORE ANALYSIS STARTS: Show beautiful cover image with Play button overlay
+    const isM3U8 = typeof videoSrc === 'string' && videoSrc.endsWith('.m3u8');
+    const coverImage = PlaceHolderImages.find(img => img.id === (isM3U8 ? 'traffic-feed-2' : 'traffic-feed-detected'))?.imageUrl 
+                       || PlaceHolderImages[0]?.imageUrl;
+
+    return (
+        <div className="w-full h-full relative min-h-[300px] flex items-center justify-center bg-black group overflow-hidden">
+            <Image src={coverImage} alt="Video Preview Cover" fill className="object-cover opacity-70 group-hover:scale-105 transition-transform duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/80 flex flex-col items-center justify-center p-4">
+                <div className="w-16 h-16 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center mb-4 group-hover:bg-primary/40 group-hover:scale-110 transition-all duration-300 shadow-lg cursor-pointer" onClick={() => handleStatusChange('STARTED')}>
+                    <MonitorPlay className="w-8 h-8 text-primary animate-pulse" />
+                </div>
+                <Badge className="mb-2 bg-primary/20 text-primary border-primary/30">
+                    {isM3U8 ? 'Kamera Live HLS' : 'File Rekaman Video'}
+                </Badge>
+                <p className="text-white text-sm font-semibold text-center mb-1 drop-shadow-md">
+                    {activeVideo?.name || 'Sumber Video Terpilih'}
+                </p>
+                <p className="text-muted-foreground text-xs text-center max-w-[320px] drop-shadow-md">
+                    Klik tombol putar atau "Mulai Analisis Video" untuk memproses deteksi AI dan menghitung kendaraan.
+                </p>
+            </div>
+        </div>
+    );
   };
 
   return (
@@ -406,8 +443,8 @@ export function TrafficDashboard() {
                     <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-2">
                         <span>Server backend AI di <code>{BACKEND_URL}</code> tidak merespons.</span>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="xs" onClick={() => window.location.reload()}>Coba Lagi</Button>
-                            <Button variant="secondary" size="xs" onClick={() => setMode('SIMULATION')}>Aktifkan Simulasi</Button>
+                            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Coba Lagi</Button>
+                            <Button variant="secondary" size="sm" onClick={() => setMode('SIMULATION')}>Aktifkan Simulasi</Button>
                         </div>
                     </AlertDescription>
                 </Alert>
@@ -425,7 +462,7 @@ export function TrafficDashboard() {
 
             <main>
               {/* Desktop View: Grid Layout */}
-              <div className="hidden xl:grid gap-6 grid-cols-12">
+              <div className="hidden lg:grid gap-6 grid-cols-12">
                 <div className="col-span-9 space-y-6">
                     <Card className="overflow-hidden border-none shadow-md">
                         <CardHeader className="bg-primary/10 py-3 border-b flex flex-row items-center justify-between">
@@ -457,7 +494,7 @@ export function TrafficDashboard() {
               </div>
 
               {/* Mobile/Tablet View: Tabs Layout */}
-              <div className="xl:hidden space-y-6">
+              <div className="lg:hidden space-y-6">
                 <div className="aspect-video relative bg-black rounded-lg overflow-hidden shadow-md">
                     {renderVideoPlayer()}
                 </div>

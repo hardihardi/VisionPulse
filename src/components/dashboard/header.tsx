@@ -12,7 +12,7 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
   return (
     <header className="flex items-start justify-between">
       <div className="flex items-center gap-4">
-        <SidebarTrigger className="md:hidden" />
+        <SidebarTrigger className="-ml-1" />
         <div>
           <h1 className="font-headline text-3xl font-bold tracking-tight">{title}</h1>
           {description.includes("Mendeteksi lokasi...") ? (

@@ -71,17 +71,54 @@ export function useVideoHistory() {
                 loadedVideos.push(defaultVideo);
             }
 
+            // Ensure Bekasi CCTV is always in the list
+            const hasBekasi = loadedVideos.some(v => v.source.type === 'url' && v.source.url === 'https://eofficev2.bekasikota.go.id/backupcctv/m3/proyek_bekasi.m3u8');
+            if (!hasBekasi) {
+                const bekasiVideo: VideoHistoryItem = {
+                    id: 'default-bekasi-cctv',
+                    name: 'CCTV Live - Proyek Bekasi',
+                    source: {
+                        type: 'url',
+                        url: 'https://eofficev2.bekasikota.go.id/backupcctv/m3/proyek_bekasi.m3u8'
+                    }
+                };
+                loadedVideos = [bekasiVideo, ...loadedVideos];
+                
+                // Persist it back to local storage
+                try {
+                    const serializableVideos = loadedVideos.map(video => {
+                        if (video.source.type === 'file') {
+                            const { file, ...restOfSource } = video.source;
+                            return { ...video, source: restOfSource };
+                        }
+                        return video;
+                    });
+                    localStorage.setItem(HISTORY_KEY, JSON.stringify(serializableVideos));
+                } catch (e) {
+                    console.error("Failed to persist updated videos", e);
+                }
+            }
+
             setVideos(loadedVideos);
             
+            // Set Bekasi CCTV as active if storedActiveId is not valid or not present
             const activeId = storedActiveId && loadedVideos.some(v => v.id === storedActiveId)
                 ? storedActiveId
-                : loadedVideos[0]?.id || null;
+                : 'default-bekasi-cctv';
 
             setActiveVideoId(activeId);
 
         } catch (error) {
             console.error("Failed to load video history from localStorage", error);
             // On error, start with the default demo video
+            const bekasiVideo: VideoHistoryItem = {
+                id: 'default-bekasi-cctv',
+                name: 'CCTV Live - Proyek Bekasi',
+                source: {
+                    type: 'url',
+                    url: 'https://eofficev2.bekasikota.go.id/backupcctv/m3/proyek_bekasi.m3u8'
+                }
+            };
             const defaultVideo: VideoHistoryItem = {
                 id: 'default-youtube-video',
                 name: 'Live Demo - Bandung',
@@ -90,8 +127,8 @@ export function useVideoHistory() {
                     url: 'https://youtu.be/YLy7ntKXw-w'
                 }
             };
-            setVideos([defaultVideo]);
-            setActiveVideoId(defaultVideo.id);
+            setVideos([bekasiVideo, defaultVideo]);
+            setActiveVideoId(bekasiVideo.id);
         }
     }, []);
 
