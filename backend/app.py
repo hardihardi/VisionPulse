@@ -123,10 +123,21 @@ def process_video():
 
     stream_url = get_stream_url(video_source)
     is_live = isinstance(stream_url, str) and stream_url.startswith(('http', 'rtsp'))
+    local_fallback = 'public/proyek_bekasi.mp4'
 
     if is_live:
+        print(f"[Backend] Attempting to open HLS stream: {stream_url}")
         vs = VideoStream(stream_url).start()
-        time.sleep(1.0)  # Wait for first frame
+        time.sleep(1.5)  # Wait for first frame
+        
+        ret_check, frame_check = vs.read()
+        if not ret_check:
+            print(f"[Backend Warning] HLS stream {stream_url} is unreachable. Falling back to local video: {local_fallback}")
+            vs.stop()
+            stream_url = local_fallback
+            is_live = False
+
+    if is_live:
         while is_processing:
             ret, frame = vs.read()
             if not ret:
@@ -145,15 +156,13 @@ def process_video():
             time.sleep(0.01)
         vs.stop()
     else:
+        print(f"[Backend] Opening video file: {stream_url}")
         cap = cv2.VideoCapture(stream_url)
         while is_processing:
             ret, frame = cap.read()
             if not ret:
-                if isinstance(video_source, str) and not video_source.startswith(('http', 'rtsp')):
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                    continue
-                else:
-                    break
+                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                continue
 
             processed_frame = counter.process_frame(frame)
             ret_enc, buffer = cv2.imencode('.jpg', processed_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])

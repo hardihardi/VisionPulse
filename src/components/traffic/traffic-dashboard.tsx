@@ -99,7 +99,7 @@ export function TrafficDashboard() {
   const { toast } = useToast();
   const isAnalyzing = status === 'ANALYZING' || status === 'STARTED';
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 
-    (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')
+    (typeof window !== 'undefined' && process.env.NODE_ENV === 'production' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')
       ? `${window.location.origin}/api`
       : 'http://127.0.0.1:5000');
 
@@ -131,15 +131,36 @@ export function TrafficDashboard() {
           const runHls = () => {
               const Hls = (window as any).Hls;
               if (Hls && Hls.isSupported()) {
-                  hls = new Hls();
+                  hls = new Hls({
+                      xhrSetup: (xhr: any) => {
+                          xhr.timeout = 3000; // 3 seconds timeout
+                      }
+                  });
                   hls.loadSource(videoSrc);
                   hls.attachMedia(videoEl);
                   hls.on(Hls.Events.MANIFEST_PARSED, () => {
                       videoEl.play().catch(e => console.log("Auto-play blocked:", e));
                   });
+                  hls.on(Hls.Events.ERROR, (event: any, data: any) => {
+                      if (data.fatal) {
+                          console.log("[Hls.js Error] Failed to load HLS stream. Falling back to local MP4.");
+                          if (hls) {
+                              hls.destroy();
+                              hls = null;
+                          }
+                          videoEl.muted = true;
+                          videoEl.src = '/proyek_bekasi.mp4';
+                          videoEl.play().catch(e => console.log("Fallback auto-play blocked:", e));
+                      }
+                  });
               } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
                   videoEl.src = videoSrc;
-                  videoEl.play().catch(e => console.log("Auto-play blocked:", e));
+                  videoEl.play().catch(e => {
+                      console.log("[Native HLS Error] Falling back to local MP4.");
+                      videoEl.muted = true;
+                      videoEl.src = '/proyek_bekasi.mp4';
+                      videoEl.play().catch(err => console.log("Fallback blocked:", err));
+                  });
               }
           };
 
