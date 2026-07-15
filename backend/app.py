@@ -30,8 +30,9 @@ frame_lock = threading.Lock()
 
 class VideoStream:
     def __init__(self, src):
-        self.src = src
-        self.cap = cv2.VideoCapture(src)
+        self.original_src = src
+        self.src = get_stream_url(src)
+        self.cap = cv2.VideoCapture(self.src)
         self.ret = False
         self.frame = None
         self.started = False
@@ -54,8 +55,9 @@ class VideoStream:
                 if not ret:
                     consecutive_failures += 1
                     if consecutive_failures > 50:
-                        # Reconnect
+                        # Reconnect with fresh URL extraction (for temporary URLs like YouTube)
                         self.cap.release()
+                        self.src = get_stream_url(self.original_src)
                         self.cap = cv2.VideoCapture(self.src)
                         consecutive_failures = 0
                         time.sleep(1.0)
@@ -73,6 +75,7 @@ class VideoStream:
                         self.cap.release()
                     except:
                         pass
+                    self.src = get_stream_url(self.original_src)
                     self.cap = cv2.VideoCapture(self.src)
                     consecutive_failures = 0
                 time.sleep(0.1)
@@ -125,7 +128,7 @@ def process_video():
     is_live = isinstance(stream_url, str) and stream_url.startswith(('http', 'rtsp'))
 
     if is_live:
-        vs = VideoStream(stream_url).start()
+        vs = VideoStream(video_source).start()
         time.sleep(1.0)  # Wait for first frame
         while is_processing:
             ret, frame = vs.read()
