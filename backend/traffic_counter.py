@@ -5,7 +5,20 @@ from collections import defaultdict, deque
 import time
 
 class TrafficCounter:
-    def __init__(self, model_path='yolov8n.pt', line_y=0.5):
+    def __init__(self, model_path=None, line_y=0.5):
+        import os
+        if model_path is None:
+            # Check if yolov8n.onnx is available in the current directory or parent
+            if os.path.exists('yolov8n.onnx'):
+                model_path = 'yolov8n.onnx'
+            elif os.path.exists('../yolov8n.onnx'):
+                model_path = '../yolov8n.onnx'
+            elif os.path.exists('backend/yolov8n.onnx'):
+                model_path = 'backend/yolov8n.onnx'
+            else:
+                model_path = 'yolov8n.pt'
+        
+        print(f"[TrafficCounter] Loading model from: {model_path}")
         self.model = YOLO(model_path)
         self.line_y_ratio = line_y
         self.counts = {

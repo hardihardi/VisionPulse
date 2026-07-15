@@ -24,6 +24,8 @@ is_processing = False
 video_source = None
 processing_thread = None
 current_frame = None
+current_frame_bytes = None
+frame_ready_event = threading.Event()
 frame_lock = threading.Lock()
 
 class VideoStream:
@@ -134,8 +136,12 @@ def process_video():
                 continue
 
             processed_frame = counter.process_frame(frame)
-            with frame_lock:
-                current_frame = processed_frame.copy()
+            ret_enc, buffer = cv2.imencode('.jpg', processed_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+            if ret_enc:
+                with frame_lock:
+                    current_frame_bytes = buffer.tobytes()
+                    current_frame = processed_frame.copy()
+                frame_ready_event.set()
             time.sleep(0.01)
         vs.stop()
     else:
@@ -150,8 +156,12 @@ def process_video():
                     break
 
             processed_frame = counter.process_frame(frame)
-            with frame_lock:
-                current_frame = processed_frame.copy()
+            ret_enc, buffer = cv2.imencode('.jpg', processed_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+            if ret_enc:
+                with frame_lock:
+                    current_frame_bytes = buffer.tobytes()
+                    current_frame = processed_frame.copy()
+                frame_ready_event.set()
             time.sleep(0.01)
         cap.release()
 
@@ -271,19 +281,19 @@ def stop_processing():
     return jsonify({'message': 'Processing stopped'})
 
 def generate_frames():
-    global is_processing, current_frame
+    global is_processing, current_frame_bytes, frame_ready_event
     while is_processing:
-        if current_frame is not None:
-            with frame_lock:
-                # Use lower quality for MJPEG to save bandwidth/CPU
-                ret, buffer = cv2.imencode('.jpg', current_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
-                if not ret:
-                    continue
-                frame_bytes = buffer.tobytes()
-
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-        time.sleep(0.04)
+        got_frame = frame_ready_event.wait(timeout=1.0)
+        if got_frame:
+            frame_ready_event.clear()
+        
+        with frame_lock:
+            if current_frame_bytes is None:
+                continue
+            frame_bytes = current_frame_bytes
+            
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
 
 @app.route('/stream')
 def stream_video():
