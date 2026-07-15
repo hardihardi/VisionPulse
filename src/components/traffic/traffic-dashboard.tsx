@@ -94,6 +94,7 @@ export function TrafficDashboard() {
   const trafficCountingChartRef = useRef<HTMLDivElement>(null);
   const movingAverageChartRef = useRef<HTMLDivElement>(null);
   const vehicleComparisonChartRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const { toast } = useToast();
   const isAnalyzing = status === 'ANALYZING' || status === 'STARTED';
@@ -120,24 +121,27 @@ export function TrafficDashboard() {
     return () => clearInterval(interval);
   }, [BACKEND_URL, mode]);
 
-  // Dynamic HLS.js loading for HLS stream simulation in browser
+  // Dynamic HLS.js loading for HLS stream simulation/serverless fallback in browser
   useEffect(() => {
-      if (mode === 'SIMULATION' && isAnalyzing && videoSrc && videoSrc.endsWith('.m3u8')) {
-          const videoEl = document.querySelector('video');
-          if (!videoEl) return;
+      const isServerless = BACKEND_URL.includes('vercel') || BACKEND_URL.startsWith('/api');
+      const shouldPlayHls = (mode === 'SIMULATION' || isServerless || backendError) && isAnalyzing && videoSrc && videoSrc.endsWith('.m3u8');
+      
+      if (shouldPlayHls && videoRef.current) {
+          const videoEl = videoRef.current;
+          let hls: any = null;
 
           const runHls = () => {
               const Hls = (window as any).Hls;
               if (Hls && Hls.isSupported()) {
-                  const hls = new Hls();
+                  hls = new Hls();
                   hls.loadSource(videoSrc);
                   hls.attachMedia(videoEl);
                   hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                      videoEl.play().catch(e => console.log("Auto-play blocked:", e));
+                      videoEl.play().catch((e: any) => console.log("Auto-play blocked:", e));
                   });
               } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
                   videoEl.src = videoSrc;
-                  videoEl.play().catch(e => console.log("Auto-play blocked:", e));
+                  videoEl.play().catch((e: any) => console.log("Auto-play blocked:", e));
               }
           };
 
@@ -150,13 +154,17 @@ export function TrafficDashboard() {
               script.onload = runHls;
               document.body.appendChild(script);
               return () => {
+                  if (hls) hls.destroy();
                   if (document.body.contains(script)) {
                       document.body.removeChild(script);
                   }
               };
           }
+          return () => {
+              if (hls) hls.destroy();
+          };
       }
-  }, [mode, isAnalyzing, videoSrc]);
+  }, [mode, isAnalyzing, videoSrc, backendError, BACKEND_URL]);
 
   useEffect(() => {
     if (activeVideo) {
@@ -394,7 +402,9 @@ export function TrafficDashboard() {
     }
 
     if (isAnalyzing) {
-        if (mode === 'SIMULATION') {
+        const isServerless = BACKEND_URL.includes('vercel') || BACKEND_URL.startsWith('/api');
+        
+        if (mode === 'SIMULATION' || isServerless || backendError) {
             const embedUrl = getYouTubeEmbedUrl(videoSrc);
             if (embedUrl) {
                 return (
@@ -407,17 +417,21 @@ export function TrafficDashboard() {
                         />
                         <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
                         <div className="absolute top-4 left-4 z-10">
-                            <Badge variant="secondary" className="bg-blue-600 text-white animate-pulse">SIMULATING AI OVERLAY</Badge>
+                            <Badge variant="secondary" className={`${mode === 'SIMULATION' ? 'bg-blue-600' : 'bg-green-600'} text-white animate-pulse`}>
+                                {mode === 'SIMULATION' ? 'SIMULATING AI OVERLAY' : 'LIVE AI MONITOR (SERVERLESS)'}
+                            </Badge>
                         </div>
                     </div>
                 );
             }
             return (
                 <div className="w-full h-full relative bg-black min-h-[300px] flex items-center justify-center">
-                    <video src={videoSrc} className="w-full h-full object-contain opacity-60" controls autoPlay loop muted />
-                    <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
-                    <div className="absolute top-4 left-4">
-                        <Badge variant="secondary" className="bg-blue-600 text-white animate-pulse">SIMULATING AI OVERLAY</Badge>
+                    <video ref={videoRef} src={videoSrc} className="w-full h-full object-contain opacity-70" controls autoPlay loop muted />
+                    <div className="absolute inset-0 bg-blue-500/5 pointer-events-none" />
+                    <div className="absolute top-4 left-4 z-10">
+                        <Badge variant="secondary" className={`${mode === 'SIMULATION' ? 'bg-blue-600' : 'bg-green-600'} text-white animate-pulse`}>
+                            {mode === 'SIMULATION' ? 'SIMULATING AI OVERLAY' : 'LIVE AI MONITOR (SERVERLESS)'}
+                        </Badge>
                     </div>
                 </div>
             );
@@ -430,15 +444,6 @@ export function TrafficDashboard() {
                     alt="Stream"
                     onError={() => setBackendError(true)}
                 />
-                {backendError && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 gap-3">
-                        <AlertCircle className="w-8 h-8 text-destructive" />
-                        <div className="text-center px-4">
-                            <p className="text-white font-medium mb-2">Backend Offline</p>
-                            <Button variant="default" size="sm" onClick={() => setMode('SIMULATION')}>Gunakan Mode Simulasi</Button>
-                        </div>
-                    </div>
-                )}
             </div>
         );
     }
