@@ -40,3 +40,4 @@ backend/venv/
 backend/__pycache__/
 *.pt
 *.pyc
+.env*
