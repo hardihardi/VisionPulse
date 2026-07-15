@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
@@ -101,6 +101,10 @@ export function TrafficDashboard() {
     (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
       ? `${window.location.origin}/api`
       : 'http://localhost:5000');
+
+  const streamUrl = useMemo(() => {
+    return `${BACKEND_URL}/stream?active=${activeVideo?.id || 'default'}&status=${status}`;
+  }, [BACKEND_URL, activeVideo?.id, status]);
 
   // Health Check
   useEffect(() => {
@@ -370,10 +374,21 @@ export function TrafficDashboard() {
         return (
             <div className="w-full h-full relative bg-black min-h-[300px]">
                 <img
-                    src={`${BACKEND_URL}/stream?t=${new Date().getTime()}`}
+                    src={streamUrl}
                     className="w-full h-full object-contain"
                     alt="Stream"
-                    onError={() => setBackendError(true)}
+                    onError={(e) => {
+                        if (isBackendHealthy !== false) {
+                            setTimeout(() => {
+                                const img = e.target as HTMLImageElement;
+                                if (img) {
+                                    img.src = `${streamUrl}&retry=${new Date().getTime()}`;
+                                }
+                            }, 1000);
+                        } else {
+                            setBackendError(true);
+                        }
+                    }}
                 />
                 {backendError && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 gap-3">
