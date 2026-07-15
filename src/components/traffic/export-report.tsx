@@ -18,7 +18,10 @@ interface ExportReportProps {
 
 export function ExportReport({ isAnalyzing, trafficData, countingChartRef, movingAverageChartRef, vehicleComparisonChartRef }: ExportReportProps) {
   const { toast } = useToast();
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 
+    (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
+      ? `${window.location.origin}/api`
+      : 'http://localhost:5000');
 
   const downloadFromBackend = async (fmt: 'csv' | 'xlsx') => {
     try {

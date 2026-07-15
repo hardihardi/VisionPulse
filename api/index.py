@@ -16,6 +16,7 @@ counts = {
 recent_logs = []
 
 @app.route('/api/traffic-stats', methods=['GET'])
+@app.route('/traffic-stats', methods=['GET'])
 def traffic_stats():
     global is_processing, counts, start_time
     status = 'STARTED' if is_processing else 'STOPPED'
@@ -66,6 +67,7 @@ def traffic_stats():
     })
 
 @app.route('/api/process-url', methods=['POST'])
+@app.route('/process-url', methods=['POST'])
 def process_url():
     global is_processing, video_source, start_time, counts, recent_logs
     data = request.json or {}
@@ -88,6 +90,7 @@ def process_url():
     })
 
 @app.route('/api/stop', methods=['POST'])
+@app.route('/stop', methods=['POST'])
 def stop():
     global is_processing
     is_processing = False

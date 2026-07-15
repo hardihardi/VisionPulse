@@ -97,7 +97,10 @@ export function TrafficDashboard() {
 
   const { toast } = useToast();
   const isAnalyzing = status === 'ANALYZING' || status === 'STARTED';
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 
+    (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
+      ? `${window.location.origin}/api`
+      : 'http://localhost:5000');
 
   // Health Check
   useEffect(() => {
