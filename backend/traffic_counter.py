@@ -47,7 +47,7 @@ class TrafficCounter:
         height, width, _ = frame.shape
         line_y = int(self.line_y_ratio * height)
 
-        results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", imgsz=320, verbose=False)
+        results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", imgsz=480, conf=0.20, iou=0.5, verbose=False)
 
         if results[0].boxes.id is not None:
             boxes = results[0].boxes.xywh.cpu()
