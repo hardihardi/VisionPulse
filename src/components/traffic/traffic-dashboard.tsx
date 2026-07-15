@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/layout/main-sidebar';
 import { DashboardHeader } from '@/components/dashboard/header';
@@ -102,10 +102,6 @@ export function TrafficDashboard() {
       ? `${window.location.origin}/api`
       : 'http://localhost:5000');
 
-  const streamUrl = useMemo(() => {
-    return `${BACKEND_URL}/stream?active=${activeVideo?.id || 'default'}&status=${status}`;
-  }, [BACKEND_URL, activeVideo?.id, status]);
-
   // Health Check
   useEffect(() => {
     const checkHealth = async () => {
@@ -123,6 +119,44 @@ export function TrafficDashboard() {
     const interval = setInterval(checkHealth, 10000);
     return () => clearInterval(interval);
   }, [BACKEND_URL, mode]);
+
+  // Dynamic HLS.js loading for HLS stream simulation in browser
+  useEffect(() => {
+      if (mode === 'SIMULATION' && isAnalyzing && videoSrc && videoSrc.endsWith('.m3u8')) {
+          const videoEl = document.querySelector('video');
+          if (!videoEl) return;
+
+          const runHls = () => {
+              const Hls = (window as any).Hls;
+              if (Hls && Hls.isSupported()) {
+                  const hls = new Hls();
+                  hls.loadSource(videoSrc);
+                  hls.attachMedia(videoEl);
+                  hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                      videoEl.play().catch(e => console.log("Auto-play blocked:", e));
+                  });
+              } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+                  videoEl.src = videoSrc;
+                  videoEl.play().catch(e => console.log("Auto-play blocked:", e));
+              }
+          };
+
+          if ((window as any).Hls) {
+              runHls();
+          } else {
+              const script = document.createElement('script');
+              script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
+              script.async = true;
+              script.onload = runHls;
+              document.body.appendChild(script);
+              return () => {
+                  if (document.body.contains(script)) {
+                      document.body.removeChild(script);
+                  }
+              };
+          }
+      }
+  }, [mode, isAnalyzing, videoSrc]);
 
   useEffect(() => {
     if (activeVideo) {
@@ -361,6 +395,23 @@ export function TrafficDashboard() {
 
     if (isAnalyzing) {
         if (mode === 'SIMULATION') {
+            const embedUrl = getYouTubeEmbedUrl(videoSrc);
+            if (embedUrl) {
+                return (
+                    <div className="w-full h-full relative bg-black min-h-[300px] flex items-center justify-center">
+                        <iframe
+                            src={embedUrl}
+                            className="w-full h-full absolute inset-0 border-none opacity-80"
+                            allow="autoplay; encrypted-media"
+                            allowFullScreen
+                        />
+                        <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
+                        <div className="absolute top-4 left-4 z-10">
+                            <Badge variant="secondary" className="bg-blue-600 text-white animate-pulse">SIMULATING AI OVERLAY</Badge>
+                        </div>
+                    </div>
+                );
+            }
             return (
                 <div className="w-full h-full relative bg-black min-h-[300px] flex items-center justify-center">
                     <video src={videoSrc} className="w-full h-full object-contain opacity-60" controls autoPlay loop muted />
@@ -374,21 +425,10 @@ export function TrafficDashboard() {
         return (
             <div className="w-full h-full relative bg-black min-h-[300px]">
                 <img
-                    src={streamUrl}
+                    src={`${BACKEND_URL}/stream?t=${new Date().getTime()}`}
                     className="w-full h-full object-contain"
                     alt="Stream"
-                    onError={(e) => {
-                        if (isBackendHealthy !== false) {
-                            setTimeout(() => {
-                                const img = e.target as HTMLImageElement;
-                                if (img) {
-                                    img.src = `${streamUrl}&retry=${new Date().getTime()}`;
-                                }
-                            }, 1000);
-                        } else {
-                            setBackendError(true);
-                        }
-                    }}
+                    onError={() => setBackendError(true)}
                 />
                 {backendError && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 gap-3">

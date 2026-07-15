@@ -25,14 +25,13 @@ video_source = None
 processing_thread = None
 current_frame = None
 current_frame_bytes = None
-frame_ready_event = threading.Event()
+frame_index = 0
 frame_lock = threading.Lock()
 
 class VideoStream:
     def __init__(self, src):
-        self.original_src = src
-        self.src = get_stream_url(src)
-        self.cap = cv2.VideoCapture(self.src)
+        self.src = src
+        self.cap = cv2.VideoCapture(src)
         self.ret = False
         self.frame = None
         self.started = False
@@ -55,9 +54,8 @@ class VideoStream:
                 if not ret:
                     consecutive_failures += 1
                     if consecutive_failures > 50:
-                        # Reconnect with fresh URL extraction (for temporary URLs like YouTube)
+                        # Reconnect
                         self.cap.release()
-                        self.src = get_stream_url(self.original_src)
                         self.cap = cv2.VideoCapture(self.src)
                         consecutive_failures = 0
                         time.sleep(1.0)
@@ -75,7 +73,6 @@ class VideoStream:
                         self.cap.release()
                     except:
                         pass
-                    self.src = get_stream_url(self.original_src)
                     self.cap = cv2.VideoCapture(self.src)
                     consecutive_failures = 0
                 time.sleep(0.1)
@@ -112,7 +109,7 @@ def get_stream_url(url):
     return url
 
 def process_video():
-    global is_processing, counter, video_source, current_frame
+    global is_processing, counter, video_source, current_frame, current_frame_bytes, frame_index
     if not video_source:
         return
 
@@ -128,7 +125,7 @@ def process_video():
     is_live = isinstance(stream_url, str) and stream_url.startswith(('http', 'rtsp'))
 
     if is_live:
-        vs = VideoStream(video_source).start()
+        vs = VideoStream(stream_url).start()
         time.sleep(1.0)  # Wait for first frame
         while is_processing:
             ret, frame = vs.read()
@@ -144,7 +141,7 @@ def process_video():
                 with frame_lock:
                     current_frame_bytes = buffer.tobytes()
                     current_frame = processed_frame.copy()
-                frame_ready_event.set()
+                    frame_index += 1
             time.sleep(0.01)
         vs.stop()
     else:
@@ -164,7 +161,7 @@ def process_video():
                 with frame_lock:
                     current_frame_bytes = buffer.tobytes()
                     current_frame = processed_frame.copy()
-                frame_ready_event.set()
+                    frame_index += 1
             time.sleep(0.01)
         cap.release()
 
@@ -284,17 +281,21 @@ def stop_processing():
     return jsonify({'message': 'Processing stopped'})
 
 def generate_frames():
-    global is_processing, current_frame_bytes, frame_ready_event
+    global is_processing, current_frame_bytes, frame_index
+    last_seen_index = -1
     while is_processing:
-        got_frame = frame_ready_event.wait(timeout=1.0)
-        if got_frame:
-            frame_ready_event.clear()
-        
         with frame_lock:
             if current_frame_bytes is None:
-                continue
-            frame_bytes = current_frame_bytes
+                idx = -1
+            else:
+                idx = frame_index
+                frame_bytes = current_frame_bytes
+                
+        if idx == -1 or idx == last_seen_index:
+            time.sleep(0.03)
+            continue
             
+        last_seen_index = idx
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
 
